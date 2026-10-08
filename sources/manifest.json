@@ -1,0 +1,13 @@
+{
+  "paper.xml": {
+    "sha256": "04910ea040f5a721be1a2c0b3ad76ec2f6746228ab7cc606f3a29aba4f04a386",
+    "bytes": 187982,
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13340232/fullTextXML",
+    "license": "CC-BY-4.0"
+  },
+  "supplement.pdf": {
+    "sha256": "45db65b8846b57886b6e69333de8b14355437121ad0023e986745b99e945fc02",
+    "bytes": 1418572,
+    "url": "https://academic.oup.com/bioinformatics/article/42/Supplement_1/btag245/8726316#supplementary-data"
+  }
+}

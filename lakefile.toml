@@ -1,0 +1,23 @@
+name = "Camus"
+version = "0.1.0"
+keywords = ["math", "phylogenetics"]
+defaultTargets = ["Camus", "Challenge", "Solution"]
+
+[leanOptions]
+autoImplicit = false
+maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.35.0-rc4"
+
+[[lean_lib]]
+name = "Camus"
+globs = ["Camus.+"]
+
+[[lean_lib]]
+name = "Challenge"
+
+[[lean_lib]]
+name = "Solution"
