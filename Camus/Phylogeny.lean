@@ -1,5 +1,7 @@
 module
 
+public import Camus.Definitions
+
 public import Mathlib.Data.Finset.Card
 public import Mathlib.Data.List.FinRange
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
@@ -7,69 +9,6 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 @[expose] public section
 
 namespace Camus
-
-/-- A rooted full binary tree. Labels need not be distinct in storage; `WellLabelled`
-expresses the defining leaf-labelling condition of a phylogenetic tree. -/
-inductive PhyloTree where
-  | leaf : ℕ → PhyloTree
-  | fork : PhyloTree → PhyloTree → PhyloTree
-  deriving DecidableEq, Repr
-
-namespace PhyloTree
-
-def labels : PhyloTree → List ℕ
-  | .leaf a => [a]
-  | .fork l r => labels l ++ labels r
-
-def WellLabelled (t : PhyloTree) : Prop := t.labels.Nodup
-
-instance (t : PhyloTree) : Decidable t.WellLabelled := inferInstanceAs (Decidable t.labels.Nodup)
-
-def taxa (t : PhyloTree) : Finset ℕ := t.labels.toFinset
-
-/-- Every rooted edge cuts off the clade at its lower endpoint. The whole-tree
-clade is harmless and is included to simplify recursion. -/
-def clades : PhyloTree → List (Finset ℕ)
-  | .leaf a => [{a}]
-  | .fork l r => (l.taxa ∪ r.taxa) :: (clades l ++ clades r)
-
-end PhyloTree
-
-/-- A resolved quartet, represented by four increasing taxon labels and one of
-three splits. Sorted labels eliminate permutation duplicates. The ordering fields
-are defining laws, not assumed mathematical results. -/
-structure Quartet where
-  a : ℕ
-  b : ℕ
-  c : ℕ
-  d : ℕ
-  ab : a < b
-  bc : b < c
-  cd : c < d
-  split : Fin 3
-  deriving DecidableEq
-
-namespace Quartet
-
-def taxa (q : Quartet) : Finset ℕ := {q.a, q.b, q.c, q.d}
-
-def sides (q : Quartet) : Finset ℕ × Finset ℕ :=
-  if q.split = 0 then ({q.a, q.b}, {q.c, q.d})
-  else if q.split = 1 then ({q.a, q.c}, {q.b, q.d})
-  else ({q.a, q.d}, {q.b, q.c})
-
-/-- A clade induces the split if it contains precisely one side among the quartet's
-four taxa. Other taxa in the clade do not affect restriction to the quartet. -/
-def cutBy (q : Quartet) (s : Finset ℕ) : Bool :=
-  decide (q.sides.1 ⊆ s ∧ Disjoint q.sides.2 s ∨
-    q.sides.2 ⊆ s ∧ Disjoint q.sides.1 s)
-
-/-- Definition 1 (`mthst1`): suppressing the root and restricting to four leaves
-is equivalent to an edge cut separating the two pairs. -/
-def induced (q : Quartet) (t : PhyloTree) : Bool :=
-  decide (q.taxa ⊆ t.taxa) && t.clades.any q.cutBy
-
-end Quartet
 
 /-- Cycle-separated galled networks, written by their recursive blocks.
 `gall l r b` is one directed cycle with top node, two directed paths to the

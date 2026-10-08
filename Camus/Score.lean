@@ -1,5 +1,7 @@
 module
 
+public import Camus.Definitions
+
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Multiset.Filter
 public import Mathlib.Data.Finset.Max
@@ -9,10 +11,6 @@ public import Mathlib.Data.Finset.Max
 namespace Camus
 
 variable {α : Type*} [DecidableEq α]
-
-/-- Count occurrences, including multiplicity, of the input quartets in a repertoire. -/
-def score (Q : Multiset α) (D : Finset α) : ℕ :=
-  (Q.filter (· ∈ D)).card
 
 /-- Definition 4 (`mthst7`): an edge receives the multiplicity of each quartet it
 satisfies and zero otherwise. -/

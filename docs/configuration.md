@@ -16,3 +16,5 @@
   and tie-breaking on 2026-10-08. Original false uniqueness claim is refuted, not assumed.
 - User approved refuting exact-budget monotonicity and proving at-most-budget monotonicity.
 - User approved a conditional formalization with cited Observation 2 exposed by name.
+
+The user explicitly requested continuing the directed-network library and the full main theorem, rather than finishing an audited partial project. Internal decomposition results may not be turned into assumptions.
