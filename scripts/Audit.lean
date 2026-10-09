@@ -5,6 +5,7 @@ public meta import Lean.DocString
 -- One `import all` line per module of the library, so that proofs are visible to the dependency
 -- traversal (the module system hides them from a plain `import`). Generate the lines with
 --   find PaperName -name '*.lean' | sort | sed 's/\.lean$//; s#/#.#g; s/^/import all /'
+import all Camus
 import all Camus.Algorithm1
 import all Camus.BudgetCounterexampleWitness
 import all Camus.BudgetCounterexamples
