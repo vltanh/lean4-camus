@@ -58,7 +58,7 @@ theorem lemma1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
 /-- Directed-graph bridge for Lemma 2: two non-tree edges with the same original LCA target
 would yield cycles sharing that vertex. This uses the concrete footprint bridge
 and the paper's shared-target contradiction. -/
-theorem lemma2 (t : PhyloTree) (ht : t.WellLabelled) (N : RootedNetwork)
+theorem lemma2 (t : PhyloTree) (N : RootedNetwork)
     (hN : N.RootedBinaryLevelOne) (S : Finset (ℕ × ℕ))
     (H : SupportSubdivision t N S) {e f : ℕ × ℕ}
     (he : e ∈ N.edges \ S) (hf : f ∈ N.edges \ S)
