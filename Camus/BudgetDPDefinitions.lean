@@ -28,6 +28,11 @@ def best (S : Finset ℕ) : Finset ℕ := S.filter (fun z => z = S.sup id)
   apply (mem_best).mpr
   exact ⟨by simpa using (Finset.sup_mem_of_nonempty (f := id) hn), fun x hx => Finset.le_sup (f := id) hx⟩
 
+ theorem best_card_le_one (S : Finset ℕ) : (best S).card ≤ 1 := by
+  apply Finset.card_le_one.mpr
+  intro x hx y hy
+  exact (Finset.mem_filter.mp hx).2.trans (Finset.mem_filter.mp hy).2.symm
+
 /-- Max-plus convolution, distributing the exact budget between two rows. -/
 def convolution (A B : ℕ → Finset ℕ) (k : ℕ) : Finset ℕ :=
   (Finset.range (k+1)).biUnion fun i =>
@@ -48,11 +53,18 @@ def convolution (A B : ℕ → Finset ℕ) (k : ℕ) : Finset ℕ :=
     refine ⟨i,Finset.mem_range.mpr (by omega),Finset.mem_image.mpr ?_⟩
     exact ⟨(a,b),Finset.mem_product.mpr ⟨ha,by simpa [show k-i=j by omega] using hb⟩,rfl⟩
 
-/-- Knapsack over the hanging subproblems. Budget allocations, not networks,
-are convolved. Each subtree row has already been maximized. -/
+/-- Specification helper containing all budget-allocation scores. This is not
+the algorithm: `forest` prunes intermediate maxima while preserving attainment
+and domination, as proved in `BudgetDPForest`. No network is enumerated. -/
+def allocations (M : Address → ℕ → Finset ℕ) : List Address → ℕ → Finset ℕ
+  | [], k => if k=0 then {0} else ∅
+  | r::rs, k => convolution (M r) (allocations M rs) k
+
+/-- Hanging-forest knapsack: retain only the maximum after each
+convolution, so every intermediate exact-budget row is empty or singleton. -/
 def forest (M : Address → ℕ → Finset ℕ) : List Address → ℕ → Finset ℕ
   | [], k => if k=0 then {0} else ∅
-  | r::rs, k => convolution (M r) (forest M rs) k
+  | r::rs, k => best (convolution (M r) (forest M rs) k)
 
 /-- The source §2.4 recurrence: either no edge at v, or one edge at v using
 one budget unit followed by allocation across the Eq. 4/5 hanging forest. -/

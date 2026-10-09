@@ -10,6 +10,19 @@ namespace Camus.BudgetDP
 
 open DynamicProgramming
 
+/-- Every computed or intermediate row contains at most one score. -/
+ theorem forest_row_card (M : Address → ℕ → Finset ℕ) (rs : List Address) (k : ℕ) :
+    (forest M rs k).card ≤ 1 := by
+  cases rs with
+  | nil => simp only [forest]; split_ifs <;> simp
+  | cons r rs => exact best_card_le_one _
+
+ theorem array_row_card (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
+    (hM : Array t w M) {v : Address} (hv : v ∈ t.nodes) (k : ℕ) :
+    (M v k).card ≤ 1 := by
+  rw [hM v hv k]
+  exact best_card_le_one _
+
  theorem row_sup_eq (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
     (hM : Array t w M) {v : Address} (hv : v ∈ t.nodes) {k z : ℕ} (hz : z ∈ M v k) :
     (M v k).sup id=z := by

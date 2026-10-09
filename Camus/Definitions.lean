@@ -333,6 +333,8 @@ noncomputable def anchor {t : PhyloTree} {N : RootedNetwork}
   if h : ∃ p ∈ t.nodes, p ≠ [] ∧ v ∈ wireInterior (H.wire p) then
     Classical.choose h else []
 
+/-- Definition 2 (`mthst3`): the endpoints below the selected non-tree edge.
+Lemma 1 proves the unique quartet attribution used by Procedure ASSIGN. -/
 noncomputable def pairOf {t : PhyloTree} {N : RootedNetwork}
     {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S) (e : ℕ × ℕ) :
     Address × Address := (H.anchor e.1, H.anchor e.2)
@@ -396,7 +398,7 @@ noncomputable def supportEdges (t : PhyloTree) (E : Finset Pair) : Finset (ℕ �
 noncomputable def leafAddress (t : PhyloTree) (a : ℕ) : Address :=
   ((t.nodes.toList).find? (fun p => t.nodeAt p = some (.leaf a))).getD []
 
-/-- Insert the directed donor→recipient edges into the canonically subdivided
+/-- Definition 3 (`mthst6`): insert the directed donor→recipient edges into the canonically subdivided
 constraint tree. No theorem is assumed by this construction. -/
 noncomputable def graph (t : PhyloTree) (E : Finset Pair) : RootedNetwork :=
   { vertices := t.nodes.image Address.code ∪ E.biUnion (fun e => {donor t e, recipient t e})
@@ -411,7 +413,7 @@ noncomputable def cycleVertices (t : PhyloTree) (e : Pair) : Finset ℕ :=
   (EdgeAbove.footprint t e).image Address.code ∪ {donor t e, recipient t e}
 
 /-- Left/right children in the SUBDIVIDED single-edge network. This realizes
-Definition 5; testing only original children against the original footprint
+Definition 5 (`mthst8`); testing only original children against the original footprint
 would choose the wrong branch at a subdivision endpoint. -/
 noncomputable def child (t : PhyloTree) (e : Pair) (p : Address) (b : Bool) : ℕ :=
   let q := p ++ [b]

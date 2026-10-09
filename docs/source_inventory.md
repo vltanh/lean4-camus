@@ -41,4 +41,4 @@ The source-review agent checked the numbered statements and representation choic
 
 ## Helper correction
 
-Subdivision invariance needs an acyclic source. Without it, antiparallel arcs become a single undirected bridge before subdivision and a cycle afterwards. The helper now requires the source rooted-network laws; this changes no paper statement. A Lean counterexample certificate remains to be added.
+Subdivision invariance needs an acyclic source. Without it, antiparallel arcs become a single undirected bridge before subdivision and a cycle afterwards. The helper now requires the source rooted-network laws; this changes no paper statement. `SubdivisionCounterexample.antiparallel_cut_counterexample` kernel-checks the finite underlying cut obstruction. This certifies the cut counterexample, independently of the main network library.
