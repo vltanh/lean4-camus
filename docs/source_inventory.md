@@ -13,10 +13,12 @@ The target is DOI 10.1093/bioinformatics/btag245. Publisher TeX was unavailable;
 - `E1`: (1) s e ( u , w ) = ∑ q ∈ Q δ T ( q , ( u , w ) ) ,
 - `E2`: (2) M [ v ] = max { M [ l ( v ) ] + M [ r ( v ) ] , s ( v ) ,
 - `E3`: (3) s ( v ) = max ( u , w ) ∈ Pairs ( v ) ( s e ( u , w ) + s d p ( v , u , w ) ) ,
-- `E4`: (4) s d p ( v , u , w ) = M [ w ] + M [ u ] + ∑ x ∈ γ ( u , w ) ∩ V ( T ) ∖ { v } { M [ l ( x ) ] if l ( x ) ∈ γ ( u , w ) M [ r ( x ) ] otherwise .
-- `E5`: (5) s d p ( v , u , w ) = M [ w ] + ∑ x ∈ γ ( u , w ) ∩ V ( T ) { M [ l ( x ) ] if l ( x ) ∈ γ ( u , w ) M [ r ( x ) ] otherwise .
+- `E4`: (4) s d p ( v , u , w ) = M [ w ] + M [ u ] + ∑ x ∈ γ ( u , w ) ∩ V ( T ) ∖ { v } { M [ l ( x ) ] if l ( x ) ∉ γ ( u , w ) M [ r ( x ) ] otherwise .
+- `E5`: (5) s d p ( v , u , w ) = M [ w ] + ∑ x ∈ γ ( u , w ) ∩ V ( T ) { M [ l ( x ) ] if l ( x ) ∉ γ ( u , w ) M [ r ( x ) ] otherwise .
 - `mthst9`: Theorem 1. The algorithm gives an assignment of non-tree edges to add to the tree T that maximizes the number of quartets in Q that are satisfied, under the constraint that we create a level-1 phylogenetic network.
 - `mthst10`: Proof. By design, the solution that CAMUS outputs is a level-1 phylogenetic network N that extends T . Specifically, consider the target nodes for a pair of added edges defined by the backtracking through the DP matrix. If their target nodes are not in relation (neither above the other), then the cycles they create are vertex-disjoint. If some target node x is above another target node y , then this case would be handled by Equations (4) and (5) , which ensure that the created cycles do not share vertices. It is also easy to see that M[r] is the number of quartet trees in Q that are satisfied by N and not by T , where r is the root of T .
+
+The source uses “satisfied” to mean displayed by the network but absent from its constraint tree (§2.1, paragraph immediately following Definition 1). Lemma 1 therefore already concerns novel quartets. Equations (4) and (5) have a struck-through membership symbol in MathML, meaning ∉; plain XML text extraction loses that mark.
 
 ## Additional obligations
 

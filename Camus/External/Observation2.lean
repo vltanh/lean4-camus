@@ -11,10 +11,11 @@ namespace Camus.External
 cut edge or two edges of one cycle, one incident to its bottom reticulation.
 
 This is a named, UNPROVED proposition. It may be an explicit hypothesis of
-future conditional theorems, as authorized by the user. It does not assert
+conditional theorems, as authorized by the user. It does not assert
 unique attribution to an added edge and does not assume the CAMUS DP
-decomposition. No existing library theorem currently depends on it. The
-graph-switching and graph/block bridges still need independent proofs. -/
+decomposition. The
+project proves graph decomposition and quartet attribution independently; only
+this displayed-quartet characterization is assumed. -/
 def WarnowTabatabaeeEvansObservation2 : Prop :=
   ∀ N : RootedNetwork, N.RootedBinaryLevelOne →
     ∀ q : Quartet, q.taxa ⊆ N.taxa →

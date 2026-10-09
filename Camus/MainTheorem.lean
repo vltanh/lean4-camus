@@ -62,9 +62,9 @@ theorem theorem1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
         score Q (DynamicProgramming.novel t Q (Realization.graph t E)) := by
     intro N hN
     obtain ⟨S, ⟨H⟩⟩ := hN.2
-    have hF := H.extracted_separated ht hN.1
+    have hF := H.extracted_separated hN.1
     have hNF := Realization.levelOne t ht H.extracted hF
-    obtain ⟨i⟩ := H.canonical_iso ht hN.1
+    obtain ⟨i⟩ := H.canonical_iso hN.1
     have hrep := DynamicProgramming.repertoire_iso Q hN.1 hNF i
     have hnovelEq : DynamicProgramming.novel t Q N =
         DynamicProgramming.novel t Q (Realization.graph t H.extracted) := by
@@ -76,9 +76,9 @@ theorem theorem1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
     hscoreE, hnovel, ?_⟩
   intro N hN
   obtain ⟨S, ⟨H⟩⟩ := hN.2
-  have hF := H.extracted_separated ht hN.1
+  have hF := H.extracted_separated hN.1
   have hNF := Realization.levelOne t ht H.extracted hF
-  obtain ⟨i⟩ := H.canonical_iso ht hN.1
+  obtain ⟨i⟩ := H.canonical_iso hN.1
   have hrep := DynamicProgramming.repertoire_iso Q hN.1 hNF i
   have hbaseN : DynamicProgramming.repertoire Q (Realization.graph t ∅) ⊆
       DynamicProgramming.repertoire Q N := by
