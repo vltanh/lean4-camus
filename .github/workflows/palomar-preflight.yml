@@ -1,0 +1,33 @@
+name: Palomar preflight
+
+# Runs Palomar's complete mechanical verification on this commit, as the registry does after a
+# submission, and publishes its report as an artifact. The verifier fetches the repository
+# anonymously, so the repository must be public. A run can take hours, so it only runs on demand.
+# Pin `uses` and `pipeline_commit` to the same full PalomarSubmission commit:
+#   git ls-remote https://github.com/PalomarRegistry/PalomarSubmission.git HEAD
+# `request_id` must be exactly 12 lowercase letters or digits.
+on:
+  workflow_dispatch:
+    inputs:
+      authorization_relationship:
+        description: "Your relationship authorizing this submission"
+        required: true
+        type: choice
+        options:
+          - "I am a responsible author or maintainer"
+          - "I have approval from a responsible author or maintainer"
+
+permissions:
+  contents: read
+
+jobs:
+  palomar-preflight:
+    uses: PalomarRegistry/PalomarSubmission/.github/workflows/submission.yml@d4e41c1d5b0d114c4859e6e5831dc6d3ad1d0d44
+    with:
+      repository: ${{ github.repository }}
+      commit: ${{ github.sha }}
+      pipeline_commit: d4e41c1d5b0d114c4859e6e5831dc6d3ad1d0d44
+      request_id: preflight001
+      mode: full
+      execution_profile: palomar-standard-v1
+      options: '{"comparator_config_path":"comparator.json","authorization_relationship":${{ toJSON(inputs.authorization_relationship) }}}'

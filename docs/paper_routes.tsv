@@ -1,4 +1,4 @@
-# Published JATS identifiers; explicit references in theorem proof mthst10.
+# Published JATS identifiers; explicit references in the theorem proof section, including plain-text Equation (2).
 # label	environment	proved	route
 mthst1	definition	0	
 mthst2	lemma	1	
@@ -12,4 +12,4 @@ E2	equation	0
 E3	equation	0	
 E4	equation	0	
 E5	equation	0	
-mthst9	theorem	1	mthst2,mthst4,E4,E5
+mthst9	theorem	1	mthst2,mthst4,E2,E4,E5

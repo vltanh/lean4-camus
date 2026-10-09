@@ -42,7 +42,11 @@ end Realization
 /-- Lemma 1 (`mthst2`) for an arbitrary rooted graph with an anchored support
 switching. The single-pair realization is Definition 3's T+e. Completeness and
 suppression bridges justify this representation; attribution is not assumed.
-The only cited hypothesis is precisely the named literature Observation 2. -/
+The only cited hypothesis is precisely the named literature Observation 2.
+
+Supplementary representation bridge: the paper deletes and suppresses to obtain
+T+e; the canonical endpoint graph needs a proved wire bridge, which reuses Lemma 2
+for ghost-wire ownership. This preserves the source attribution argument. -/
 theorem lemma1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
     (t : PhyloTree) (ht : t.WellLabelled) (N : RootedNetwork)
     (hN : N.RootedBinaryLevelOne) (S : Finset (ℕ × ℕ))

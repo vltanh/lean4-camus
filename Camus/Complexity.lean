@@ -47,6 +47,21 @@ structure DeltaOracle (t : PhyloTree) (Q : Multiset Quartet) where
   correct : ∀ e ∈ EdgeAbove.candidates t, ∀ q ∈ Q.toFinset,
     test e q = true ↔ q ∈ novel t Q (Realization.graph t {e})
 
+/-- One cached weight is computed by scanning the distinct weighted observations.
+Input multiplicities are available as stored integers; reading and compressing a
+raw list of observations is outside this distinct-topology input convention. -/
+noncomputable def oracleWeight {t : PhyloTree} {Q : Multiset Quartet}
+    (D : DeltaOracle t Q) (e : Pair) : ℕ :=
+  ∑ q ∈ Q.toFinset, if D.test e q = true then Q.count q else 0
+
+theorem oracleWeight_eq {t : PhyloTree} {Q : Multiset Quartet}
+    (D : DeltaOracle t Q) {e : Pair} (he : e ∈ EdgeAbove.candidates t) :
+    oracleWeight D e = edgeWeight t Q e := by
+  unfold oracleWeight edgeWeight
+  apply Finset.sum_congr rfl
+  intro q hq
+  simp only [D.correct e he q hq]
+
 /-- The finite table construction scans all ordered node pairs once. Each pair
 belongs to precisely one target's subproblem, rather than being rescanned at
 all targets. -/
@@ -197,13 +212,14 @@ theorem observedQuartets_bound (t : PhyloTree) (Q : Multiset Quartet)
 
 /-- Number of unit-size stored integers: compressed observations, cached pair
 weights, all-pairs LCA, clade membership, depth and scalar DP cells. Multiplicity
-is one integer per distinct quartet. This is the paper's unit-space convention. -/
+is one integer per distinct quartet, beside its four taxon labels and split.
+This is the paper's unit-space convention. -/
 noncomputable def scalarSpace (t : PhyloTree) (Q : Multiset Quartet) : ℕ :=
-  Q.toFinset.card + (EdgeAbove.candidates t).card + (t.nodes ×ˢ t.nodes).card +
+  6*Q.toFinset.card + (EdgeAbove.candidates t).card + (t.nodes ×ˢ t.nodes).card +
     (t.nodes ×ˢ t.taxa).card + 2*t.nodes.card
 
 theorem scalarSpace_bound {t : PhyloTree} (ht : t.WellLabelled) (Q : Multiset Quartet)
-    (hQ : ∀ q ∈ Q.toFinset, q.taxa ⊆ t.taxa) : scalarSpace t Q ≤ 17*t.taxa.card^4 := by
+    (hQ : ∀ q ∈ Q.toFinset, q.taxa ⊆ t.taxa) : scalarSpace t Q ≤ 32*t.taxa.card^4 := by
   have hn := t.labels_nonempty
   have hnodes := t.nodes_count
   have htaxa : t.taxa.card = t.labels.length := List.toFinset_card_of_nodup ht

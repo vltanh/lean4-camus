@@ -118,7 +118,7 @@ theorem target_mem_footprint (t : PhyloTree) (e : Address × Address)
 
 /-- Lemma 2 (`mthst4`) in the concrete tree-path model: two distinct disjoint cycles cannot
 share a target. The proof is precisely the paper's shared-vertex contradiction.
-The graph/path representation bridge remains a separate obligation. -/
+The graph/path representation bridge is proved separately in the graph library. -/
 theorem target_unique (t : PhyloTree) (E : Finset (Address × Address))
     (hE : CycleSeparated t E) {e f : Address × Address}
     (he : e ∈ E) (hf : f ∈ E) (ht : target e = target f) : e = f := by

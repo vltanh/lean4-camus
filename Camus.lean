@@ -10,3 +10,5 @@ public import Camus.ReticulationBudget
 public import Camus.GraphCounterexamples
 public import Camus.SubdivisionCounterexample
 public import Camus.BudgetDP
+public import Camus.OracleWeights
+public import Camus.BudgetCounterexampleWitness

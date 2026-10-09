@@ -38,10 +38,20 @@ The inventory's Eq. 4/5 tests must retain MathML `menclose notation="updiagonals
 
 Eq. 1 is read as a sum over distinct observed quartet topologies with multiplicities as weights, consistent with §2.3. Literal occurrence-wise multiset summation counts a repeated quartet twice. The informal `Pairs(v)` criterion needs valid edge-above pairs: no root endpoints and no recipient ancestor of its donor. Ghost donors are retained.
 
-The user-authorized at-most-budget and consistency adaptations must remain visibly distinguished from the false exact-budget monotonicity and automatic unique optimizer claims. The universal exact-budget counterexample is currently proved in the concrete `GalledNetwork` block grammar; no equivalence of that grammar with arbitrary directed graphs is supplied. The E4 optimizer counterexample additionally has an actual directed-graph certificate in `GraphCounterexamples`. Do not claim that representation bridge is already Lean-checked.
+The user-authorized at-most-budget and consistency adaptations must remain visibly distinguished from the false exact-budget monotonicity and automatic unique optimizer claims. Both counterexamples now have actual directed-graph certificates in addition to the block witnesses. Their graph proofs use explicit constructions and saturation; no general equivalence of the block grammar with arbitrary directed graphs is assumed. The universal directed E3 bound states Observation 2 explicitly.
 
 The exact-budget knapsack recurrence is implemented in the new BudgetDP modules and its finite array existence, feasibility and optimality are proved. Abstract operation/storage bounds are proved under the declared unit-cost tabulation model; correspondence to actual executable runtime is not proved. Biological model-to-empirical-support convergence, empirical experiments, the early stopping rule and actual execution of the published software remain outside the proved scope. The directed-network reticulation count bound is proved.
 
 ## Verification boundary
 
-Review found no new blocking mathematical defect in the completed dynamic program, baseline, realization, canonical isomorphism or invariance proofs. Final kernel and route checks remain the integrating agent's responsibility. In particular, conditional use of the unproved cited Observation 2 must be stated in every completion claim. This document records a review, not final completion certification.
+Review found no new blocking mathematical defect in the completed dynamic program, baseline, realization, canonical isomorphism or invariance proofs. The integrating parent ran the final kernel, axiom and route checks, recorded below. In particular, conditional use of the unproved cited Observation 2 must be stated in every completion claim. This document records a review, not final completion certification.
+
+## Final route review
+
+The generated route dependencies retain every cited main-proof dependency. All 11 extra uses are individually recorded in `docs/route_differences.tsv`. Ten make definitions or recurrences explicit. The additional Lemma 2 use in Lemma 1 is through `ghostEndpoints_mem_unique`, validating canonical wire ownership in the proved single-edge suppression bridge. It reuses the same vertex-disjoint-cycle invariant and leaves the Observation 2 existence and independent uniqueness argument intact. This is supplementary representation work, recorded in REPORT Section 7. Eq. 2 is named in the source's concluding proof paragraph as plain JATS text; the reviewed source route includes it, so it is no longer an accepted difference.
+
+## Final counterexample and integration review
+
+The completeness reviewer independently checked `BudgetSaturation`, `BudgetCounterexamples` and the complete `BudgetCounterexampleWitness`. The alternative switching preserves the root and every taxon label; its proved subdivision displays the crossing quartet and has exactly two reticulations. Three disjoint sibling triangles certify count-three feasibility. The universal directed count-three upper bound uses the named Observation 2 only for attribution. No general block-grammar equivalence is assumed.
+
+Parent integration checks passed: the full build, all-library standard-axiom audit, reviewed source-route check and Comparator under Lean and NanoDa. The only proof placeholders are the four deliberate Challenge targets.

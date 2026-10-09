@@ -241,7 +241,7 @@ def RootedBinaryLevelOne (N : RootedNetwork) : Prop :=
 /-- Deleting one incoming reticulation edge keeps precisely one incoming edge
 at each non-root vertex. Suppression of unary vertices is unnecessary for the
 edge-separation test for unrooted quartets. The suppression/restriction bridge
-is an outstanding proof obligation, not part of this definition. -/
+is proved separately and is not part of this definition. -/
 def Switching (N : RootedNetwork) (S : Finset (ℕ × ℕ)) : Prop :=
   S ⊆ N.edges ∧ ∀ v ∈ N.vertices, v ≠ N.root →
     (S.filter (fun e => e.2 = v)).card = 1

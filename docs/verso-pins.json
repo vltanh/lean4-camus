@@ -1,0 +1,14 @@
+{
+  "toolchain": "v4.35.0-rc4",
+  "checked_at": "2026-10-09",
+  "shared": [
+    [
+      "plausible",
+      true
+    ],
+    [
+      "Cli",
+      true
+    ]
+  ]
+}

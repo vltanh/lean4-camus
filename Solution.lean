@@ -3,6 +3,12 @@ module
 public import Camus
 public import Camus.MainTheorem
 
+-- Preserve the Nat lattice instance chosen by the immutable Challenge imports.
+-- Later proof imports also export Nat.instLattice; it is definitionally equal
+-- but the Comparator requires identical elaborated statement dependencies.
+attribute [local instance 2000] DistribLattice.toLattice
+attribute [local instance 2000] Lattice.toSemilatticeSup
+
 @[expose] public section
 
 namespace CamusResults
