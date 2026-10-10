@@ -7,6 +7,8 @@ public import Camus.Pipelines.Uniqueness
 public import Camus.Restriction.Backtracking
 public import Camus.Restriction.StoppingRule
 public import Camus.Pipelines.Inclusion
+public import Camus.DP.Definition1
+public import Camus.Network.RootAbove.Example
 
 /-!
 # The statements of record, proved
@@ -30,17 +32,18 @@ open DynamicProgramming
 satisfying the recurrence of Equations (2)–(5) with the weights of Equation (1), and every family
 `E` obtained by backtracking through `M` from the root, the network obtained from `T` by adding the
 edges of `E` is built on `T` and satisfies `M[root]` quartets of `Q` (with multiplicity); no network
-built on `T` satisfies more, or displays more quartets of `Q`. -/
+built on `T` in the sense of Definition 1, whose root may lie above the root of `T`, satisfies more,
+or displays more quartets of `Q`. -/
 theorem theorem1 (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ) (hM : DynamicProgramming.Array t (edgeWeight t Q) M)
     (E : Finset Pair) (trace : Trace t (edgeWeight t Q) M [] E) :
     (Realization.graph t E).AnchoredExtension t ∧
       score Q (novel t Q (Realization.graph t E)) = M [] ∧
-      (∀ N : RootedNetwork, N.AnchoredExtension t →
+      (∀ N : RootedNetwork, N.BuiltOn t →
         score Q (novel t Q N) ≤ score Q (novel t Q (Realization.graph t E))) ∧
-      (∀ N : RootedNetwork, N.AnchoredExtension t →
+      (∀ N : RootedNetwork, N.BuiltOn t →
         score Q (repertoire Q N) ≤ score Q (repertoire Q (Realization.graph t E))) := by
-  exact Camus.theorem1 t ht Q M hM E trace
+  exact Camus.theorem1_builtOn t ht Q M hM E trace
 
 /-- The hypotheses of `theorem1` can be met: for every tree and all weights, the recurrence has a
 solution and a backtracking trace from the root. -/
@@ -59,13 +62,29 @@ theorem edgeWeight_eq (t : PhyloTree) (Q : Multiset Quartet) (e : Pair) :
     edgeWeight t Q e = score Q (novel t Q (Realization.graph t {e})) := by
   exact DynamicProgramming.edgeWeight_score t Q e
 
+/-- Definition 1's class reduces to the networks obtained by adding edges to `T`: every network
+built on a well-labelled `T` in the sense of Definition 1 has the reticulations and the displayed
+quartets of a network built on `T` with the root kept. -/
+theorem definition1_reduction (t : PhyloTree) (ht : t.WellLabelled) (N : RootedNetwork)
+    (hN : N.BuiltOn t) :
+    ∃ N' : RootedNetwork, N'.AnchoredExtension t ∧ N'.reticulationCount = N.reticulationCount ∧
+      ∀ q, N.DisplaysQuartet q ↔ N'.DisplaysQuartet q := by
+  exact hN.exists_anchored ht
+
+/-- Definition 1's class is larger: some network built on a well-labelled `T` in the sense of
+Definition 1 is not built on `T` with the root kept. -/
+theorem builtOn_not_anchored :
+    ∃ (t : PhyloTree) (N : RootedNetwork), t.WellLabelled ∧ N.BuiltOn t ∧
+      ¬N.AnchoredExtension t := by
+  exact Counterexamples.builtOn_not_anchored
+
 /-- **Section 2.4.** Let `M` satisfy the modified recurrence with the weights of Equation (1). For
 every `k`, the row `k` at the root is nonempty if and only if some network built on `T` has exactly
 `k` reticulations; and every family `E` obtained by backtracking through `M` from the root with
 budget `k` gives the network `N_k` of Section 2.4: it is built on `T`, has exactly `k`
 reticulations, satisfies the number of quartets of `Q` kept in the row, and satisfies, and
-displays, at least as many quartets of `Q` as every network built on `T` with exactly `k`
-reticulations. -/
+displays, at least as many quartets of `Q` as every network built on `T` (Definition 1) with
+exactly `k` reticulations. -/
 theorem reticulation_restriction (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ → Finset ℕ) (hM : BudgetDP.Array t (edgeWeight t Q) M) (k : ℕ) :
     ((M [] k).Nonempty ↔
@@ -74,12 +93,19 @@ theorem reticulation_restriction (t : PhyloTree) (ht : t.WellLabelled) (Q : Mult
         (Realization.graph t E).AnchoredExtension t ∧
         (Realization.graph t E).reticulationCount = k ∧
         score Q (novel t Q (Realization.graph t E)) ∈ M [] k ∧
-        (∀ N : RootedNetwork, N.AnchoredExtension t → N.reticulationCount = k →
+        (∀ N : RootedNetwork, N.BuiltOn t → N.reticulationCount = k →
           score Q (novel t Q N) ≤ score Q (novel t Q (Realization.graph t E))) ∧
-        (∀ N : RootedNetwork, N.AnchoredExtension t → N.reticulationCount = k →
+        (∀ N : RootedNetwork, N.BuiltOn t → N.reticulationCount = k →
           score Q (repertoire Q N) ≤ score Q (repertoire Q (Realization.graph t E))) := by
-  exact ⟨BudgetDP.root_row_nonempty_iff t ht (edgeWeight t Q) M hM k,
-    fun _ trace => BudgetDP.trace_graph_optimal t ht Q M hM trace⟩
+  refine ⟨BudgetDP.root_row_nonempty_iff t ht (edgeWeight t Q) M hM k, fun E trace => ?_⟩
+  obtain ⟨hanc, hk, hmem, hnovel, hrep⟩ := BudgetDP.trace_graph_optimal t ht Q M hM trace
+  refine ⟨hanc, hk, hmem, fun N hN hNk => ?_, fun N hN hNk => ?_⟩
+  · obtain ⟨N', hN', hret, hq⟩ := hN.exists_anchored ht
+    rw [novel_congr_displays t Q hq]
+    exact hnovel N' hN' (hret.trans hNk)
+  · obtain ⟨N', hN', hret, hq⟩ := hN.exists_anchored ht
+    rw [repertoire_congr_displays Q hq]
+    exact hrep N' hN' (hret.trans hNk)
 
 /-- The hypotheses of `reticulation_restriction` can be met: for every tree and all weights, the
 modified recurrence has a solution, and backtracking from the root succeeds with every budget whose

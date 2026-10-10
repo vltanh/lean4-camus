@@ -6,6 +6,8 @@
     "Camus.Challenge.exists_array_trace",
     "Camus.Challenge.tree_displays_iff",
     "Camus.Challenge.edgeWeight_eq",
+    "Camus.Challenge.definition1_reduction",
+    "Camus.Challenge.builtOn_not_anchored",
     "Camus.Challenge.reticulation_restriction",
     "Camus.Challenge.exists_budget_traces",
     "Camus.Challenge.not_exactCountMonotone",

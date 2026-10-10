@@ -23,79 +23,31 @@ Bioinformatics 42, Supplement 1 (2026), btag245, doi:10.1093/bioinformatics/btag
 
 CAMUS takes a rooted binary tree `T` (the constraint tree) and a multiset `Q` of quartet trees,
 and adds edges to `T` to obtain a rooted level-1 phylogenetic network that satisfies as many
-quartets of `Q` as possible, by a dynamic program over `T`. This file states the paper's
-Theorem 1 (the dynamic program is optimal) and the claim of Section 2.4 (a modified dynamic program
-gives an optimal network for each number of reticulations), refutes two other claims of the paper
-(Sections 2.4 and 3.2), and states a corrected form of the second. The definitions below are a
-verbatim copy of the shared block of `Camus/Defs.lean`.
-
-## Conventions
-
-* Taxa are natural numbers. A vertex of a tree is addressed by its path from the root (`Address`, a
-  list of Booleans, `false` for the left child). `PhyloTree` is a rooted full binary tree with
-  labelled leaves; `t.WellLabelled` says that the labels are distinct.
-* A quartet (`Quartet`) is written with its four taxa in increasing order `a < b < c < d` and a
-  split: `0` for `ab|cd`, `1` for `ac|bd`, `2` for `ad|bc`. `q.induced t` says that `q` is a quartet
-  of the tree `t` (`q ∈ Q(t)`): some clade of `t` contains one side of `q` and no taxon of the
-  other.
-* A network (`RootedNetwork`) is a finite directed graph on natural numbers with a root, a set of
-  taxa and a leaf map. `N.RootedBinaryLevelOne` says that it is a rooted binary level-1
-  phylogenetic network: acyclic; every vertex reachable from the root; the root of indegree 0 and
-  outdegree 0 or 2; every other vertex a leaf (indegree 1, outdegree 0), a tree vertex (1, 2) or a
-  reticulation (2, 1); the leaves exactly the images of the taxa, injectively; and any two distinct
-  cycles of the underlying undirected graph vertex-disjoint.
-* Display (Definition 1): a switching of `N` keeps exactly one incoming edge at every vertex other
-  than the root, which gives one of the trees displayed by `N`. `N.DisplaysQuartet q`
-  (`q ∈ Q(N_r)`) says that some switching has an edge whose removal separates the two pairs of `q`,
-  each pair staying connected.
-* "`N` is built on `T`" (`N.AnchoredExtension t`): `N` is a rooted binary level-1 network and `T`,
-  with its edges subdivided, is a switching of `N` with the same root and the same labelled leaves
-  (`SupportSubdivision`). Its number of reticulations (`RootedNetwork.reticulationCount`) is its
-  number of vertices of indegree 2. `RootedNetwork.Iso` is isomorphism of networks.
-* An added edge is given by a pair `(u, w)` of vertices of `T`, added from above `u` to above `w`
-  (Definition 3); `Realization.graph t E` is the network obtained from `T` by adding an edge above
-  each pair of `E`, and `Realization.graph t ∅` is `T` itself. The target of `(u, w)` is
-  `lca(u, w)` (Definition 2), and `DynamicProgramming.pairsAt t v` is `Pairs(v)`: the pairs with
-  target `v` whose ends are not the root and whose recipient `w` is neither an ancestor of the donor `u` nor `u`
-  itself.
-* Scores: `score Q D` is the number of elements of the multiset `Q`, with multiplicity, that lie in
-  the finite set `D`. `DynamicProgramming.repertoire Q N` is the set of quartets of `Q` that `N`
-  displays, and `DynamicProgramming.novel t Q N` the set of those that `N` satisfies: displayed by
-  `N` but not induced by `T`. `DynamicProgramming.edgeWeight t Q e` is `s_e(u, w)` of
-  Equation (1).
-* The dynamic program: `DynamicProgramming.Array t w M` says that `M` satisfies the recurrence of
-  Equations (2)–(5) with the weights `w` (`M[v] = 0` at a leaf, `M[v] = max(M[l(v)] + M[r(v)], s(v))`
-  otherwise), and `DynamicProgramming.Trace t w M v E` that the family of pairs `E` is obtained by
-  backtracking through `M` from `v`, taking any maximizing branch. The modified dynamic program of
-  Section 2.4 (`BudgetDP.Array`) keeps, at each vertex `v` and number `k` of added edges, a set
-  `M v k` that is empty when no family of `k` added edges below `v` is feasible, and otherwise holds
-  only the best value.
+quartets of `Q` as possible, by a dynamic program over `T`. The definitions below are a verbatim
+copy of the shared block of `Camus/Defs.lean`, and their docstrings explain them. In brief: a
+network displays `q` (`q ∈ Q(N_r)`, Definition 1) when some switching has an edge whose removal
+separates the pairs of `q`; `N.AnchoredExtension t` says that `N` is obtained by adding edges to
+`T`, and `N.BuiltOn t` that `T` is a tree of `N` in the sense of Definition 1, whose root may lie
+below the root of `N`; `Realization.graph t E` adds an edge above each pair of `E`.
 
 ## The theorems
 
-* `theorem1` (Theorem 1): for every `M` satisfying the recurrence with the weights of
-  Equation (1) and every backtracking trace `E` from the root, the network obtained by adding `E`
-  is built on `T`, satisfies `M[root]` quartets of `Q`, and no network built on `T` satisfies more,
-  or displays more quartets of `Q`.
-* `exists_array_trace`: such an `M` and such a trace exist, for every tree and all weights.
-* `tree_displays_iff`: `T`, as a network with no added edge, displays exactly the quartets of `T`,
-  which ties display through switchings to `Quartet.induced`.
-* `edgeWeight_eq`: the weight `s_e(u, w)` of Equation (1) is the number of quartets of `Q` that the
-  network with the single added edge `e` satisfies.
-* `reticulation_restriction` (Section 2.4): for every `k`, the modified array's row `k` at the root
-  is nonempty if and only if some network built on `T` has exactly `k` reticulations, and its value
-  is then attained by such a network, which satisfies, and displays, at least as many quartets of
-  `Q` as every network built on `T` with exactly `k` reticulations.
-* `exists_budgetArray`: the modified array exists.
-* `not_exactCountMonotone` (Section 2.4): the claim that the score "will never decrease as the
-  number of reticulations increases" (`ExactCountMonotone`, for exact numbers of reticulations) is
-  false.
-* `not_uniqueOptimum` (Section 3.2): the claim that the true network `N` is the unique optimal
-  network when `Q` is a multiset version of `Q(N_r)` (`UniqueOptimum`) is false.
-* `recovery` (Section 3.2, corrected): it holds when `N` is identifiable under inclusion (every
-  network built on `T` that displays all the quartets of `N`, with no more reticulations, is
-  isomorphic to `N`) and the optimal network has the fewest reticulations among optimal networks.
-* `tree_identifiable`: `T` itself is identifiable under inclusion, so `recovery` is not vacuous.
+* `theorem1` (Theorem 1): the network of every backtracking trace is built on `T`, satisfies
+  `M[root]` quartets of `Q`, and no network built on `T` (Definition 1) satisfies or displays more.
+* `exists_array_trace`: such an array and such a trace exist.
+* `tree_displays_iff`, `edgeWeight_eq`: `T` displays the quartets of `T`; Equation (1).
+* `definition1_reduction`, `builtOn_not_anchored`: every network built on `T` in the sense of
+  Definition 1 has the reticulations and the quartets of a network obtained by adding edges to
+  `T`; the first class is larger.
+* `reticulation_restriction`, `exists_budget_traces` (Section 2.4): the networks `N_k` returned by
+  backtracking through the modified array are optimal with exactly `k` reticulations.
+* `not_exactCountMonotone`, `not_exactStoppingRule`, `not_atMostStoppingRule` (Section 2.4): the
+  score can decrease as the number of reticulations increases, and the stopping rule can stop
+  before a better score.
+* `not_uniqueOptimum`, `recovery`, `tree_identifiable`, `recovery_needs_identifiable`
+  (Section 3.2): the true network need not be the unique optimum; it is under identifiability under
+  inclusion and a tie-break toward the fewest reticulations; trees are identifiable; and
+  identifiability cannot be dropped.
 
 No result from prior work is assumed. The paper derives Lemma 1, on which Theorem 1 and Section 2.4
 rest, from Observation 2 of Warnow, Tabatabaee and Evans (J. Comput. Biol. 32 (2025) 3–27), which
@@ -417,6 +369,50 @@ begins above the root of `T`; asking only that `T` be a displayed tree of `N` wo
 networks whose root lies above the root of `T`. -/
 def RootedNetwork.AnchoredExtension (N : RootedNetwork) (t : PhyloTree) : Prop :=
   N.RootedBinaryLevelOne ∧ ∃ S, Nonempty (SupportSubdivision t N S)
+
+/-- The switching `S` of `N` gives the tree `T` of Definition 1, with the root of `N` at or above
+the root of `T`: `S` is `T` with each edge replaced by a directed path, below a directed path
+`rootWire` of `S` from `N.root` to `original []` (`[N.root]` when the two roots coincide, the case
+of `SupportSubdivision`). Deleting the edges outside `S` and cleaning up (suppressing the vertices
+with one child, a root with one child included; a switching of a rooted binary level-1 network
+leaves no unlabelled leaf) gives `T`. The laws are those of `SupportSubdivision`, with the root
+wire: it runs from `N.root` to `original []` without repeating a vertex, its other vertices are not
+images of vertices of `T` and avoid the interiors of the wires, and its vertices and edges are
+vertices and edges of `N` and of `S`. -/
+structure DisplayedSubdivision (t : PhyloTree) (N : RootedNetwork)
+    (S : Finset (ℕ × ℕ)) where
+  original : Address → ℕ
+  wire : Address → List ℕ
+  rootWire : List ℕ
+  original_injective : Set.InjOn original t.nodes
+  taxa_preserved : N.taxa = t.taxa
+  leaves_preserved : ∀ p ∈ t.nodes, ∀ a, t.nodeAt p = some (.leaf a) →
+    original p = N.leaf a
+  rootWire_laws : rootWire.Nodup ∧ rootWire.head? = some N.root ∧
+    rootWire.getLast? = some (original []) ∧
+    Disjoint rootWire.dropLast.toFinset (t.nodes.image original)
+  wire_laws : ∀ p ∈ t.nodes, p ≠ [] →
+    2 ≤ (wire p).length ∧ (wire p).Nodup ∧
+    (wire p).head? = some (original (parent p)) ∧
+    (wire p).getLast? = some (original p) ∧
+    Disjoint (wireInterior (wire p)) (t.nodes.image original)
+  interiors_disjoint :
+    ((t.nodes.erase []) : Set Address).Pairwise
+      (fun p q => Disjoint (wireInterior (wire p)) (wireInterior (wire q)))
+  rootWire_disjoint : ∀ p ∈ t.nodes, p ≠ [] →
+    Disjoint rootWire.dropLast.toFinset (wireInterior (wire p))
+  vertices_covered : N.vertices = t.nodes.image original ∪
+    (t.nodes.erase []).biUnion (fun p => wireInterior (wire p)) ∪ rootWire.dropLast.toFinset
+  edges_covered : S = (t.nodes.erase []).biUnion (fun p => wireEdges (wire p)) ∪
+    wireEdges rootWire
+  switching : N.Switching S
+
+/-- **Definition 1** (`mthst1`). `N` is built on `T`: `N` is a rooted binary level-1 network and
+`T` is one of its trees, the trees obtained by deleting one of the two edges into each reticulation
+and cleaning up (`DisplayedSubdivision`). The root of `T` need not be the root of `N`; with the
+root of `T` at the root of `N`, this is `RootedNetwork.AnchoredExtension`. -/
+def RootedNetwork.BuiltOn (N : RootedNetwork) (t : PhyloTree) : Prop :=
+  N.RootedBinaryLevelOne ∧ ∃ S, Nonempty (DisplayedSubdivision t N S)
 
 /-- An isomorphism of rooted networks from `N` to `P`: a bijection between their vertex sets
 that preserves and reflects the directed edges and preserves the root and the leaf of each
@@ -851,15 +847,16 @@ open DynamicProgramming
 satisfying the recurrence of Equations (2)–(5) with the weights of Equation (1), and every family
 `E` obtained by backtracking through `M` from the root, the network obtained from `T` by adding the
 edges of `E` is built on `T` and satisfies `M[root]` quartets of `Q` (with multiplicity); no network
-built on `T` satisfies more, or displays more quartets of `Q`. -/
+built on `T` in the sense of Definition 1, whose root may lie above the root of `T`, satisfies more,
+or displays more quartets of `Q`. -/
 theorem theorem1 (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ) (hM : DynamicProgramming.Array t (edgeWeight t Q) M)
     (E : Finset Pair) (trace : Trace t (edgeWeight t Q) M [] E) :
     (Realization.graph t E).AnchoredExtension t ∧
       score Q (novel t Q (Realization.graph t E)) = M [] ∧
-      (∀ N : RootedNetwork, N.AnchoredExtension t →
+      (∀ N : RootedNetwork, N.BuiltOn t →
         score Q (novel t Q N) ≤ score Q (novel t Q (Realization.graph t E))) ∧
-      (∀ N : RootedNetwork, N.AnchoredExtension t →
+      (∀ N : RootedNetwork, N.BuiltOn t →
         score Q (repertoire Q N) ≤ score Q (repertoire Q (Realization.graph t E))) := by
   sorry
 
@@ -880,13 +877,29 @@ theorem edgeWeight_eq (t : PhyloTree) (Q : Multiset Quartet) (e : Pair) :
     edgeWeight t Q e = score Q (novel t Q (Realization.graph t {e})) := by
   sorry
 
+/-- Definition 1's class reduces to the networks obtained by adding edges to `T`: every network
+built on a well-labelled `T` in the sense of Definition 1 has the reticulations and the displayed
+quartets of a network built on `T` with the root kept. -/
+theorem definition1_reduction (t : PhyloTree) (ht : t.WellLabelled) (N : RootedNetwork)
+    (hN : N.BuiltOn t) :
+    ∃ N' : RootedNetwork, N'.AnchoredExtension t ∧ N'.reticulationCount = N.reticulationCount ∧
+      ∀ q, N.DisplaysQuartet q ↔ N'.DisplaysQuartet q := by
+  sorry
+
+/-- Definition 1's class is larger: some network built on a well-labelled `T` in the sense of
+Definition 1 is not built on `T` with the root kept. -/
+theorem builtOn_not_anchored :
+    ∃ (t : PhyloTree) (N : RootedNetwork), t.WellLabelled ∧ N.BuiltOn t ∧
+      ¬N.AnchoredExtension t := by
+  sorry
+
 /-- **Section 2.4.** Let `M` satisfy the modified recurrence with the weights of Equation (1). For
 every `k`, the row `k` at the root is nonempty if and only if some network built on `T` has exactly
 `k` reticulations; and every family `E` obtained by backtracking through `M` from the root with
 budget `k` gives the network `N_k` of Section 2.4: it is built on `T`, has exactly `k`
 reticulations, satisfies the number of quartets of `Q` kept in the row, and satisfies, and
-displays, at least as many quartets of `Q` as every network built on `T` with exactly `k`
-reticulations. -/
+displays, at least as many quartets of `Q` as every network built on `T` (Definition 1) with
+exactly `k` reticulations. -/
 theorem reticulation_restriction (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ → Finset ℕ) (hM : BudgetDP.Array t (edgeWeight t Q) M) (k : ℕ) :
     ((M [] k).Nonempty ↔
@@ -895,9 +908,9 @@ theorem reticulation_restriction (t : PhyloTree) (ht : t.WellLabelled) (Q : Mult
         (Realization.graph t E).AnchoredExtension t ∧
         (Realization.graph t E).reticulationCount = k ∧
         score Q (novel t Q (Realization.graph t E)) ∈ M [] k ∧
-        (∀ N : RootedNetwork, N.AnchoredExtension t → N.reticulationCount = k →
+        (∀ N : RootedNetwork, N.BuiltOn t → N.reticulationCount = k →
           score Q (novel t Q N) ≤ score Q (novel t Q (Realization.graph t E))) ∧
-        (∀ N : RootedNetwork, N.AnchoredExtension t → N.reticulationCount = k →
+        (∀ N : RootedNetwork, N.BuiltOn t → N.reticulationCount = k →
           score Q (repertoire Q N) ≤ score Q (repertoire Q (Realization.graph t E))) := by
   sorry
 

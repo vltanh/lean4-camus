@@ -37,6 +37,8 @@ with the same definitions. Their properties are proved in the rest of the librar
   Q(N_r) of Definition 1.
 * `SupportSubdivision`, `RootedNetwork.AnchoredExtension`: the network `N` is built on `T`, with
   the root of `T` at the root of `N`.
+* `DisplayedSubdivision`, `RootedNetwork.BuiltOn`: `N` is built on `T` in the sense of
+  Definition 1, the root of `T` at or below the root of `N`.
 * `EdgeAbove.Admissible`, `EdgeAbove.target`, `EdgeAbove.footprint`: the pairs `(u, w)` above
   which an edge can be added, their targets lca(u, w) (Definition 2), and the vertices of `T` on
   their cycles γ(u, w).
@@ -378,6 +380,50 @@ begins above the root of `T`; asking only that `T` be a displayed tree of `N` wo
 networks whose root lies above the root of `T`. -/
 def RootedNetwork.AnchoredExtension (N : RootedNetwork) (t : PhyloTree) : Prop :=
   N.RootedBinaryLevelOne ∧ ∃ S, Nonempty (SupportSubdivision t N S)
+
+/-- The switching `S` of `N` gives the tree `T` of Definition 1, with the root of `N` at or above
+the root of `T`: `S` is `T` with each edge replaced by a directed path, below a directed path
+`rootWire` of `S` from `N.root` to `original []` (`[N.root]` when the two roots coincide, the case
+of `SupportSubdivision`). Deleting the edges outside `S` and cleaning up (suppressing the vertices
+with one child, a root with one child included; a switching of a rooted binary level-1 network
+leaves no unlabelled leaf) gives `T`. The laws are those of `SupportSubdivision`, with the root
+wire: it runs from `N.root` to `original []` without repeating a vertex, its other vertices are not
+images of vertices of `T` and avoid the interiors of the wires, and its vertices and edges are
+vertices and edges of `N` and of `S`. -/
+structure DisplayedSubdivision (t : PhyloTree) (N : RootedNetwork)
+    (S : Finset (ℕ × ℕ)) where
+  original : Address → ℕ
+  wire : Address → List ℕ
+  rootWire : List ℕ
+  original_injective : Set.InjOn original t.nodes
+  taxa_preserved : N.taxa = t.taxa
+  leaves_preserved : ∀ p ∈ t.nodes, ∀ a, t.nodeAt p = some (.leaf a) →
+    original p = N.leaf a
+  rootWire_laws : rootWire.Nodup ∧ rootWire.head? = some N.root ∧
+    rootWire.getLast? = some (original []) ∧
+    Disjoint rootWire.dropLast.toFinset (t.nodes.image original)
+  wire_laws : ∀ p ∈ t.nodes, p ≠ [] →
+    2 ≤ (wire p).length ∧ (wire p).Nodup ∧
+    (wire p).head? = some (original (parent p)) ∧
+    (wire p).getLast? = some (original p) ∧
+    Disjoint (wireInterior (wire p)) (t.nodes.image original)
+  interiors_disjoint :
+    ((t.nodes.erase []) : Set Address).Pairwise
+      (fun p q => Disjoint (wireInterior (wire p)) (wireInterior (wire q)))
+  rootWire_disjoint : ∀ p ∈ t.nodes, p ≠ [] →
+    Disjoint rootWire.dropLast.toFinset (wireInterior (wire p))
+  vertices_covered : N.vertices = t.nodes.image original ∪
+    (t.nodes.erase []).biUnion (fun p => wireInterior (wire p)) ∪ rootWire.dropLast.toFinset
+  edges_covered : S = (t.nodes.erase []).biUnion (fun p => wireEdges (wire p)) ∪
+    wireEdges rootWire
+  switching : N.Switching S
+
+/-- **Definition 1** (`mthst1`). `N` is built on `T`: `N` is a rooted binary level-1 network and
+`T` is one of its trees, the trees obtained by deleting one of the two edges into each reticulation
+and cleaning up (`DisplayedSubdivision`). The root of `T` need not be the root of `N`; with the
+root of `T` at the root of `N`, this is `RootedNetwork.AnchoredExtension`. -/
+def RootedNetwork.BuiltOn (N : RootedNetwork) (t : PhyloTree) : Prop :=
+  N.RootedBinaryLevelOne ∧ ∃ S, Nonempty (DisplayedSubdivision t N S)
 
 /-- An isomorphism of rooted networks from `N` to `P`: a bijection between their vertex sets
 that preserves and reflects the directed edges and preserves the root and the leaf of each

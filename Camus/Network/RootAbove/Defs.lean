@@ -13,16 +13,11 @@ optimizes ("we cannot add an edge to T that begins above the root of T"). Defini
 allows networks whose root lies above the root of `T`. The root of such a network has two
 children, the root of `T` and a reticulation (`DisplayedSubdivision.root_above`), and deleting the
 edge into the reticulation leaves a root with one child, which the clean-up suppresses
-(`Counterexamples.rootAboveNet` is an example). This file defines Definition 1's class,
-`RootedNetwork.BuiltOn`, proves the fact on switchings that the definition relies on (a switching
-of a rooted binary level-1 network has no unlabelled leaf), and shows that the class contains the
-anchored extensions.
-
-## Main definitions
-
-* `DisplayedSubdivision`: the switching `S` of `N` is a subdivision of `T` below a directed path
-  from the root of `N` to the root of `T`.
-* `RootedNetwork.BuiltOn`: `N` is built on `T` (Definition 1).
+(`Counterexamples.rootAboveNet` is an example). Definition 1's class,
+`RootedNetwork.BuiltOn` (`DisplayedSubdivision`), is defined with the shared definitions in
+`Camus/Defs.lean`. This file proves the fact on switchings that the definition relies on (a
+switching of a rooted binary level-1 network has no unlabelled leaf), and shows that the class
+contains the anchored extensions.
 
 ## Main results
 
@@ -37,65 +32,6 @@ anchored extensions.
 @[expose] public section
 
 namespace Camus
-
-/-- The switching `S` of `N` gives the tree `T` of Definition 1, with the root of `N` at or above
-the root of `T`. Deleting the edges of `N` outside `S` deletes one of the two edges into each
-reticulation; the tree of Definition 1 is the rooted binary tree obtained by deleting the
-unlabelled leaves, of which there are none (`RootedNetwork.switching_leaf_of_childless`), and
-suppressing the vertices with one child, a root with one child included. The structure says that
-this tree is `T`: `S` is `T` with each edge replaced by a directed path, below a directed path
-from the root of `N` to the root of `T`. The map `original` sends the vertices of `T` injectively
-to vertices of `N`; for each non-root vertex `p` of `T`, `wire p` is the directed path of `N`
-that replaces the edge of `T` from `parent p` to `p`; and `rootWire` is the directed path from
-`N.root` to `original []`, which is `[N.root]` when the root of `T` is the root of `N`
-(`SupportSubdivision.toDisplayed`). The laws:
-* `original` sends the leaf of `T` labelled `a` to `N.leaf a`, and `N` has the taxa of `T`;
-* the root wire runs from `N.root` to `original []` without repeating a vertex, and its vertices
-  other than `original []` are not images of vertices of `T`;
-* each wire runs from `original (parent p)` to `original p` without repeating a vertex, and its
-  interior vertices are not images of vertices of `T`;
-* the interiors of distinct wires are disjoint, and they avoid the vertices of the root wire;
-* the vertices of `N` are the images of the vertices of `T`, the interior vertices of the wires
-  and the vertices of the root wire, and `S` is the set of the edges of the wires and of the root
-  wire;
-* `S` is a switching of `N`.
-
-`SupportSubdivision` is the case `rootWire = [N.root]` (`SupportSubdivision.toDisplayed`,
-`DisplayedSubdivision.toSupport`). -/
-structure DisplayedSubdivision (t : PhyloTree) (N : RootedNetwork)
-    (S : Finset (ℕ × ℕ)) where
-  original : Address → ℕ
-  wire : Address → List ℕ
-  rootWire : List ℕ
-  original_injective : Set.InjOn original t.nodes
-  taxa_preserved : N.taxa = t.taxa
-  leaves_preserved : ∀ p ∈ t.nodes, ∀ a, t.nodeAt p = some (.leaf a) →
-    original p = N.leaf a
-  rootWire_laws : rootWire.Nodup ∧ rootWire.head? = some N.root ∧
-    rootWire.getLast? = some (original []) ∧
-    Disjoint rootWire.dropLast.toFinset (t.nodes.image original)
-  wire_laws : ∀ p ∈ t.nodes, p ≠ [] →
-    2 ≤ (wire p).length ∧ (wire p).Nodup ∧
-    (wire p).head? = some (original (parent p)) ∧
-    (wire p).getLast? = some (original p) ∧
-    Disjoint (wireInterior (wire p)) (t.nodes.image original)
-  interiors_disjoint :
-    ((t.nodes.erase []) : Set Address).Pairwise
-      (fun p q => Disjoint (wireInterior (wire p)) (wireInterior (wire q)))
-  rootWire_disjoint : ∀ p ∈ t.nodes, p ≠ [] →
-    Disjoint rootWire.dropLast.toFinset (wireInterior (wire p))
-  vertices_covered : N.vertices = t.nodes.image original ∪
-    (t.nodes.erase []).biUnion (fun p => wireInterior (wire p)) ∪ rootWire.dropLast.toFinset
-  edges_covered : S = (t.nodes.erase []).biUnion (fun p => wireEdges (wire p)) ∪
-    wireEdges rootWire
-  switching : N.Switching S
-
-/-- **Definition 1** (`mthst1`). `N` is built on `T`: `N` is a rooted binary level-1 network and
-`T` is one of its trees, the trees obtained by deleting one of the two edges into each reticulation
-and cleaning up (`DisplayedSubdivision`). The root of `T` need not be the root of `N`; with the
-root of `T` at the root of `N`, this is `RootedNetwork.AnchoredExtension`. -/
-def RootedNetwork.BuiltOn (N : RootedNetwork) (t : PhyloTree) : Prop :=
-  N.RootedBinaryLevelOne ∧ ∃ S, Nonempty (DisplayedSubdivision t N S)
 
 namespace RootedNetwork
 
