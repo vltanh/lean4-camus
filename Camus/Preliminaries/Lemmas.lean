@@ -23,7 +23,8 @@ directly below the two ends of the non-tree edge `d` (Definition 2). The network
 paper is the canonical network `Realization.graph t {H.pairOf d}`, obtained from `T` by adding an
 edge above `(u, w)` (Definition 3). A quartet is satisfied by a network if the network displays it
 and `T` does not induce it. The proof of Lemma 1 uses Observation 2 of Warnow, Tabatabaee and Evans
-(2025), proved in `Camus/External/WarnowTabatabaeeEvans/Observation2.lean` (`External.observation2`).
+(2025), proved in `Camus/External/WarnowTabatabaeeEvans/Observation2.lean`
+(`External.observation2`).
 
 ## Main results
 

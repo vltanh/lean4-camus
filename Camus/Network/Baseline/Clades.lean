@@ -196,7 +196,8 @@ theorem baseline_switching_unique (t : PhyloTree) (ht : t.WellLabelled)
   classical
   have hempty : EdgeAbove.CycleSeparated t ∅ := by simp [EdgeAbove.CycleSeparated, Set.Pairwise]
   have htotal : (graph t ∅).Switching (graph t ∅).edges := by
-    simpa only [graph, Finset.image_empty, Finset.union_empty] using (support t ht ∅ hempty).switching
+    simpa only [graph, Finset.image_empty, Finset.union_empty] using (support t ht ∅
+        hempty).switching
   apply Finset.Subset.antisymm hS.1
   intro e he
   have he' := he
@@ -233,7 +234,8 @@ theorem baseline_edgeSet (t : PhyloTree) (edge : Sym2 ℕ) :
       · rw [baseline_edges] at he
         obtain ⟨p, hp, heq⟩ := Finset.mem_image.mp he
         obtain ⟨hu, hv⟩ := Prod.mk.inj heq
-        exact ⟨p, (Finset.mem_erase.mp hp).2, (Finset.mem_erase.mp hp).1, by rw [baselineCut, hu, hv]⟩
+        exact ⟨p, (Finset.mem_erase.mp hp).2, (Finset.mem_erase.mp hp).1,
+          by rw [baselineCut, hu, hv]⟩
       · rw [baseline_edges] at he
         obtain ⟨p, hp, heq⟩ := Finset.mem_image.mp he
         obtain ⟨hv, hu⟩ := Prod.mk.inj heq

@@ -380,7 +380,8 @@ theorem endpoint_degrees (t : PhyloTree) (E : Finset Pair)
     Finset.union_empty, hdin, hrout, Finset.union_singleton]
   have hn1 : (donor t e, recipient t e) ∉ (supportEdges t E).filter (fun f => f.1 = donor t e) :=
     fun h => hn (Finset.mem_filter.mp h).1
-  have hn2 : (donor t e, recipient t e) ∉ (supportEdges t E).filter (fun f => f.2 = recipient t e) :=
+  have hn2 : (donor t e, recipient t e) ∉ (supportEdges t E).filter (fun f => f.2 = recipient t e)
+      :=
     fun h => hn (Finset.mem_filter.mp h).1
   simp [Finset.card_insert_of_notMem hn1, Finset.card_insert_of_notMem hn2, hdout, hrin]
 

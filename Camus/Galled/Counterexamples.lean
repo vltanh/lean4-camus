@@ -175,9 +175,12 @@ theorem exact_budget_witnesses :
   have h1 : oneReticulation.Valid := by simp [oneReticulation, Valid]
   have h2 : twoReticulations.Valid := by simp [twoReticulations, Valid]
   have h3 : threeTriangles.Valid := by simp [threeTriangles, Valid]
-  have hl1 : oneReticulation.WellLabelled := by simp [oneReticulation, GalledNetwork.WellLabelled, GalledNetwork.labels]
-  have hl2 : twoReticulations.WellLabelled := by simp [twoReticulations, GalledNetwork.WellLabelled, GalledNetwork.labels]
-  have hl3 : threeTriangles.WellLabelled := by simp [threeTriangles, GalledNetwork.WellLabelled, GalledNetwork.labels]
+  have hl1 : oneReticulation.WellLabelled := by
+    simp [oneReticulation, GalledNetwork.WellLabelled, GalledNetwork.labels]
+  have hl2 : twoReticulations.WellLabelled := by
+    simp [twoReticulations, GalledNetwork.WellLabelled, GalledNetwork.labels]
+  have hl3 : threeTriangles.WellLabelled := by
+    simp [threeTriangles, GalledNetwork.WellLabelled, GalledNetwork.labels]
   simp only [Phylogenetic, h1, h2, h3, hl1, hl2, hl3, true_and]
   decide +kernel
 

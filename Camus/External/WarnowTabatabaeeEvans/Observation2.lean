@@ -9,7 +9,8 @@ public import Camus.Network.Isomorphism.Rename
 The paper's Lemma 1 "follows directly from Observation 2 in Warnow et al. (2025)". Warnow,
 Tabatabaee and Evans state the observation without proof ("The following observation is
 straightforward and the proof is omitted"): "For every level-1 phylogenetic network N, ab | cd ∈
-Q(N_r) if and only if a, b is separated from c, d as the result of deleting either a cut edge in N or
+Q(N_r) if and only if a, b is separated from c, d as the result of deleting either a cut edge in N
+or
 deleting two edges from a cycle, where one of the edges is incident with the bottom node of the
 cycle." This file states it (`WarnowTabatabaeeEvansObservation2`) and proves it
 (`External.observation2`).

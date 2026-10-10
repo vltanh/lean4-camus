@@ -249,7 +249,8 @@ theorem internal_cycle_parent_edge {t : PhyloTree} {E : Finset Pair}
     have hprefix := (Finset.mem_filter.mp hp).2.1
     have hlen := hprefix.length_le
     rw [h] at hlen
-    have htarget := List.length_eq_zero_iff.mp (by simpa using hlen : (EdgeAbove.target e).length = 0)
+    have htarget := List.length_eq_zero_iff.mp
+        (by simpa using hlen : (EdgeAbove.target e).length = 0)
     exact hp0 (h.trans htarget.symm)
   exact Finset.mem_biUnion.mpr ⟨p, Finset.mem_erase.mpr ⟨hnonroot,hnode⟩, by
     rw [internal_cycle_wire hE he hp hp0]

@@ -10,7 +10,8 @@ public import Camus.Network.Reticulations
 Section 2.4 of the paper asks for networks `N_1, …, N_m` such that all are level-1, all contain
 `T`, `N_k` has exactly `k` non-tree edges, and each maximizes the number of quartets of `Q` subject
 to these constraints. This file proves this for the formalization's recurrence (`BudgetDP.Array`)
-with the weights `s_e` of Equation (1), using Lemma 1 for the additivity of the score: the root row `M[r][k]` holds the number of quartets satisfied by a network
+with the weights `s_e` of Equation (1), using Lemma 1 for the additivity of the score: the root row
+`M[r][k]` holds the number of quartets satisfied by a network
 built on `T` with exactly `k` reticulations, and no network built on `T` with exactly `k`
 reticulations satisfies more. The paper's stopping rule (add columns until the score stops
 improving) is not formalized.
@@ -71,7 +72,8 @@ with `M[r]` replaced by the value of row `b r` (`DynamicProgramming.hanging_scor
   exact (row_sup_eq t w M hM (Finset.mem_filter.mp hr).1 (hs r hr)).symm
 
 /-- Section 2.4: the networks `N_k`. Let `M` satisfy the recurrence `BudgetDP.Array` with the
-weights `s_e` of Equation (1). For every value `z` in the root row `M[r][k]` there is a family `E` of added edges whose canonical network
+weights `s_e` of Equation (1). For every value `z` in the root row `M[r][k]` there is a family `E`
+of added edges whose canonical network
 `Realization.graph t E` is built on `T`, has exactly `k` reticulations and satisfies `z` quartets of
 `Q` (with multiplicity); every network built on `T` with exactly `k` reticulations satisfies at
 most `z` quartets of `Q`, and displays at most as many as `Realization.graph t E`. The recurrence is

@@ -49,7 +49,8 @@ theorem baseline_separated : EdgeAbove.CycleSeparated constraint ∅ := by
   simp [EdgeAbove.CycleSeparated]
 
 /-- `T`, as a network with no added edge, displays every quartet of `data`. -/
-theorem graphData_exact : DynamicProgramming.repertoire data (Realization.graph constraint ∅) = data.toFinset := by
+theorem graphData_exact : DynamicProgramming.repertoire data (Realization.graph constraint ∅) =
+    data.toFinset := by
   classical
   ext q
   simp only [DynamicProgramming.repertoire, Finset.mem_filter]
@@ -69,22 +70,26 @@ theorem graph_uniqueness_counterexample :
     (Realization.graph constraint ∅).reticulationCount = 0 ∧
     (Realization.graph constraint {extraPair}).reticulationCount = 1 ∧
     score data (DynamicProgramming.repertoire data (Realization.graph constraint ∅)) = data.card ∧
-    score data (DynamicProgramming.repertoire data (Realization.graph constraint {extraPair})) = data.card := by
+    score data (DynamicProgramming.repertoire data (Realization.graph constraint {extraPair})) =
+        data.card := by
   classical
   have ht := constraint_wellLabelled
   have hb := baseline_separated
   have he := extraPair_separated
-  have hbase : score data (DynamicProgramming.repertoire data (Realization.graph constraint ∅)) = data.card := by
+  have hbase : score data (DynamicProgramming.repertoire data (Realization.graph constraint ∅)) =
+      data.card := by
     apply (score_eq_card_iff data _).mpr
     rw [graphData_exact]
-  have hextra : score data (DynamicProgramming.repertoire data (Realization.graph constraint {extraPair})) = data.card := by
+  have hextra : score data (DynamicProgramming.repertoire data (Realization.graph constraint
+      {extraPair})) = data.card := by
     apply (score_eq_card_iff data _).mpr
     rw [← graphData_exact]
     exact baseline_subset constraint ht data {extraPair} he
   refine ⟨⟨Realization.levelOne constraint ht ∅ hb,
       ⟨Realization.supportEdges constraint ∅, ⟨Realization.support constraint ht ∅ hb⟩⟩⟩,
     ⟨Realization.levelOne constraint ht {extraPair} he,
-      ⟨Realization.supportEdges constraint {extraPair}, ⟨Realization.support constraint ht {extraPair} he⟩⟩⟩,
+      ⟨Realization.supportEdges constraint {extraPair}, ⟨Realization.support constraint ht
+          {extraPair} he⟩⟩⟩,
     ?_, ?_, hbase, hextra⟩
   · simpa using Realization.reticulationCount_eq_card constraint ∅ hb
   · simpa using Realization.reticulationCount_eq_card constraint {extraPair} he

@@ -55,7 +55,8 @@ open DynamicProgramming
   have hn : S.Nonempty := ⟨z,hz⟩
   refine ⟨S.sup id, ?_, Finset.le_sup (f := id) hz⟩
   apply (mem_best).mpr
-  exact ⟨by simpa using (Finset.sup_mem_of_nonempty (f := id) hn), fun x hx => Finset.le_sup (f := id) hx⟩
+  exact ⟨by simpa using (Finset.sup_mem_of_nonempty (f := id) hn), fun x hx => Finset.le_sup (f :=
+      id) hx⟩
 
 /-- `best S` has at most one element. -/
  theorem best_card_le_one (S : Finset ℕ) : (best S).card ≤ 1 := by

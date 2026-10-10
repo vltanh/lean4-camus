@@ -14,7 +14,8 @@ than `N` ties it, since the objective only counts the quartets of `Q`.
 
 ## Main results
 
-* `UniqueOptimum` (defined with the shared definitions in `Camus/Defs.lean`): the claim. If `N` is built on `t` and the quartets of `Q` are exactly those that
+* `UniqueOptimum` (defined with the shared definitions in `Camus/Defs.lean`): the claim. If `N` is
+built on `t` and the quartets of `Q` are exactly those that
   `N` displays, then every network built on `t` that displays as many quartets of `Q` as any other
   is isomorphic to `N`.
 * `not_uniqueOptimum`: the claim fails. The five-leaf tree `T = (O,((B,A),(D,C)))`, as a network

@@ -58,7 +58,8 @@ theorem mem_internalNodes_iff (t : PhyloTree) (p : Address) :
 theorem internalNodes_card_fork (l r : PhyloTree) :
     (PhyloTree.fork l r).internalNodes.card = l.internalNodes.card + r.internalNodes.card + 1 := by
   classical
-  have hdis : Disjoint (l.internalNodes.image (false :: ·)) (r.internalNodes.image (true :: ·)) := by
+  have hdis : Disjoint (l.internalNodes.image (false :: ·)) (r.internalNodes.image (true :: ·)) :=
+      by
     rw [Finset.disjoint_left]
     intro p hp hq
     obtain ⟨x,hx,hxp⟩ := Finset.mem_image.mp hp

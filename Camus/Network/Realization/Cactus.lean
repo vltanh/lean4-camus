@@ -62,7 +62,8 @@ theorem full_deleted_edge_replace {t : PhyloTree} {E : Finset Pair}
       apply hr e he
       change r ∈ s(donor t e,recipient t e) ::
         ((cycleSupportPath t E hE e he).val.mapLe (support_underlying_le t E)).edges
-      exact List.mem_cons_of_mem _ (by simpa only [SimpleGraph.Walk.edges_mapLe_eq_edges] using hmem)
+      exact List.mem_cons_of_mem _
+          (by simpa only [SimpleGraph.Walk.edges_mapLe_eq_edges] using hmem)
     rcases ha with hf | hb
     · obtain ⟨e,he,hpair⟩ := Finset.mem_image.mp hf
       have hu : u = donor t e := (congrArg Prod.fst hpair).symm
@@ -119,7 +120,8 @@ theorem cycle_edge_in_fundamental {t : PhyloTree} {E : Finset Pair}
       change s(u,w) ∈ s(donor t e,recipient t e) :: _
       simp [hu,hw,Sym2.eq_swap]
   -- Replace the added edges of that connection by support paths, which avoid `r`.
-  have hreplaced := walk_replace_reachable (fun u v hadj => full_deleted_edge_replace hE _ havoid hadj)
+  have hreplaced := walk_replace_reachable (fun u v hadj => full_deleted_edge_replace hE _ havoid
+      hadj)
     hfull.2.some
   -- So `r` lies on a cycle of the support, which is acyclic.
   have hscycle := SimpleGraph.adj_and_reachable_delete_edges_iff_exists_cycle.mp
@@ -205,7 +207,8 @@ private theorem isCycles_walk_support_subset {G : SimpleGraph ℕ} [G.LocallyFin
     intro w hw
     rcases List.mem_cons.mp hw with rfl | htail
     · exact hu
-    · have hdadj := (hd.adj_toSubgraph_iff_of_isCycles hG (d.mem_verts_toSubgraph.mpr hu) _).mpr hadj
+    · have hdadj := (hd.adj_toSubgraph_iff_of_isCycles hG (d.mem_verts_toSubgraph.mpr hu) _).mpr
+        hadj
       have hnext := SimpleGraph.Walk.mem_support_of_adj_toSubgraph hdadj.symm
       exact ih hnext htail
 
@@ -270,8 +273,10 @@ theorem cycles_disjoint (t : PhyloTree) (E : Finset Pair)
   let dK := d.transfer (cyclicGraph t E hE) hdEdges
   have hcK : cK.IsCycle := hc.transfer hcEdges
   have hdK : dK.IsCycle := hd.transfer hdEdges
-  have hxcK : x ∈ cK.support := by simpa only [cK,SimpleGraph.Walk.support_transfer] using List.mem_toFinset.mp hxc
-  have hxdK : x ∈ dK.support := by simpa only [dK,SimpleGraph.Walk.support_transfer] using List.mem_toFinset.mp hxd
+  have hxcK : x ∈ cK.support := by
+    simpa only [cK,SimpleGraph.Walk.support_transfer] using List.mem_toFinset.mp hxc
+  have hxdK : x ∈ dK.support := by
+    simpa only [dK,SimpleGraph.Walk.support_transfer] using List.mem_toFinset.mp hxd
   -- There, two cycles through the common vertex `x` have the same edges.
   have heq := isCycles_cycle_edges_eq (cyclicGraph_isCycles t E hE) cK dK hcK hdK hxcK hxdK
   exact hne (by simpa only [cK,dK,SimpleGraph.Walk.edges_transfer] using heq)

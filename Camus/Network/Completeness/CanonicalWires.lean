@@ -37,7 +37,8 @@ theorem wire_decompose {l : List ℕ} (hlen : 2 ≤ l.length) {a b : ℕ}
       simp only [List.head?_cons,Option.some.injEq] at hhead
       subst x
       have htail : (y :: l).getLast? = some b := by simpa using hlast
-      exact congrArg (List.cons a) (List.dropLast_append_getLast? b (htail ▸ Option.mem_some_self b)).symm
+      exact congrArg (List.cons a) (List.dropLast_append_getLast? b (htail ▸ Option.mem_some_self
+          b)).symm
 
 namespace SupportSubdivision
 
@@ -152,7 +153,8 @@ theorem map_wire_eq (H : SupportSubdivision t N S)
     have hbridge : (m.map H.encode).toFinset = (wireInterior (H.wire p)).image H.encode := by
       ext v
       simp only [m,wireInterior,List.mem_toFinset,List.mem_map,Finset.mem_image]
-    exact hbridge.trans ((H.encoded_interior_eq hN hp hp0).trans (Realization.wireInterior_eq t H.extracted p))
+    exact hbridge.trans ((H.encoded_interior_eq hN hp hp0).trans (Realization.wireInterior_eq t
+        H.extracted p))
   have hperm : M.Perm (O ++ G) := List.perm_of_nodup_nodup_toFinset_eq hMN hOGN hsets
   have hOC : O = [] ∨ ∃ o, O = [o] := by
     cases ho : O with
@@ -179,7 +181,8 @@ theorem map_wire_eq (H : SupportSubdivision t N S)
     · simpa only [ho,hg,List.nil_append,List.perm_nil] using hperm
     · simpa only [ho,hg,List.nil_append,List.perm_singleton] using hperm
     · simpa only [ho,hg,List.append_nil,List.perm_singleton] using hperm
-    · have hpairsM : M = [o,g] ∨ M = [g,o] := List.perm_pair.mp (by simpa only [ho,hg,List.singleton_append] using hperm)
+    · have hpairsM : M = [o,g] ∨ M = [g,o] := List.perm_pair.mp
+        (by simpa only [ho,hg,List.singleton_append] using hperm)
       rcases hpairsM with hgood | hbad
       · simpa only [ho,hg,List.singleton_append] using hgood
       · exact False.elim (H.encoded_ghost_before_outer_impossible hN hpairs hp hp0

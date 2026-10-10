@@ -81,7 +81,8 @@ theorem list_wire_reaches (a : ℕ) (L : List ℕ) {v : ℕ} (hv : v ∈ a :: L)
           (fun u v => (u,v) ∈ wireEdges (a :: b :: L)) b v :=
         Relation.ReflTransGen.mono
           (fun u v he => by rw [wireEdges_cons_cons]; exact Finset.mem_insert_of_mem he) _ _ htail
-      exact (Relation.ReflTransGen.single (by rw [wireEdges_cons_cons]; exact Finset.mem_insert_self _ _)).trans htail'
+      exact (Relation.ReflTransGen.single
+          (by rw [wireEdges_cons_cons]; exact Finset.mem_insert_self _ _)).trans htail'
 
 /-- Every vertex of the wire above a non-root vertex `p` of `T` is reached from `parent(p)`
 along support edges. -/

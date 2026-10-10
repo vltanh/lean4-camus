@@ -30,7 +30,8 @@ namespace Camus.Realization
 
 /-- The undirected support graph of `Realization.graph t E` restricted to
 `Realization.cycleVertices t e`: the footprint of `e = (u, w)` together with `u′` and `w′`. -/
-noncomputable def cycleSupportGraph (t : PhyloTree) (E : Finset Pair) (e : Pair) : SimpleGraph ℕ where
+noncomputable def cycleSupportGraph (t : PhyloTree) (E : Finset Pair) (e : Pair) : SimpleGraph ℕ
+    where
   Adj u v := ({graph t E with edges := supportEdges t E}).underlying.Adj u v ∧
     u ∈ cycleVertices t e ∧ v ∈ cycleVertices t e
   symm := ⟨by intro u v h; exact ⟨h.1.symm, h.2.2, h.2.1⟩⟩
@@ -160,7 +161,8 @@ theorem fundamentalCycle_support_subset (t : PhyloTree) (E : Finset Pair)
   change v ∈ (donor t e ::
     ((cycleSupportPath t E hE e he).val.mapLe (support_underlying_le t E)).support).toFinset at hv
   have hmem : v = donor t e ∨ v ∈ (cycleSupportPath t E hE e he).val.support := by
-    simpa only [SimpleGraph.Walk.support_mapLe_eq_support, List.mem_toFinset, List.mem_cons] using hv
+    simpa only [SimpleGraph.Walk.support_mapLe_eq_support, List.mem_toFinset, List.mem_cons] using
+        hv
   rcases hmem with rfl | hmem
   · simp [cycleVertices]
   · exact cycleSupportPath_support_subset t E hE e he (List.mem_toFinset.mpr hmem)

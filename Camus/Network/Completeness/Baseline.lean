@@ -62,7 +62,8 @@ noncomputable def baseline_subdivision {t : PhyloTree} {N : RootedNetwork}
     exact Finset.mem_image.mpr ⟨Realization.leafAddress t a,
       Realization.leafAddress_mem_nodes ha,rfl⟩
   · intro a ha
-    change H.original (Realization.addressOf (Address.code (Realization.leafAddress t a))) = N.leaf a
+    change H.original (Realization.addressOf (Address.code (Realization.leafAddress t a))) = N.leaf
+        a
     rw [Realization.addressOf_code]
     exact H.leaves_preserved _ (Realization.leafAddress_mem_nodes ha) a
       (Realization.leafAddress_nodeAt ha)

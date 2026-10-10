@@ -59,7 +59,8 @@ theorem GraphSubdivision.displays_iff {P N : RootedNetwork}
     rw [H.edges_covered] at harcN
     obtain ⟨e, he, harc⟩ := Finset.mem_biUnion.mp harcN
     have hR := H.active_switching hB
-    have hsepP : P.Separates (({P with edges := H.active B}).underlying.deleteEdges {s(e.1,e.2)}) q := by
+    have hsepP : P.Separates (({P with edges := H.active B}).underlying.deleteEdges {s(e.1,e.2)}) q
+        := by
       apply (H.separates_cut_iff hP hB.1 he harc q hq).mp
       simpa only [heq] using hsep
     -- the cut edge `e` is active: otherwise the cut leaves the connected switching of `P` intact

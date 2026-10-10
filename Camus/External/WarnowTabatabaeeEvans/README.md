@@ -23,7 +23,7 @@ Observation 2 in Warnow et al. (2025)." The formalization uses it for the existe
 Lemma 1 ([`RootedNetwork.novel_edge_exists`](../../Preliminaries/Lemma1/Cuts.lean#L95)); the uniqueness half needs another argument
 (the report's E1).
 
-**The Lean statement.** [`External.WarnowTabatabaeeEvansObservation2`](Observation2.lean#L69), in
+**The Lean statement.** [`External.WarnowTabatabaeeEvansObservation2`](Observation2.lean#L70), in
 [`Camus/External/WarnowTabatabaeeEvans/Observation2.lean`](Observation2.lean): for every rooted binary level-1 network `N`
 ([`RootedNetwork.RootedBinaryLevelOne`](../../../Challenge.lean#L270)) and every quartet `q` on four of its taxa, `N` displays `q`
 ([`RootedNetwork.DisplaysQuartet`](../../../Challenge.lean#L311): some switching of `N`, which keeps one incoming edge at every
@@ -36,8 +36,8 @@ unlabelled leaves change no split; a vertex of indegree 2 on a cycle of a level-
 cycle's bottom node; and deleting both edges into the bottom node separates the same pairs as
 deleting the edge below it.
 
-**The proof.** [`External.observation2`](Observation2.lean#L186), from [`External.observation2_forward`](Observation2.lean#L79) and
-[`External.observation2_backward`](Observation2.lean#L155). A switching is a spanning tree of the network, and every edge
+**The proof.** [`External.observation2`](Observation2.lean#L187), from [`External.observation2_forward`](Observation2.lean#L80) and
+[`External.observation2_backward`](Observation2.lean#L156). A switching is a spanning tree of the network, and every edge
 `d` that it leaves out closes a cycle with the path of the switching between its ends; the head of
 `d` is the cycle's reticulation. If a switching displays `q` through an edge `e`, either `e` is a
 cut edge of `N`, and deleting it leaves the same two components in `N` as in the switching, or `e`

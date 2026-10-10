@@ -35,7 +35,8 @@ noncomputable def eraseArc (B : Finset (ℕ × ℕ)) (edge : Sym2 ℕ) : Finset 
 /-- Deleting an undirected edge from the underlying graph of an arc set `B` gives the underlying
 graph of `eraseArc B edge`. -/
 theorem underlying_eraseArc (N : RootedNetwork) (B : Finset (ℕ × ℕ)) (edge : Sym2 ℕ) :
-    ({N with edges := B}).underlying.deleteEdges {edge} = ({N with edges := eraseArc B edge}).underlying := by
+    ({N with edges := B}).underlying.deleteEdges {edge} =
+        ({N with edges := eraseArc B edge}).underlying := by
   classical
   ext u v
   simp only [SimpleGraph.deleteEdges_adj, RootedNetwork.underlying, eraseArc,

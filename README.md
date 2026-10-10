@@ -24,8 +24,8 @@ a tree of a network need not be a basis for it (Section 3.2).
 
 ## What is proved
 
-- The paper's results, each by the paper's proof where it gives one: Lemma 1 ([`Camus.lemma1`](Camus/Preliminaries/Lemmas.lean#L138),
-  [`Camus.lemma1_union`](Camus/Preliminaries/Lemmas.lean#L289)), Lemma 2 ([`Camus.lemma2`](Camus/Preliminaries/Lemmas.lean#L160)), Theorem 1 ([`Camus.theorem1`](Camus/DP/Theorem1.lean#L109), and over
+- The paper's results, each by the paper's proof where it gives one: Lemma 1 ([`Camus.lemma1`](Camus/Preliminaries/Lemmas.lean#L139),
+  [`Camus.lemma1_union`](Camus/Preliminaries/Lemmas.lean#L290)), Lemma 2 ([`Camus.lemma2`](Camus/Preliminaries/Lemmas.lean#L161)), Theorem 1 ([`Camus.theorem1`](Camus/DP/Theorem1.lean#L109), and over
   Definition 1's class [`Camus.theorem1_builtOn`](Camus/DP/Definition1.lean#L76)), the running time `O(n²(|Q| + n))` and memory
   `O(n⁴)` of Section 2.3 for CAMUS as a program, with `δ_T` in constant time
   ([`Complexity.camus_array`](Camus/Complexity/Program.lean#L1090), [`Complexity.camus_time`](Camus/Complexity/Program.lean#L1193), [`Complexity.time_delta`](Camus/Complexity/Delta.lean#L746),
@@ -33,20 +33,20 @@ a tree of a network need not be a basis for it (Section 3.2).
   ([`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61), [`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499)), the running time
   `O(n²(|Q| + m³n))` of computing the modified array ([`Complexity.camusBudget_time`](Camus/Complexity/BudgetProgram.lean#L680)), and the bound
   of `n − 1` reticulations
-  ([`RootedNetwork.anchored_reticulation_bound`](Camus/Network/Reticulations.lean#L227)), the steps of Section 3.2's consistency argument in
+  ([`RootedNetwork.anchored_reticulation_bound`](Camus/Network/Reticulations.lean#L228)), the steps of Section 3.2's consistency argument in
   the site model of Warnow et al. ([`astral_maximizer_tendsto`](Camus/Pipelines/Astral.lean#L543), [`snp_recovery_tendsto`](Camus/Pipelines/SNP.lean#L81)), and the test
   of Algorithm 1 with its motivation under the multispecies coalescent
   ([`Coalescent.msc_filterQuartets`](Camus/Pipelines/Coalescent.lean#L250)). Two steps depart from the paper: uniqueness in Lemma 1, and the
   networks of Definition 1 whose root lies above the root of `T` (see the audit summary).
-- The cited results: Observation 2 of Warnow, Tabatabaee and Evans ([`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186)), proved
+- The cited results: Observation 2 of Warnow, Tabatabaee and Evans ([`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L187)), proved
   from general facts about switchings and cycles, and the convergence of the quartets of SNPs under
   their site model ([`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99)), with a hypothesis their model omits.
 - The refutations ([`not_exactCountMonotone`](Camus/Restriction/Monotonicity.lean#L37), [`not_exactStoppingRule`](Camus/Restriction/StoppingRule.lean#L462), [`not_atMostStoppingRule`](Camus/Restriction/StoppingRule.lean#L481),
-  [`not_uniqueOptimum`](Camus/Pipelines/Uniqueness.lean#L49), [`Counterexamples.shallow_not_identifiable`](Camus/Pipelines/Inclusion.lean#L219),
+  [`not_uniqueOptimum`](Camus/Pipelines/Uniqueness.lean#L50), [`Counterexamples.shallow_not_identifiable`](Camus/Pipelines/Inclusion.lean#L219),
   [`Counterexamples.deeperDonor_meets_hypotheses`](Camus/Pipelines/SNPCondition.lean#L321), with an outgroup,
   [`Counterexamples.camus_output_not_rootAboveNet`](Camus/Network/RootAbove/Example.lean#L414)),
-  with CAMUS itself returning the wrong network ([`camus_may_add_edge`](Camus/Pipelines/Uniqueness.lean#L134),
-  [`Counterexamples.camus_may_return_deep`](Camus/Pipelines/Inclusion.lean#L374)), and the corrected Section 3.2 ([`Camus.recovery`](Camus/Pipelines/Uniqueness.lean#L151)).
+  with CAMUS itself returning the wrong network ([`camus_may_add_edge`](Camus/Pipelines/Uniqueness.lean#L135),
+  [`Counterexamples.camus_may_return_deep`](Camus/Pipelines/Inclusion.lean#L374)), and the corrected Section 3.2 ([`Camus.recovery`](Camus/Pipelines/Uniqueness.lean#L152)).
 - `lake build` succeeds with no `sorry` outside [`Challenge.lean`](Challenge.lean) and no `axiom`;
   `lake env lean scripts/Audit.lean` checks that every declaration depends only on [`propext`](https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#propext),
   [`Classical.choice`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Classical.choice) and [`Quot.sound`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Quot.sound).

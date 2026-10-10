@@ -47,7 +47,8 @@ open DynamicProgramming
   | fork l r =>
     have hc (b : Bool) : M (v++[b]) = N (v++[b]) :=
       funext (h _ (PhyloTree.child_mem_nodes hnode b) (List.prefix_append _ _) (by simp))
-    have hf e (he : e ∈ pairsAt t v) : forest M (hanging t e).toList = forest N (hanging t e).toList := by
+    have hf e (he : e ∈ pairsAt t v) : forest M (hanging t e).toList = forest N (hanging t e).toList
+        := by
       obtain ⟨hec,het⟩ := Finset.mem_filter.mp he
       have hae := (Finset.mem_filter.mp hec).2
       apply funext

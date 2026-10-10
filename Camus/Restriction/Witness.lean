@@ -19,7 +19,8 @@ reticulations, which Section 2.4 computes, this is false (the report's E5). Let
   donor). Switching to the second edge gives the tree `(A,(C,(B,D)))`, whose quartet is `AC|BD`.
 * Networks built on `T` with exactly three reticulations exist: three triangles
   (`saturatedPairs`).
-* Every network built on `T` with exactly three reticulations displays no quartet of `Q` (`graph_exact_three_score_zero`).
+* Every network built on `T` with exactly three reticulations displays no quartet of `Q`
+(`graph_exact_three_score_zero`).
 
 So the best score is `1` with two reticulations and `0` with three. For at most `k` reticulations
 the claim holds (`Camus.atMostScore_mono`). The same example in the block grammar is
@@ -147,11 +148,13 @@ noncomputable def budgetSwitch : Finset (ℕ×ℕ) :=
 /-- The edges of the subdivided tree `T` in the network with two reticulations. -/
 theorem support_expanded : supportEdges smallConstraint budgetPairs =
     {(1,donor smallConstraint budgetOuter),(donor smallConstraint budgetOuter,2),
-      (1,recipient smallConstraint budgetOuter),(recipient smallConstraint budgetOuter,donor smallConstraint budgetInner),
+      (1,recipient smallConstraint budgetOuter),(recipient smallConstraint budgetOuter,donor
+          smallConstraint budgetInner),
       (donor smallConstraint budgetInner,3),(3,5),(3,7),(7,11),
       (7,recipient smallConstraint budgetInner),(recipient smallConstraint budgetInner,15)} := by
   unfold supportEdges
-  have hn : smallConstraint.nodes.erase [] = {[false],[true],[true,false],[true,true],[true,true,false],[true,true,true]} := by decide
+  have hn : smallConstraint.nodes.erase [] =
+      {[false],[true],[true,false],[true,true],[true,true,false],[true,true,true]} := by decide
   rw [hn]
   simp [wire_false,wire_true,wire_recipient,
     wire_other [true,false] (by decide),wire_other [true,true] (by decide),
@@ -169,7 +172,8 @@ theorem endpoint_facts :
     donor smallConstraint budgetInner ≠ recipient smallConstraint budgetOuter ∧
     donor smallConstraint budgetInner ≠ recipient smallConstraint budgetInner := by
   have hb : 15 ≤ bound smallConstraint := by
-    simpa [Address.code] using code_le_bound (show [true,true,true] ∈ smallConstraint.nodes by decide)
+    simpa [Address.code] using
+      code_le_bound (show [true,true,true] ∈ smallConstraint.nodes by decide)
   have hdo := bound_lt_donor smallConstraint budgetOuter
   have hro := bound_lt_recipient smallConstraint budgetOuter
   have hdi := bound_lt_donor smallConstraint budgetInner
@@ -185,12 +189,14 @@ theorem endpoint_facts :
     have he := recipient_injective smallConstraint heo hei h
     exact (by decide : budgetOuter ≠ budgetInner) he
   exact ⟨by omega,by omega,by omega,by omega,hdd,hrr,
-    donor_ne_recipient _ _ _,donor_ne_recipient _ _ _,donor_ne_recipient _ _ _,donor_ne_recipient _ _ _⟩
+    donor_ne_recipient _ _ _,donor_ne_recipient _ _ _,donor_ne_recipient _ _ _,donor_ne_recipient _
+        _ _⟩
 
 /-- The edges of the switching `budgetSwitch`. -/
 theorem switch_expanded : budgetSwitch =
     {(1,donor smallConstraint budgetOuter),(donor smallConstraint budgetOuter,2),
-      (1,recipient smallConstraint budgetOuter),(recipient smallConstraint budgetOuter,donor smallConstraint budgetInner),
+      (1,recipient smallConstraint budgetOuter),(recipient smallConstraint budgetOuter,donor
+          smallConstraint budgetInner),
       (donor smallConstraint budgetInner,3),(3,5),(3,7),(7,11),
       (donor smallConstraint budgetInner,recipient smallConstraint budgetInner),
       (recipient smallConstraint budgetInner,15)} := by
@@ -209,7 +215,8 @@ theorem switch_expanded : budgetSwitch =
     all_goals omega
 
 /-- The vertices of `(A,(C,(B,D)))`, as a network with no added edge. -/
-theorem baseline_alternate_vertices : (graph alternateConstraint ∅).vertices = {1,2,3,5,7,11,15} := by
+theorem baseline_alternate_vertices : (graph alternateConstraint ∅).vertices = {1,2,3,5,7,11,15} :=
+    by
   decide
 
 /-- The edges of `(A,(C,(B,D)))`, as a network with no added edge. -/
@@ -246,18 +253,22 @@ theorem alternate_leaf_codes :
     (graph alternateConstraint ∅).leaf 0 = 2 ∧ (graph alternateConstraint ∅).leaf 1 = 11 ∧
     (graph alternateConstraint ∅).leaf 2 = 5 ∧ (graph alternateConstraint ∅).leaf 3 = 15 := by
   have ht : alternateConstraint.WellLabelled := by decide
-  change (leafAddress alternateConstraint 0).code = 2 ∧ (leafAddress alternateConstraint 1).code = 11 ∧
+  change (leafAddress alternateConstraint 0).code = 2 ∧ (leafAddress alternateConstraint 1).code =
+      11 ∧
     (leafAddress alternateConstraint 2).code = 5 ∧ (leafAddress alternateConstraint 3).code = 15
   rw [leafAddress_eq ht (show alternateConstraint.nodeAt [false] = some (.leaf 0) by decide),
-    leafAddress_eq ht (show alternateConstraint.nodeAt [true,true,false] = some (.leaf 1) by decide),
+    leafAddress_eq ht
+      (show alternateConstraint.nodeAt [true,true,false] = some (.leaf 1) by decide),
     leafAddress_eq ht (show alternateConstraint.nodeAt [true,false] = some (.leaf 2) by decide),
     leafAddress_eq ht (show alternateConstraint.nodeAt [true,true,true] = some (.leaf 3) by decide)]
   decide
 
 /-- The vertices of the leaves `A`, `B`, `C`, `D` of the network with two reticulations. -/
 theorem original_leaf_codes :
-    (graph smallConstraint budgetPairs).leaf 0 = 2 ∧ (graph smallConstraint budgetPairs).leaf 1 = 5 ∧
-    (graph smallConstraint budgetPairs).leaf 2 = 15 ∧ (graph smallConstraint budgetPairs).leaf 3 = 11 := by
+    (graph smallConstraint budgetPairs).leaf 0 = 2 ∧ (graph smallConstraint budgetPairs).leaf 1 = 5
+        ∧
+    (graph smallConstraint budgetPairs).leaf 2 = 15 ∧ (graph smallConstraint budgetPairs).leaf 3 =
+        11 := by
   have ht : smallConstraint.WellLabelled := by decide
   change (leafAddress smallConstraint 0).code = 2 ∧ (leafAddress smallConstraint 1).code = 5 ∧
     (leafAddress smallConstraint 2).code = 15 ∧ (leafAddress smallConstraint 3).code = 11
@@ -270,7 +281,8 @@ theorem original_leaf_codes :
 /-- The switching `budgetSwitch` is a subdivision of the tree `(A,(C,(B,D)))`, with the same root
 and leaves: the vertices map by `alternateOriginal` and the edges to the paths `alternateWire`. -/
 noncomputable def alternateSubdivision :
-    GraphSubdivision (graph alternateConstraint ∅) {graph smallConstraint budgetPairs with edges := budgetSwitch} := by
+    GraphSubdivision (graph alternateConstraint ∅)
+        {graph smallConstraint budgetPairs with edges := budgetSwitch} := by
   classical
   obtain ⟨hdo,hro,hdi,hri,hdd,hrr,hdo_ro,hdo_ri,hdi_ro,hdi_ri⟩ := endpoint_facts
   have hwP := baseline_alternate_vertices
@@ -305,10 +317,12 @@ noncomputable def alternateSubdivision :
   · simp [graph,Address.code,alternateOriginal]
   · decide
   · intro a ha
-    have hleaf := (supportGraphSubdivision alternateConstraint ∅ (Finset.empty_subset _)).leaves_left a ha
+    have hleaf := (supportGraphSubdivision alternateConstraint ∅ (Finset.empty_subset
+        _)).leaves_left a ha
     exact hleaf
   · intro a ha
-    have hat : a ∈ ({0,1,2,3} : Finset ℕ) := by simpa [graph,alternateConstraint,PhyloTree.taxa,PhyloTree.labels,Finset.insert_comm] using ha
+    have hat : a ∈ ({0,1,2,3} : Finset ℕ) := by
+      simpa [graph,alternateConstraint,PhyloTree.taxa,PhyloTree.labels,Finset.insert_comm] using ha
     simp only [Finset.mem_insert,Finset.mem_singleton] at hat
     rcases hat with rfl | rfl | rfl | rfl
     · rw [alternate_leaf_codes.1,original_leaf_codes.1]
@@ -363,7 +377,8 @@ theorem budgetSwitch_subset : budgetSwitch ⊆ (graph smallConstraint budgetPair
 theorem graph_exact_two_score_one :
     (graph smallConstraint budgetPairs).AnchoredExtension smallConstraint ∧
     (graph smallConstraint budgetPairs).reticulationCount = 2 ∧
-    score oneQuartet (DynamicProgramming.repertoire oneQuartet (graph smallConstraint budgetPairs)) = 1 := by
+    score oneQuartet (DynamicProgramming.repertoire oneQuartet (graph smallConstraint budgetPairs))
+        = 1 := by
   have ht : smallConstraint.WellLabelled := by decide
   have hE := budgetPairs_separated
   have ht' : alternateConstraint.WellLabelled := by decide
@@ -371,14 +386,16 @@ theorem graph_exact_two_score_one :
   -- `(A,(C,(B,D)))` displays `AC|BD`; so do its subdivision `budgetSwitch` and the network
   have hbase : (graph alternateConstraint ∅).DisplaysQuartet (q0123 1) :=
     (baseline_displays_iff alternateConstraint ht' _).mpr (by decide)
-  have hswitch := (alternateSubdivision.displays_iff (levelOne alternateConstraint ht' ∅ hb) _).mpr hbase
+  have hswitch := (alternateSubdivision.displays_iff (levelOne alternateConstraint ht' ∅ hb) _).mpr
+      hbase
   have hdisplay := RootedNetwork.displays_of_edges_subset budgetSwitch_subset (q0123 1) hswitch
   refine ⟨⟨levelOne smallConstraint ht budgetPairs hE,
     ⟨supportEdges smallConstraint budgetPairs,⟨support smallConstraint ht budgetPairs hE⟩⟩⟩,?_,?_⟩
   · rw [reticulationCount_eq_card smallConstraint budgetPairs hE]
     decide
   · classical
-    have hs : score oneQuartet (DynamicProgramming.repertoire oneQuartet (graph smallConstraint budgetPairs)) =
+    have hs : score oneQuartet (DynamicProgramming.repertoire oneQuartet (graph smallConstraint
+        budgetPairs)) =
         oneQuartet.card := (score_eq_card_iff _ _).mpr (by
       intro q hq
       have heq : q = q0123 1 := by simpa [oneQuartet] using hq
@@ -419,7 +436,8 @@ theorem graph_exact_budget_nonmonotone :
   have hE := saturatedPairs_separated
   refine ⟨graph smallConstraint saturatedPairs,
     ⟨levelOne smallConstraint ht saturatedPairs hE,
-      ⟨supportEdges smallConstraint saturatedPairs,⟨support smallConstraint ht saturatedPairs hE⟩⟩⟩,?_⟩
+      ⟨supportEdges smallConstraint saturatedPairs,⟨support smallConstraint ht saturatedPairs
+          hE⟩⟩⟩,?_⟩
   rw [reticulationCount_eq_card smallConstraint saturatedPairs hE]
   decide
 

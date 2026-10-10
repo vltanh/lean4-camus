@@ -61,12 +61,14 @@ noncomputable def supportGraphSubdivision (t : PhyloTree) (E : Finset Pair)
     { original := id
       wire := fun e => wire t E (addressOf e.2)
       original_injective := Function.injective_id.injOn
-      root_left := by exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨[], t.root_mem_nodes, rfl⟩)
+      root_left := by
+        exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨[], t.root_mem_nodes, rfl⟩)
       root_preserved := rfl
       taxa_preserved := rfl
       leaves_left := by
         intro a ha
-        exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨leafAddress t a, leafAddress_mem_nodes ha, rfl⟩)
+        exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨leafAddress t a, leafAddress_mem_nodes
+            ha, rfl⟩)
       leaves_preserved := fun a ha => rfl
       edge_endpoints := ?_
       wire_laws := ?_

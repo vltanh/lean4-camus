@@ -123,7 +123,8 @@ in `T_v` has value at most some candidate value of `cases t w M v |F|`. -/
         apply Finset.mem_biUnion.mpr
         refine ⟨e,Finset.mem_filter.mpr ⟨hF.1.1 he,het⟩,?_⟩
         apply Finset.mem_image.mpr
-        exact ⟨c,by simpa [show F.card-1=∑ r ∈ hanging t e, (branches r).card by omega] using hc,rfl⟩
+        exact ⟨c,
+          by simpa [show F.card-1=∑ r ∈ hanging t e, (branches r).card by omega] using hc,rfl⟩
       · conv_lhs => rw [hpart]
         rw [value_gall hae w branches hbranches]
         exact Nat.add_le_add_left hcle _
@@ -138,7 +139,8 @@ in `T_v` has value at most some candidate value of `cases t w M v |F|`. -/
       obtain ⟨a,ha,haL⟩ := (hchild false).2 L hL
       obtain ⟨b,hb,hbR⟩ := (hchild true).2 R hR
       have hpart : F=L∪R := fork_partition hF hno
-      have hcard : L.card+R.card=F.card := by rw [hpart,Finset.card_union_of_disjoint (fork_disjoint hL hR)]
+      have hcard : L.card+R.card=F.card := by
+        rw [hpart,Finset.card_union_of_disjoint (fork_disjoint hL hR)]
       refine ⟨a+b,?_,?_⟩
       · simp only [cases,hnode]
         apply Finset.mem_union_left

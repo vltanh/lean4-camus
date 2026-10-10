@@ -33,7 +33,8 @@ theorem wire_edge_idxOf {L : List ℕ} (hL : L.Nodup) {e : ℕ × ℕ}
     cases L with
     | nil => simp [wireEdges] at he
     | cons b L =>
-      have hcons : wireEdges (a :: b :: L) = insert (a,b) (wireEdges (b :: L)) := by simp [wireEdges]
+      have hcons : wireEdges (a :: b :: L) = insert (a,b) (wireEdges (b :: L)) := by
+        simp [wireEdges]
       rw [hcons] at he
       rcases Finset.mem_insert.mp he with rfl | he
       · have hab : b ≠ a := by

@@ -12,7 +12,8 @@ public import Camus.Preliminaries.Lemma1.Unique
 The bound at three reticulations in the counterexample to the monotonicity claim of Section 2.4
 (the report's E5). Let `T = (A,(B,(D,C)))` (`Counterexamples.smallConstraint`, with `A = 0`,
 `B = 1`, `C = 2`, `D = 3`) and `Q = {AC|BD}` (`Counterexamples.oneQuartet`). Every network built on
-`T` with exactly three reticulations, the maximum `n − 1`, displays no quartet of `Q`. The networks with two reticulations are in
+`T` with exactly three reticulations, the maximum `n − 1`, displays no quartet of `Q`. The networks
+with two reticulations are in
 `Camus/Restriction/Witness.lean`.
 
 ## Main results
@@ -133,14 +134,16 @@ theorem small_single_display_footprint {e : Pair}
   have hcyc2 := RootedNetwork.single_novel_pair_vertex_on_cycle small_wellLabelled hN H
     (q0123 1) hnot hs p hp r hr hp2 hr2 hd hraw
   -- and the vertices of `T` on that cycle are those of `EdgeAbove.footprint t e`
-  have hsub := canonical_fundamentalCycle_support small_wellLabelled hE (by simp : e ∈ ({e} : Finset Pair)) hd
+  have hsub := canonical_fundamentalCycle_support small_wellLabelled hE
+      (by simp : e ∈ ({e} : Finset Pair)) hd
   constructor
   · exact (Realization.code_mem_cycleVertices_iff (show [true] ∈ t.nodes by decide)).mp
       (hsub (List.mem_toFinset.mpr hcyc1))
   · exact (Realization.code_mem_cycleVertices_iff (show [true,true] ∈ t.nodes by decide)).mp
       (hsub (List.mem_toFinset.mpr hcyc2))
 
-/-- For a cycle-separated family `E` of three added edges on `T = (A,(B,(D,C)))`, the canonical network `Realization.graph t E` does not display
+/-- For a cycle-separated family `E` of three added edges on `T = (A,(B,(D,C)))`, the canonical
+network `Realization.graph t E` does not display
 `AC|BD`. -/
 theorem small_exact_three_not_display
     {E : Finset Pair} (hE : EdgeAbove.CycleSeparated smallConstraint E) (hc : E.card = 3) :
@@ -157,7 +160,8 @@ theorem small_exact_three_not_display
   have hsingle := (mem_novel_iff smallConstraint small_wellLabelled oneQuartet _ _).mp hqe
   -- with `3 = n − 1` edges, the cycle of `e` meets `T` only in its target
   have hf := EdgeAbove.saturated_footprint hE
-    (show E.card = smallConstraint.internalNodes.card by simpa [smallConstraint,PhyloTree.internalNodes] using hc) he
+    (show E.card = smallConstraint.internalNodes.card by
+      simpa [smallConstraint,PhyloTree.internalNodes] using hc) he
   -- but it passes through the two vertices `(B,(D,C))` and `(D,C)`
   obtain ⟨h1,h2⟩ := small_single_display_footprint (hE.1 he) hsingle.2.1
   rw [hf] at h1 h2
@@ -166,10 +170,12 @@ theorem small_exact_three_not_display
   exact (by decide : ([true] : Address) ≠ [true,true]) hbad
 
 /-- E5 (Section 2.4), the bound at three reticulations. Every network built on
-`T = (A,(B,(D,C)))` with exactly three reticulations displays no quartet of `Q = {AC|BD}`: its score is `0`. -/
+`T = (A,(B,(D,C)))` with exactly three reticulations displays no quartet of `Q = {AC|BD}`: its score
+is `0`. -/
 theorem graph_exact_three_score_zero
     (N : RootedNetwork) (hN : N.AnchoredExtension smallConstraint)
-    (hr : N.reticulationCount = 3) : score oneQuartet (DynamicProgramming.repertoire oneQuartet N) = 0 := by
+    (hr : N.reticulationCount = 3) : score oneQuartet (DynamicProgramming.repertoire oneQuartet N) =
+        0 := by
   classical
   -- `N` is isomorphic to the canonical network of its three added edges
   obtain ⟨S,⟨H⟩⟩ := hN.2

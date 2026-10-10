@@ -191,7 +191,8 @@ theorem interior_incoming_retained (H : GraphSubdivision P N)
   have hcB := hB.2 _ (H.interior_mem_vertices he hv) hroot
   have hsub := Finset.filter_subset_filter (fun f : ℕ × ℕ => f.2 = arc.2) hB.1
   have heq := Finset.eq_of_subset_of_card_le hsub (by rw [hcB, H.interior_incoming_card he hv])
-  have hm : arc ∈ B.filter (fun f => f.2 = arc.2) := by rw [heq]; exact Finset.mem_filter.mpr ⟨harc, rfl⟩
+  have hm : arc ∈ B.filter (fun f => f.2 = arc.2) := by
+    rw [heq]; exact Finset.mem_filter.mpr ⟨harc, rfl⟩
   exact (Finset.mem_filter.mp hm).1
 
 /-- The edges of `P` whose terminal arc lies in `B`. -/

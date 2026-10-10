@@ -43,7 +43,8 @@ theorem path_between_chain_members {G : SimpleGraph ℕ} {l : List ℕ}
   intro x hx
   have hxz := z.support_toPath_subset_support hx
   rcases (SimpleGraph.Walk.mem_support_append_iff _ _).mp hxz with ha | hb
-  · have hxa : x ∈ a.support := by simpa only [SimpleGraph.Walk.support_reverse, List.mem_reverse] using ha
+  · have hxa : x ∈ a.support := by
+      simpa only [SimpleGraph.Walk.support_reverse, List.mem_reverse] using ha
     have hxw := w.support_takeUntil_subset_support hwu hxa
     simpa only [w, SimpleGraph.Walk.support_ofSupport] using hxw
   · have hxw := w.support_takeUntil_subset_support hwv hb

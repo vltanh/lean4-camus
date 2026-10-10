@@ -104,7 +104,8 @@ theorem original_reachable_of_prefix (H : SupportSubdivision t N S)
     Relation.ReflTransGen (fun u w => (u,w) ∈ S) (H.original p) (H.original q) := by
   obtain ⟨r,rfl⟩ := hpq
   induction r using List.reverseRecOn with
-  | nil => simpa only [List.append_nil] using (Relation.ReflTransGen.refl (r := fun u w => (u,w) ∈ S) (a := H.original p))
+  | nil => simpa only [List.append_nil] using (Relation.ReflTransGen.refl (r := fun u w => (u,w) ∈
+      S) (a := H.original p))
   | append_singleton r b ih =>
     have hpbr : p ++ (r ++ [b]) = (p ++ r) ++ [b] := List.append_assoc _ _ _ |>.symm
     have hpr : p ++ r ∈ t.nodes :=

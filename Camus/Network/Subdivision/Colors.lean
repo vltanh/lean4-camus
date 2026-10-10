@@ -125,7 +125,8 @@ theorem reachable_contract (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
       ({P with edges := H.active B}).underlying.Reachable u v := by
   classical
   let G := ({P with edges := H.active B}).underlying
-  have hc : ∀ e ∈ P.edges, wireEdges (H.wire e) ⊆ B → G.connectedComponentMk e.1 = G.connectedComponentMk e.2 := by
+  have hc : ∀ e ∈ P.edges, wireEdges (H.wire e) ⊆ B → G.connectedComponentMk e.1 =
+      G.connectedComponentMk e.2 := by
     intro e he hfull
     by_cases hneq : e.1 = e.2
     · rw [hneq]
@@ -133,7 +134,8 @@ theorem reachable_contract (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
         (show G.Adj e.1 e.2 from ⟨hneq, Or.inl (Finset.mem_filter.mpr ⟨he, hfull⟩)⟩).reachable
   obtain ⟨color, horig, hedge⟩ := H.exists_subdivision_coloring B hB G.connectedComponentMk hc
   intro hreach
-  have preserve {a b : ℕ} (walk : ({N with edges := B}).underlying.Walk a b) : color a = color b := by
+  have preserve {a b : ℕ} (walk : ({N with edges := B}).underlying.Walk a b) : color a = color b :=
+      by
     induction walk with
     | nil => rfl
     | @cons a b c hadj walk ih =>
@@ -163,7 +165,8 @@ theorem wire_reachable (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     intro f hf
     have hidx := wire_edge_idxOf hl.2.1 hf
     have hneq : f.1 ≠ f.2 := by intro h; rw [h] at hidx; omega
-    exact (show ({N with edges := B}).underlying.Adj f.1 f.2 from ⟨hneq, Or.inl (hwire hf)⟩).reachable
+    exact (show ({N with edges := B}).underlying.Adj f.1 f.2 from ⟨hneq, Or.inl (hwire
+        hf)⟩).reachable
   have hne : H.wire e ≠ [] := by intro h; simp [h] at hl
   have hhead : (H.wire e).head hne = H.original e.1 :=
     Option.some.inj ((List.head?_eq_some_head hne).symm.trans hl.2.2.1)

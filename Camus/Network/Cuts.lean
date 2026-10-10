@@ -294,7 +294,8 @@ theorem singleton_switching_erase_incoming {N : RootedNetwork}
   · have hgv : g.2 ≠ v := fun h => hdv (hhead.symm.trans h)
     rw [Finset.filter_insert]
     simp only [hdv, ↓reduceIte]
-    rw [Finset.erase_eq_of_notMem (by simp only [Finset.mem_filter, hgv, and_false, not_false_eq_true])]
+    rw [Finset.erase_eq_of_notMem
+        (by simp only [Finset.mem_filter, hgv, and_false, not_false_eq_true])]
     exact hS.2 v hv hvroot
 
 /-- Removing an edge `g` from a set `R` of edges of `N` removes its undirected edge from the
@@ -322,7 +323,8 @@ theorem underlying_erase_eq {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     have hne' : s(a,b) ≠ s(g.1,g.2) := by simpa only [Set.mem_singleton_iff] using hne
     refine ⟨hab.1,?_⟩
     rcases hab.2 with ha | hb
-    · exact Or.inl (Finset.mem_erase.mpr ⟨fun h => hne' (congrArg (fun e : ℕ × ℕ => s(e.1,e.2)) h),ha⟩)
+    · exact Or.inl (Finset.mem_erase.mpr ⟨fun h => hne' (congrArg (fun e : ℕ × ℕ => s(e.1,e.2))
+        h),ha⟩)
     · exact Or.inr (Finset.mem_erase.mpr ⟨fun h => hne'
         ((Sym2.eq_swap).trans (congrArg (fun e : ℕ × ℕ => s(e.1,e.2)) h)),hb⟩)
 

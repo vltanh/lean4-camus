@@ -225,13 +225,15 @@ noncomputable def splitIdentity {P N : RootedNetwork} (H : GraphSubdivision P N)
         exact Finset.disjoint_of_subset_left W.upper_interior_subset (hdisOld g hg)
       · rw [Finset.mem_singleton.mp hlast,hlw]
         exact Finset.disjoint_of_subset_left W.lower_interior_subset (hdisOld g hg)
-    · rcases Finset.mem_insert.mp hf with rfl | hfl <;> rcases Finset.mem_insert.mp hg with rfl | hgl
+    · rcases Finset.mem_insert.mp hf with rfl | hfl <;> rcases Finset.mem_insert.mp hg with rfl |
+        hgl
       · exact False.elim (hfg rfl)
       · rw [Finset.mem_singleton.mp hgl,huw,hlw]
         exact W.interiors_disjoint hwl.2.1
       · rw [Finset.mem_singleton.mp hfl,hlw,huw]
         exact (W.interiors_disjoint hwl.2.1).symm
-      · exact False.elim (hfg ((Finset.mem_singleton.mp hfl).trans (Finset.mem_singleton.mp hgl).symm))
+      · exact False.elim (hfg ((Finset.mem_singleton.mp hfl).trans (Finset.mem_singleton.mp
+          hgl).symm))
   · rw [H.vertices_covered]
     have hsource : P.edges = insert e (P.edges.erase e) := (Finset.insert_erase he).symm
     rw [hsource,Finset.biUnion_insert]
@@ -400,7 +402,8 @@ noncomputable def singletonSupportSubdivision {t : PhyloTree} {E : Finset Pair}
   have hw₁ : originalEdge e.2 ∈ ((graph t ∅).splitAt (originalEdge e.1) (donor t e)).edges :=
     Finset.mem_union_left _ (Finset.mem_erase.mpr ⟨huw,hw⟩)
   have hr : recipient t e ∈ wireInterior (H₁.wire (originalEdge e.2)) := by
-    change recipient t e ∈ wireInterior (H.splitWire (originalEdge e.1) (donor t e) W (originalEdge e.2))
+    change recipient t e ∈ wireInterior (H.splitWire (originalEdge e.1) (donor t e) W (originalEdge
+        e.2))
     rw [H.splitWire_old _ hd0 W hw]
     change recipient t e ∈ wireInterior (wire t E (addressOf (Address.code e.2)))
     rw [addressOf_code]

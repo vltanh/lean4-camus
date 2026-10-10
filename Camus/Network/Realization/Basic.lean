@@ -85,8 +85,10 @@ theorem leaf_address_unique {t : PhyloTree} (ht : t.WellLabelled)
       | cons c q =>
         cases b <;> cases c
         · exact congrArg (false :: ·) (ihl hnodup.1 hp hq)
-        · exact False.elim (hnodup.2.2 a (leaf_label_mem (t := l) hp) a (leaf_label_mem (t := r) hq) rfl)
-        · exact False.elim (hnodup.2.2 a (leaf_label_mem (t := l) hq) a (leaf_label_mem (t := r) hp) rfl)
+        · exact False.elim (hnodup.2.2 a (leaf_label_mem (t := l) hp) a (leaf_label_mem (t := r) hq)
+            rfl)
+        · exact False.elim (hnodup.2.2 a (leaf_label_mem (t := l) hq) a (leaf_label_mem (t := r) hp)
+            rfl)
         · exact congrArg (true :: ·) (ihr hnodup.2.1 hp hq)
 
 end PhyloTree

@@ -63,7 +63,8 @@ theorem baseline_displays_iff (t : PhyloTree) (ht : t.WellLabelled) (q : Quartet
     have hp := (PhyloTree.mem_nodes_iff t p).mpr ⟨sub, hnode⟩
     have hempty : EdgeAbove.CycleSeparated t ∅ := by simp [EdgeAbove.CycleSeparated, Set.Pairwise]
     have htotal : (graph t ∅).Switching (graph t ∅).edges := by
-      simpa only [graph, Finset.image_empty, Finset.union_empty] using (support t ht ∅ hempty).switching
+      simpa only [graph, Finset.image_empty, Finset.union_empty] using (support t ht ∅
+          hempty).switching
     refine ⟨hq, (graph t ∅).edges, htotal, baselineCut p, ?_, ?_⟩
     · change baselineCut p ∈ (graph t ∅).underlying.edgeSet
       exact (baseline_edgeSet t _).mpr ⟨p, hp, hpnil, rfl⟩
