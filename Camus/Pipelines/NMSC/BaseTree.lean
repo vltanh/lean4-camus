@@ -72,7 +72,7 @@ def baseTree : Brooqs.Net L → PhyloTree
   | .tree _ N₁ _ N₂ => .fork (baseTree N₁) (baseTree N₂)
   | .cycle _ S₁ S₂ _ H =>
       if hasNode S₂ then .fork (attachTree S₁ (baseTree H)) (detachTree S₂)
-      else .fork (detachTree S₁) (baseTree H)
+      else .fork (attachTree S₂ (baseTree H)) (detachTree S₁)
 
 /-- The tree of a side with the tree `X` hanging from its hybrid edge: a caterpillar with the
 base trees of the networks hanging from the nodes of the side, from the top, and `X` at the
@@ -101,8 +101,8 @@ def pairs : Brooqs.Net L → Finset (Address × Address)
         insert (true :: lastAddr S₂, false :: hangAddr S₁)
           (liftPairs false (attachPairs S₁ (pairs H)) ∪ liftPairs true (detachPairs S₂))
       else
-        insert (false :: lastAddr S₁, [true])
-          (liftPairs false (detachPairs S₁) ∪ liftPairs true (pairs H))
+        insert (true :: lastAddr S₁, false :: hangAddr S₂)
+          (liftPairs false (attachPairs S₂ (pairs H)) ∪ liftPairs true (detachPairs S₁))
 
 /-- The pairs of the cycles below a side, in `NMSC.attachTree`, given the pairs `P` of the tree
 hanging from its hybrid edge. -/
@@ -118,7 +118,8 @@ def detachPairs : Brooqs.Side L → Finset (Address × Address)
 end
 
 theorem baseTree_cycle_hyb (γ : ℝ) (S₁ : Brooqs.Side L) (ℓ' ℓ : ℝ) (H : Brooqs.Net L) :
-    baseTree (.cycle γ S₁ (.hyb ℓ') ℓ H) = .fork (detachTree S₁) (baseTree H) := rfl
+    baseTree (.cycle γ S₁ (.hyb ℓ') ℓ H) =
+      .fork (attachTree (.hyb ℓ' : Brooqs.Side L) (baseTree H)) (detachTree S₁) := rfl
 
 theorem baseTree_cycle_node (γ : ℝ) (S₁ : Brooqs.Side L) (ℓ' b : ℝ) (M : Brooqs.Net L)
     (S : Brooqs.Side L) (ℓ : ℝ) (H : Brooqs.Net L) :
@@ -133,8 +134,10 @@ theorem detachTree_node (ℓ b ℓ' b' : ℝ) (M M' : Brooqs.Net L) (S : Brooqs.
       .fork (baseTree M) (detachTree (.node ℓ' b' M' S)) := rfl
 
 theorem pairs_cycle_hyb (γ : ℝ) (S₁ : Brooqs.Side L) (ℓ' ℓ : ℝ) (H : Brooqs.Net L) :
-    pairs (.cycle γ S₁ (.hyb ℓ') ℓ H) = insert (false :: lastAddr S₁, [true])
-      (liftPairs false (detachPairs S₁) ∪ liftPairs true (pairs H)) := rfl
+    pairs (.cycle γ S₁ (.hyb ℓ') ℓ H) =
+      insert (true :: lastAddr S₁, false :: hangAddr (.hyb ℓ' : Brooqs.Side L))
+        (liftPairs false (attachPairs (.hyb ℓ' : Brooqs.Side L) (pairs H)) ∪
+          liftPairs true (detachPairs S₁)) := rfl
 
 theorem pairs_cycle_node (γ : ℝ) (S₁ : Brooqs.Side L) (ℓ' b : ℝ) (M : Brooqs.Net L)
     (S : Brooqs.Side L) (ℓ : ℝ) (H : Brooqs.Net L) :
@@ -162,9 +165,11 @@ theorem labels_baseTree :
       exact (labels_baseTree N₁ h.2.2.1).append (labels_baseTree N₂ h.2.2.2)
   | .cycle _ S₁ (.hyb _) _ H, h => by
       have h1 : S₁.nodes ≠ [] := h.2.2.2.2.2.2.resolve_right (by simp [Brooqs.Side.nodes])
-      simp only [baseTree, Brooqs.Net.leaves, Brooqs.Side.leaves, List.append_nil,
-        List.map_append]
-      exact (labels_detachTree S₁ h.2.2.2.1 h1).append (labels_baseTree H h.2.2.2.2.2.1)
+      rw [baseTree_cycle_hyb]
+      simp only [attachTree, PhyloTree.labels, Brooqs.Net.leaves, Brooqs.Side.leaves,
+        List.append_nil, List.map_append]
+      exact ((labels_baseTree H h.2.2.2.2.2.1).append (labels_detachTree S₁ h.2.2.2.1 h1)).trans
+        List.perm_append_comm
   | .cycle _ S₁ (.node ℓ b M S₂) _ H, h => by
       have h2 : (Brooqs.Side.node ℓ b M S₂).nodes ≠ [] := by simp [Brooqs.Side.nodes]
       simp only [baseTree, Brooqs.Net.leaves, List.map_append]
@@ -404,6 +409,37 @@ theorem footprint_cases {t : PhyloTree} {e : Address × Address} {x : Address}
     (hx : x ∈ EdgeAbove.footprint t e) : (x <+: e.1 ∧ x ≠ e.1) ∨ (x <+: e.2 ∧ x ≠ e.2) :=
   (mem_filter.1 hx).2.2
 
+/-- The pairs of a cycle and of the cycles below it form a cycle-separated family of the tree
+of the cycle: the side `Sa` with the tree `X` of the hybrid component attached, and the side `Sd`
+with its hybrid edge deleted. -/
+theorem separated_cycle {Sa Sd : Brooqs.Side L} {X : PhyloTree} {P : Finset (Address × Address)}
+    (hA : EdgeAbove.CycleSeparated (attachTree Sa X) (attachPairs Sa P))
+    (hD : EdgeAbove.CycleSeparated (detachTree Sd) (detachPairs Sd)) :
+    EdgeAbove.CycleSeparated (.fork (attachTree Sa X) (detachTree Sd))
+      (insert (true :: lastAddr Sd, false :: hangAddr Sa)
+        (liftPairs false (attachPairs Sa P) ∪ liftPairs true (detachPairs Sd))) := by
+  have hl : (PhyloTree.fork (attachTree Sa X) (detachTree Sd)).nodeAt [false] =
+      some (attachTree Sa X) := by simp [PhyloTree.nodeAt]
+  have hr : (PhyloTree.fork (attachTree Sa X) (detachTree Sd)).nodeAt [true] =
+      some (detachTree Sd) := by simp [PhyloTree.nodeAt]
+  refine separated_insert (separated_fork hA hD)
+    ⟨(mem_nodes_cons hr _).2 (lastAddr_mem_nodes _),
+      (mem_nodes_cons hl _).2 ((PhyloTree.mem_nodes_iff _ _).2 ⟨_, nodeAt_hangAddr _ _⟩),
+      List.cons_ne_nil _ _, List.cons_ne_nil _ _, by simp⟩
+    fun f hf => disjoint_left.2 fun x hx hx' => ?_
+  have hx'' := EdgeAbove.footprint_below hx'
+  rcases footprint_cases hx with ⟨h1, h2⟩ | ⟨h1, h2⟩ <;> rcases mem_union.1 hf with hf | hf <;>
+    obtain ⟨g, hg, rfl⟩ := mem_liftPairs.1 hf <;> rw [target_cons] at hx'' <;>
+    obtain ⟨y, rfl⟩ := hx''
+  · simp at h1
+  · simp only [List.cons_append, List.cons_prefix_cons, true_and, ne_eq,
+      List.cons.injEq] at h1 h2
+    exact h2 (detachPairs_off_path _ g hg _ (List.prefix_append _ _) h1)
+  · simp only [List.cons_append, List.cons_prefix_cons, true_and, ne_eq,
+      List.cons.injEq] at h1 h2
+    exact h2 (attachPairs_off_path Sa P g hg _ (List.prefix_append _ _) h1)
+  · simp at h1
+
 mutual
 /-- **Section 3.2**: the pairs of the added edges of a level-1 network `N` form a cycle-separated
 family of the base tree, so that adding an edge above each of them gives a rooted binary level-1
@@ -411,52 +447,10 @@ network built on the base tree (`Realization.levelOne`). -/
 theorem separated_pairs : ∀ N : Brooqs.Net L, EdgeAbove.CycleSeparated (baseTree N) (pairs N)
   | .leaf _ => by simp [EdgeAbove.CycleSeparated, pairs]
   | .tree _ N₁ _ N₂ => separated_fork (separated_pairs N₁) (separated_pairs N₂)
-  | .cycle _ S₁ (.hyb _) _ H => by
-      have hl : (PhyloTree.fork (detachTree S₁) (baseTree H)).nodeAt [false] =
-          some (detachTree S₁) := by simp [PhyloTree.nodeAt]
-      have hr : (PhyloTree.fork (detachTree S₁) (baseTree H)).nodeAt [true] =
-          some (baseTree H) := by simp [PhyloTree.nodeAt]
-      refine separated_insert (separated_fork (separated_detach S₁) (separated_pairs H))
-        ⟨(mem_nodes_cons hl _).2 (lastAddr_mem_nodes S₁),
-          (mem_nodes_cons hr _).2 (PhyloTree.root_mem_nodes _), List.cons_ne_nil _ _,
-          List.cons_ne_nil _ _, by simp⟩ fun f hf => disjoint_left.2 fun x hx hx' => ?_
-      have hx'' := EdgeAbove.footprint_below hx'
-      rcases footprint_cases hx with ⟨h1, h2⟩ | ⟨h1, h2⟩ <;> rcases mem_union.1 hf with hf | hf <;>
-        obtain ⟨g, hg, rfl⟩ := mem_liftPairs.1 hf <;> rw [target_cons] at hx'' <;>
-        obtain ⟨y, rfl⟩ := hx''
-      · simp only [List.cons_append, List.cons_prefix_cons, true_and, ne_eq,
-          List.cons.injEq] at h1 h2
-        exact h2 (detachPairs_off_path S₁ g hg _ (List.prefix_append _ _) h1)
-      · simp at h1
-      · simp at h1
-      · simp only [List.cons_append, List.cons_prefix_cons, true_and, ne_eq, List.cons.injEq,
-          List.prefix_nil] at h1 h2
-        exact h2 h1
-  | .cycle _ S₁ (.node ℓ b M S₂) _ H => by
-      have hl : (PhyloTree.fork (attachTree S₁ (baseTree H))
-          (detachTree (.node ℓ b M S₂))).nodeAt [false] = some (attachTree S₁ (baseTree H)) := by
-        simp [PhyloTree.nodeAt]
-      have hr : (PhyloTree.fork (attachTree S₁ (baseTree H))
-          (detachTree (.node ℓ b M S₂))).nodeAt [true] = some (detachTree (.node ℓ b M S₂)) := by
-        simp [PhyloTree.nodeAt]
-      refine separated_insert (separated_fork (separated_attach S₁ (separated_pairs H))
-        (separated_detach _))
-        ⟨(mem_nodes_cons hr _).2 (lastAddr_mem_nodes _),
-          (mem_nodes_cons hl _).2 ((PhyloTree.mem_nodes_iff _ _).2 ⟨_, nodeAt_hangAddr _ _⟩),
-          List.cons_ne_nil _ _, List.cons_ne_nil _ _, by simp⟩
-        fun f hf => disjoint_left.2 fun x hx hx' => ?_
-      have hx'' := EdgeAbove.footprint_below hx'
-      rcases footprint_cases hx with ⟨h1, h2⟩ | ⟨h1, h2⟩ <;> rcases mem_union.1 hf with hf | hf <;>
-        obtain ⟨g, hg, rfl⟩ := mem_liftPairs.1 hf <;> rw [target_cons] at hx'' <;>
-        obtain ⟨y, rfl⟩ := hx''
-      · simp at h1
-      · simp only [List.cons_append, List.cons_prefix_cons, true_and, ne_eq,
-          List.cons.injEq] at h1 h2
-        exact h2 (detachPairs_off_path _ g hg _ (List.prefix_append _ _) h1)
-      · simp only [List.cons_append, List.cons_prefix_cons, true_and, ne_eq,
-          List.cons.injEq] at h1 h2
-        exact h2 (attachPairs_off_path S₁ (pairs H) g hg _ (List.prefix_append _ _) h1)
-      · simp at h1
+  | .cycle _ S₁ (.hyb _) _ H =>
+      separated_cycle (separated_attach _ (separated_pairs H)) (separated_detach S₁)
+  | .cycle _ S₁ (.node ..) _ H =>
+      separated_cycle (separated_attach S₁ (separated_pairs H)) (separated_detach _)
 
 /-- The pairs below a side, with a tree and a cycle-separated family of it attached, form a
 cycle-separated family. -/
