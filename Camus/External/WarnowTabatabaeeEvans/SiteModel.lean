@@ -296,6 +296,10 @@ structure SiteHistory (N : RootedNetwork) (σ : Type*) where
   isSwitching : N.Switching switching
   state_off : ∀ x ∉ N.vertices, state x = state N.root
 
+/-- The root of a rooted binary level-1 network is one of its vertices. -/
+theorem root_mem_vertices {N : RootedNetwork} (hN : N.RootedBinaryLevelOne) :
+    N.root ∈ N.vertices := hN.1
+
 namespace SiteHistory
 
 variable {N : RootedNetwork} {σ : Type*}
@@ -486,19 +490,19 @@ noncomputable def weight (M : SiteModel N σ) (h : SiteHistory N σ) : ℝ≥0 :
 of the vertices: a Markov chain on the tree `S` (`markov_tree_sum`). -/
 theorem substitution_sum_states (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
     (S : {S // N.Switching S}) :
-    ∑ f : N.vertices → σ, M.root (SiteHistory.extend hN.1 f N.root) *
-      ∏ e ∈ S.1, M.substitution e (SiteHistory.extend hN.1 f e.1)
-        (SiteHistory.extend hN.1 f e.2) = 1 := by
+    ∑ f : N.vertices → σ, M.root (SiteHistory.extend (root_mem_vertices hN) f N.root) *
+      ∏ e ∈ S.1, M.substitution e (SiteHistory.extend (root_mem_vertices hN) f e.1)
+        (SiteHistory.extend (root_mem_vertices hN) f e.2) = 1 := by
   classical
   have hmem : ∀ e ∈ S.1, e.1 ∈ N.vertices ∧ e.2 ∈ N.vertices := fun e he => hN.2.1 e (S.2.1 he)
-  let r : N.vertices := ⟨N.root, hN.1⟩
+  let r : N.vertices := ⟨N.root, root_mem_vertices hN⟩
   let E : Finset (N.vertices × N.vertices) :=
     Finset.univ.filter fun e => (e.1.1, e.2.1) ∈ S.1
   have hE : ∀ e ∈ E, (e.1.1, e.2.1) ∈ S.1 := fun e he => (Finset.mem_filter.mp he).2
   -- the edges of `S` as edges between vertices of `N`
   have hconv : ∀ f : N.vertices → σ,
-      ∏ e ∈ S.1, M.substitution e (SiteHistory.extend hN.1 f e.1)
-        (SiteHistory.extend hN.1 f e.2) =
+      ∏ e ∈ S.1, M.substitution e (SiteHistory.extend (root_mem_vertices hN) f e.1)
+        (SiteHistory.extend (root_mem_vertices hN) f e.2) =
       ∏ e ∈ E, M.substitution (e.1.1, e.2.1) (f e.1) (f e.2) := by
     intro f
     symm
@@ -506,8 +510,8 @@ theorem substitution_sum_states (M : SiteModel N σ) (hN : N.RootedBinaryLevelOn
       (fun e he => (⟨e.1, (hmem e he).1⟩, ⟨e.2, (hmem e he).2⟩)) (fun e he => hE e he)
       (fun e he => Finset.mem_filter.mpr ⟨Finset.mem_univ _, he⟩) (fun e _ => rfl)
       (fun e _ => rfl) (fun e he => ?_)
-    rw [SiteHistory.extend_of_mem hN.1 f e.1.2, SiteHistory.extend_of_mem hN.1 f e.2.2]
-  simp only [hconv, SiteHistory.extend_of_mem hN.1 _ hN.1]
+    rw [SiteHistory.extend_of_mem _ f e.1.2, SiteHistory.extend_of_mem _ f e.2.2]
+  simp only [hconv, SiteHistory.extend_of_mem (root_mem_vertices hN) _ (root_mem_vertices hN)]
   refine markov_tree_sum E r (fun v => N.dagRank v.1) ?_ ?_ ?_ ?_ M.root M.root_sum
     (fun e => M.substitution (e.1.1, e.2.1)) ?_
   · -- the number of strict ancestors increases along every edge
@@ -534,26 +538,43 @@ theorem substitution_sum_states (M : SiteModel N σ) (hN : N.RootedBinaryLevelOn
   · intro e he s
     exact M.substitution_sum _ (S.2.1 (hE e he)) s
 
+/-- The probability of the history with switching `S` and states `f`: the product of the
+transmission probabilities of the edges of `S` into reticulations, and the root and substitution
+part. -/
+theorem weight_equivProd_symm (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
+    (S : {S // N.Switching S}) (f : N.vertices → σ) :
+    M.weight ((SiteHistory.equivProd (root_mem_vertices hN)).symm (S, f)) =
+      (∏ e ∈ S.1.filter (fun e => N.indegree e.2 = 2), M.transmission e) *
+        (M.root (SiteHistory.extend (root_mem_vertices hN) f N.root) *
+          ∏ e ∈ S.1, M.substitution e (SiteHistory.extend (root_mem_vertices hN) f e.1)
+            (SiteHistory.extend (root_mem_vertices hN) f e.2)) := by
+  change (∏ e ∈ S.1.filter (fun e => N.indegree e.2 = 2), M.transmission e) *
+      M.root (SiteHistory.extend (root_mem_vertices hN) f N.root) *
+      ∏ e ∈ S.1, M.substitution e (SiteHistory.extend (root_mem_vertices hN) f e.1)
+        (SiteHistory.extend (root_mem_vertices hN) f e.2) = _
+  ring
+
 /-- The probabilities of the histories of a rooted binary level-1 network sum to 1. -/
 theorem weight_sum (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
     ∑ h, M.weight h = 1 := by
   classical
-  rw [← (SiteHistory.equivProd (σ := σ) hN.1).symm.sum_comp, Fintype.sum_prod_type]
+  rw [← (SiteHistory.equivProd (σ := σ) (root_mem_vertices hN)).symm.sum_comp,
+    Fintype.sum_prod_type]
   -- the transmission part depends only on the switching
   let ω : ℕ × ℕ → ℝ≥0 := fun e => if N.indegree e.2 = 2 then M.transmission e else 1
-  have hsplit : ∀ (S : {S // N.Switching S}) (f : N.vertices → σ),
-      M.weight ((SiteHistory.equivProd hN.1).symm (S, f)) =
-        (∏ e ∈ S.1, ω e) * (M.root (SiteHistory.extend hN.1 f N.root) *
-          ∏ e ∈ S.1, M.substitution e (SiteHistory.extend hN.1 f e.1)
-            (SiteHistory.extend hN.1 f e.2)) := by
-    intro S f
-    simp only [weight, SiteHistory.equivProd, Equiv.coe_fn_symm_mk, ω, Finset.prod_ite,
-      Finset.prod_const_one, mul_one]
-    ring
+  have hω : ∀ S : {S // N.Switching S},
+      ∏ e ∈ S.1.filter (fun e => N.indegree e.2 = 2), M.transmission e = ∏ e ∈ S.1, ω e := by
+    intro S
+    simp only [ω, Finset.prod_ite, Finset.prod_const_one, mul_one]
   -- the states sum out to 1 for each switching
-  simp only [hsplit, ← Finset.mul_sum, substitution_sum_states M hN, mul_one]
+  have hstates : ∀ S : {S // N.Switching S}, ∑ f : N.vertices → σ,
+      M.weight ((SiteHistory.equivProd (σ := σ) (root_mem_vertices hN)).symm (S, f)) =
+        ∏ e ∈ S.1, ω e := by
+    intro S
+    rw [Finset.sum_congr rfl fun f _ => weight_equivProd_symm M hN S f, ← Finset.mul_sum,
+      substitution_sum_states M hN S, mul_one, hω]
   -- the switchings are independent choices at the vertices
-  rw [sum_prod hN ω]
+  rw [Finset.sum_congr rfl fun S _ => hstates S, sum_prod hN ω]
   refine Finset.prod_eq_one fun v hv => ?_
   obtain ⟨hvr, hvN⟩ := Finset.mem_erase.mp hv
   have hin : N.indegree v = 1 ∨ N.indegree v = 2 := by
@@ -571,6 +592,28 @@ theorem weight_sum (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
     refine Finset.sum_congr rfl fun e he => ?_
     have hev : e.2 = v := (Finset.mem_filter.mp he).2
     simp [ω, hev, h]
+
+/-- The probability that a site evolves down the switching `S₀`: the product of the transmission
+probabilities of the edges of `S₀` into reticulations. -/
+theorem sum_weight_switching (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
+    {S₀ : Finset (ℕ × ℕ)} (hS₀ : N.Switching S₀) :
+    ∑ h ∈ Finset.univ.filter (fun h : SiteHistory N σ => h.switching = S₀), M.weight h =
+      ∏ e ∈ S₀.filter (fun e => N.indegree e.2 = 2), M.transmission e := by
+  classical
+  rw [Finset.sum_filter, ← (SiteHistory.equivProd (σ := σ) (root_mem_vertices hN)).symm.sum_comp,
+    Fintype.sum_prod_type]
+  have hsw : ∀ (S : {S // N.Switching S}) (f : N.vertices → σ),
+      ((SiteHistory.equivProd (root_mem_vertices hN)).symm (S, f)).switching = S.1 := fun _ _ => rfl
+  simp only [hsw]
+  rw [Finset.sum_eq_single (⟨S₀, hS₀⟩ : {S // N.Switching S})]
+  · rw [Finset.sum_congr rfl fun f _ => ite_eq_left rfl,
+      Finset.sum_congr rfl fun f _ => weight_equivProd_symm M hN _ f, ← Finset.mul_sum,
+      substitution_sum_states M hN, mul_one]
+  · intro S _ hS
+    have hne : S.1 ≠ S₀ := fun h => hS (Subtype.ext h)
+    simp [hne]
+  · intro h
+    exact absurd (Finset.mem_univ _) h
 
 /-- The distribution of a site under the model `M`, on a rooted binary level-1 network. -/
 noncomputable def pmf (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
@@ -631,7 +674,7 @@ theorem indegree_head (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈
   exacts [Or.inl h.1, Or.inl h.1, Or.inr h.1]
 
 /-- On every edge of a rooted binary level-1 network, no change has positive probability. -/
-theorem stay_pos' (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ}
+theorem stay_pos_edge (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ}
     (he : e ∈ N.edges) (s : σ) : 0 < M.substitution e s s := by
   rcases indegree_head hN he with h | h
   · exact M.stay_pos e he h s
@@ -824,72 +867,121 @@ theorem displays_of_mem_quartets (hN : N.RootedBinaryLevelOne) {h : SiteHistory 
 
 end SiteHistory
 
+namespace SiteHistory
+
+open Relation
+
+variable {N : RootedNetwork} {σ : Type*}
+
+/-- The history that evolves down the switching `S` and changes only on its edge `(x, y)`: the
+state `s₁` at the vertices below `y` in `S`, and `s₀` at the others. -/
+noncomputable def snp (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)} (hS : N.Switching S)
+    {x y : ℕ} (hxy : (x, y) ∈ S) (s₀ s₁ : σ) : SiteHistory N σ := by
+  classical
+  exact ⟨S, fun v => if ReflTransGen (fun a b => (a, b) ∈ S) y v then s₁ else s₀, hS,
+    fun v hv => by
+      simp only [ite_eq_right (not_below_of_not_mem hN hS hxy hv),
+        ite_eq_right (not_below_root hN hS hxy)]⟩
+
+variable (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)} (hS : N.Switching S) {x y : ℕ}
+  (hxy : (x, y) ∈ S) (s₀ s₁ : σ)
+
+theorem snp_switching : (snp hN hS hxy s₀ s₁).switching = S := rfl
+
+theorem snp_state_tail : (snp hN hS hxy s₀ s₁).state x = s₀ := by
+  classical
+  exact ite_eq_right (not_below_tail hN hS hxy)
+
+theorem snp_state_head : (snp hN hS hxy s₀ s₁).state y = s₁ := by
+  classical
+  exact ite_eq_left ReflTransGen.refl
+
+/-- The state of `snp` does not change on the edges of `S` other than `(x, y)`. -/
+theorem snp_state_eq {e : ℕ × ℕ} (he : e ∈ S) (hne : e ≠ (x, y)) :
+    (snp hN hS hxy s₀ s₁).state e.1 = (snp hN hS hxy s₀ s₁).state e.2 := by
+  classical
+  have hiff := below_head_iff hN hS hxy (u := e.1) (v := e.2) he hne
+  change (if ReflTransGen (fun a b => (a, b) ∈ S) y e.1 then s₁ else s₀) =
+    (if ReflTransGen (fun a b => (a, b) ∈ S) y e.2 then s₁ else s₀)
+  by_cases h1 : ReflTransGen (fun a b => (a, b) ∈ S) y e.1
+  · rw [ite_eq_left h1, ite_eq_left (hiff.mpr h1)]
+  · rw [ite_eq_right h1, ite_eq_right (fun h2 => h1 (hiff.mp h2))]
+
+variable {s₀ s₁} [DecidableEq σ]
+
+/-- With two different states, `snp` changes on `(x, y)` and nowhere else. -/
+theorem snp_changes (hs : s₀ ≠ s₁) : (snp hN hS hxy s₀ s₁).changes = {(x, y)} := by
+  ext e
+  simp only [changes, Finset.mem_filter, Finset.mem_singleton, snp_switching]
+  constructor
+  · rintro ⟨he, hne⟩
+    by_contra hexy
+    exact hne (snp_state_eq hN hS hxy s₀ s₁ he hexy)
+  · rintro rfl
+    refine ⟨hxy, ?_⟩
+    rw [snp_state_tail, snp_state_head]
+    exact hs
+
+/-- With two different states, `snp` is an SNP whose quartets are those cut by the clade below
+`y` in `S`. -/
+theorem snp_quartets (hs : s₀ ≠ s₁) :
+    (snp hN hS hxy s₀ s₁).quartets = cutQuartets N S y :=
+  quartets_of_changes (snp_changes hN hS hxy hs)
+
+theorem snp_isSNP (hs : s₀ ≠ s₁) : (snp hN hS hxy s₀ s₁).IsSNP := by
+  unfold IsSNP
+  rw [snp_changes hN hS hxy hs, Finset.card_singleton]
+
+end SiteHistory
+
 namespace SiteModel
 
 open Relation
 
 variable {N : RootedNetwork} {σ : Type*} [Fintype σ] [DecidableEq σ]
 
+omit [DecidableEq σ] in
+/-- The history `SiteHistory.snp`, which follows a switching `S` and changes only on an edge
+`(x, y)` of `S` into a vertex of indegree 1, has positive probability: the transmission and root
+probabilities are positive, the change on `(x, y)` is a change on a tree edge, and on every other
+edge of `S` the state stays the same, which has probability 1 on a reticulation edge and
+`p(f, s, s) > 0` on a tree edge `f` (`stay_pos`). -/
+theorem weight_snp_pos (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
+    {S : Finset (ℕ × ℕ)} (hS : N.Switching S) {x y : ℕ} (hxy : (x, y) ∈ S)
+    (hy : N.indegree y = 1) {s₀ s₁ : σ} (hs : s₀ ≠ s₁) :
+    0 < M.weight (SiteHistory.snp hN hS hxy s₀ s₁) := by
+  simp only [weight, SiteHistory.snp_switching]
+  refine mul_pos (mul_pos ?_ (M.root_pos _)) ?_
+  · refine Finset.prod_pos fun e he => ?_
+    obtain ⟨heS, h2⟩ := Finset.mem_filter.mp he
+    exact M.transmission_pos e (hS.1 heS) h2
+  · refine Finset.prod_pos fun e he => ?_
+    by_cases hexy : e = (x, y)
+    · subst hexy
+      rw [SiteHistory.snp_state_tail, SiteHistory.snp_state_head]
+      exact M.change_pos _ (hS.1 he) hy s₀ s₁ hs
+    · rw [SiteHistory.snp_state_eq hN hS hxy s₀ s₁ he hexy]
+      exact M.stay_pos_edge hN (hS.1 he) _
+
 /-- The proof of WTE's Theorem 6, for quartets: every quartet `q` displayed by `N` is a quartet
 of an SNP of positive probability. Some switching `S` has an edge `(x, y)` into a vertex of
 indegree 1 whose clade below `y` cuts `q` (`RootedNetwork.displays_iff_treeEdge_cladeBelow`);
-the history that follows `S`, with one state above `(x, y)` and another below, changes only on
-`(x, y)`, and its probability is positive. This uses `stay_pos`: on the tree edges of `S` other
-than `(x, y)` the state does not change. -/
+the history that follows `S`, with one state above `(x, y)` and another below
+(`SiteHistory.snp`), changes only on `(x, y)`, and its probability is positive
+(`weight_snp_pos`, which uses `stay_pos`). -/
 theorem exists_snp (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) [Nontrivial σ]
     {q : Quartet} (hq : N.DisplaysQuartet q) :
     ∃ h : SiteHistory N σ, 0 < M.weight h ∧ h.IsSNP ∧ q ∈ h.quartets := by
-  classical
   -- WTE: a tree of the network containing the edge `e = (x, y)` whose clade is cut by `q`
   obtain ⟨hqt, S, hS, x, y, hxy, hy, hcut⟩ :=
     (RootedNetwork.displays_iff_treeEdge_cladeBelow hN q).mp hq
   obtain ⟨s₀, s₁, hs⟩ := exists_pair_ne σ
-  -- the character takes the state `s₁` below `y` and `s₀` elsewhere
-  let below : ℕ → Prop := fun v => ReflTransGen (fun a b => (a, b) ∈ S) y v
-  let st : ℕ → σ := fun v => if below v then s₁ else s₀
-  have hst_off : ∀ v ∉ N.vertices, st v = st N.root := by
-    intro v hv
-    simp only [st, below, ite_eq_right (not_below_of_not_mem hN hS hxy hv),
-      ite_eq_right (not_below_root hN hS hxy)]
-  let h : SiteHistory N σ := ⟨S, st, hS, hst_off⟩
-  have hx : st x = s₀ := ite_eq_right (not_below_tail hN hS hxy)
-  have hy' : st y = s₁ := ite_eq_left ReflTransGen.refl
-  have hsame : ∀ e ∈ S, e ≠ (x, y) → st e.1 = st e.2 := by
-    intro e he hne
-    have hiff := below_head_iff hN hS hxy (u := e.1) (v := e.2) he hne
-    simp only [st, below] at hiff ⊢
-    by_cases h1 : ReflTransGen (fun a b => (a, b) ∈ S) y e.1
-    · rw [ite_eq_left h1, ite_eq_left (hiff.mpr h1)]
-    · rw [ite_eq_right h1, ite_eq_right (fun h2 => h1 (hiff.mp h2))]
-  -- WTE: the character changes on `e` and no other edge of the tree, so it is an SNP
-  have hch : h.changes = {(x, y)} := by
-    ext e
-    simp only [SiteHistory.changes, Finset.mem_filter, Finset.mem_singleton, h]
-    constructor
-    · rintro ⟨he, hne⟩
-      by_contra hexy
-      exact hne (hsame e he hexy)
-    · rintro rfl
-      exact ⟨hxy, by rw [hx, hy']; exact hs⟩
-  refine ⟨h, ?_, ?_, ?_⟩
-  · -- WTE: the probability that the character evolves down the tree and changes only on `e` is
-    -- strictly positive
-    simp only [weight, h]
-    refine mul_pos (mul_pos ?_ (M.root_pos _)) ?_
-    · refine Finset.prod_pos fun e he => ?_
-      obtain ⟨heS, h2⟩ := Finset.mem_filter.mp he
-      exact M.transmission_pos e (hS.1 heS) h2
-    · refine Finset.prod_pos fun e he => ?_
-      by_cases hexy : e = (x, y)
-      · subst hexy
-        rw [hx, hy']
-        exact M.change_pos _ (hS.1 he) hy s₀ s₁ hs
-      · rw [hsame e he hexy]
-        exact M.stay_pos' hN (hS.1 he) _
-  · unfold SiteHistory.IsSNP
-    rw [hch, Finset.card_singleton]
-  · rw [SiteHistory.quartets_of_changes hch]
-    exact Finset.mem_filter.mpr ⟨Quartet.mem_onTaxa.mpr hqt, hcut⟩
+  -- WTE: the character changes on `e` and no other edge of the tree, so it is an SNP, and this
+  -- has strictly positive probability
+  refine ⟨SiteHistory.snp hN hS hxy s₀ s₁, M.weight_snp_pos hN hS hxy hy hs,
+    SiteHistory.snp_isSNP hN hS hxy hs, ?_⟩
+  rw [SiteHistory.snp_quartets hN hS hxy hs]
+  exact Finset.mem_filter.mpr ⟨Quartet.mem_onTaxa.mpr hqt, hcut⟩
 
 /-- The probability that a site contributes the quartet `q` to `Q`: the total probability of the
 histories whose quartets contain `q`. -/
