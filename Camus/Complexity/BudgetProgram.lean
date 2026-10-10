@@ -636,6 +636,7 @@ theorem time_budgetFill {t : PhyloTree} {T : Tables} (hT : T.Correct t)
     congr 1
     ext e
     simp [hB]
+  -- one column: each subproblem once, and each candidate pair in one bucket
   have hcol : ∀ (R : Address × ℕ → WithBot ℕ) (k : ℕ), k ∈ List.range (m + 1) →
       (forList (fun R v => do
         let x ← budgetCell T B W R v k
@@ -661,6 +662,7 @@ theorem time_budgetFill {t : PhyloTree} {T : Tables} (hT : T.Correct t)
       _ = _ := by
         rw [Finset.sum_add_distrib, ← Finset.sum_mul, candidate_visits]
         simp [N]
+  -- the `m + 1` columns: each subproblem is solved `m + 1` times
   unfold budgetFill
   calc
     _ ≤ ((List.range (m + 1)).map fun _ =>
@@ -681,9 +683,11 @@ theorem camusBudget_time {t : PhyloTree} (ht : t.WellLabelled) (Q : Multiset Qua
   have hT := preprocess_correct t
   have hpre := preprocess_order t
   obtain ⟨hB, -⟩ := enumerate_buckets hT Q
+  -- the preprocessing and the weights, as in Section 2.3: `O(n²|Q|)`
   have t1 := preprocess_time t
   have t2 := time_enumerate hT Q
   have t3 := time_reverseList t.preorder
+  -- the matrix: each subproblem solved `m + 1` times, with `O(m²)` look-ups per hanging subtree
   have t4 := time_budgetFill hT (fun v e => (hB v).2 e) (fun v => (hB v).1)
     (enumerate (preprocess t).val.1 Q t.preorder).val.2 m
   simp only [camusBudget, time_bind, val_reverseList, time_pure]
