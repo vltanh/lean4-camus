@@ -28,9 +28,9 @@ of its algorithm are left out. The model:
 **What was added for CAMUS.** The copied files are unchanged except for their docstrings, which
 name BROOQS where they refer to its paper, and two public lemmas: `Brooqs.exists_context_kernel`
 and `Brooqs.quartetCF_eq_sum_subnet` in `Context.lean` (the argument of
-`Brooqs.quartetCF_eq_sum_top`, stated for any subnetwork; `quartetCF_eq_sum_top` is now its
+`Brooqs.quartetCF_eq_sum_top`, stated for any subnetwork; `quartetCF_eq_sum_top` is its
 corollary) and `Brooqs.quartetCF_eq_of_components` in `Cycle.lean` (the steps of
-`Brooqs.nmsc_quartetCF` for four given taxa). The new files:
+`Brooqs.nmsc_quartetCF` for four given taxa). Files written for CAMUS:
 
 - `Displayed.lean`: the displayed trees of a network (CAMUS's Definition 1), by their clusters, and
   its displayed quartets (`Brooqs.Net.Displays`).
@@ -44,4 +44,6 @@ corollary) and `Brooqs.quartetCF_eq_of_components` in `Cycle.lean` (the steps of
   (`Brooqs.Net.regularOn_of_not_anomalous`), and its weaker part holds always
   (`Brooqs.Net.weakPattern`).
 
-The consequences for Sections 3.3 and 3.4 of CAMUS are in `Camus/Pipelines/NMSC/`.
+The consequences for Sections 3.2 to 3.4 of CAMUS are in `Camus/Pipelines/NMSC/`, with the graph
+of a network in the representation of CAMUS (`Camus/Pipelines/NMSC/BaseTree.lean`,
+`Camus/Pipelines/NMSC/Bridge.lean`).

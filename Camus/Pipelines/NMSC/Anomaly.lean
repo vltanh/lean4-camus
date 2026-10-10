@@ -1,6 +1,7 @@
 module
 
 public import Camus.Pipelines.NMSC.Filtering
+public import Camus.Pipelines.NMSC.Bridge
 
 /-!
 # Section 3.3: Quartet Filtering and ASTRAL on an anomalous network
@@ -20,7 +21,10 @@ probable (`NMSC.anomalyNet_quartetProb`). By the strong law of large numbers, fo
 of genes `01|23` is the least frequent of the three, so Algorithm 1 drops it and keeps the most
 frequent one, which is not in Q(N_r) (`NMSC.anomaly_filterQuartets`); and every tree of maximum
 quartet support score induces a quartet tree other than `01|23`, so it is not a displayed tree of
-the network (`NMSC.anomaly_astral`).
+the network (`NMSC.anomaly_astral`). In the graph representation of CAMUS, the network is the tree
+`(((0, 1), 2), 3)` with an edge added from above `2` to above the cherry `(0, 1)`
+(`NMSC.baseTree_anomalyNet`, `NMSC.pairs_anomalyNet`), and Quartet Filtering fails in the same way
+for the quartet trees that this graph displays (`NMSC.anomaly_filterQuartets_graph`).
 
 ## Main results
 
@@ -33,6 +37,7 @@ the network (`NMSC.anomaly_astral`).
   copy of the one in Q(N_r).
 * `NMSC.anomaly_astral`: almost surely, for all large numbers of genes, no tree of maximum quartet
   support score is a displayed tree of the network.
+* `NMSC.anomaly_filterQuartets_graph`: the failure of Algorithm 1 for the graph of the network.
 -/
 
 @[expose] public noncomputable section
@@ -136,6 +141,19 @@ theorem anomalyNet_not_regularOn : ¬ RegularOn anomalyNet key4 := by
     · exact absurd (h1 (hdisp 1 (by decide))) (by decide)
     · exact absurd (h2 (hdisp 2 (by decide))) (by decide)
     · exact absurd (h1 (hdisp 1 (by decide))) (by decide)
+
+/-- The taxa of the network are `0, 1, 2, 3`. -/
+theorem anomalyNet_taxa : ∀ x : taxa4, x ∈ anomalyNet.taxa := by
+  decide
+
+/-- The base tree of the network: `(((0, 1), 2), 3)`. -/
+theorem baseTree_anomalyNet :
+    baseTree anomalyNet = .fork (.fork (.fork (.leaf 0) (.leaf 1)) (.leaf 2)) (.leaf 3) := by
+  decide
+
+/-- The pair of the added edge: from above the leaf `2` to above the cherry `(0, 1)`. -/
+theorem pairs_anomalyNet : pairs anomalyNet = {([false, true], [false, false])} := by
+  decide
 
 section Genes
 
@@ -295,6 +313,28 @@ theorem anomaly_astral (G : ℕ → Ω → Finset (Finset taxa4)) (hind : iIndep
   have hT' : (key4.quartet (T.splitOf key4)).induced T = true :=
     (PhyloTree.induced_iff_splitOf T hT key4 hk _).2 rfl
   exact hne ((anomalyNet_displaysQuartet _).1 ⟨K, hK, (hiff _).2 hT'⟩)
+
+/-- **Section 3.3: Quartet Filtering fails under the NMSC, in the graph representation.** Let the
+gene trees be independent, each with the law of the NMSC on the network `N₃₂` of `anomalyNet`, and
+let `N_r = Realization.graph (baseTree anomalyNet) (pairs anomalyNet)` be its graph, the tree
+`(((0, 1), 2), 3)` with an edge added from above `2` to above `(0, 1)`. `N_r` displays `01|23`.
+For every threshold `t`, almost surely, for all large numbers `n` of genes, Algorithm 1 applied to
+the quartet trees of the first `n` gene trees returns no copy of `01|23`, and returns a quartet tree
+that `N_r` does not display (`NMSC.anomaly_filterQuartets`, `NMSC.graph_displaysQuartet_iff`). -/
+theorem anomaly_filterQuartets_graph (G : ℕ → Ω → Finset (Finset taxa4)) (hind : iIndepFun G P)
+    (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = anomalyNet.geneTreeDist id T) (t : ℝ) :
+    (Realization.graph (baseTree anomalyNet) (pairs anomalyNet)).DisplaysQuartet (key4.quartet 0) ∧
+    ∀ᵐ ω ∂P, ∀ᶠ n in atTop,
+      (filterQuartets t (geneQuartets (fun i => G i ω) n)).count (key4.quartet 0) = 0 ∧
+      ∃ q ∈ filterQuartets t (geneQuartets (fun i => G i ω) n),
+        ¬ (Realization.graph (baseTree anomalyNet) (pairs anomalyNet)).DisplaysQuartet q := by
+  have hiff := graph_displaysQuartet_iff anomalyNet_wellFormed anomalyNet_taxa
+  refine ⟨(hiff _).2 ((anomalyNet_displaysQuartet 0).2 rfl), ?_⟩
+  filter_upwards [anomaly_filterQuartets G hind hid hlaw t] with ω hω
+  filter_upwards [hω] with n hn
+  obtain ⟨h0, q, hq, hnq⟩ := hn
+  exact ⟨h0, q, hq, fun h => hnq ((hiff q).1 h)⟩
 
 end Genes
 
