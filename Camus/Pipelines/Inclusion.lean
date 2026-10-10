@@ -168,10 +168,12 @@ among the networks built on `T` that do. -/
 theorem deepNet_optimal_fewest (Q : Multiset Quartet)
     (hQ : ∀ q, q ∈ Q ↔ shallowNet.DisplaysQuartet q) :
     (∀ R : RootedNetwork, R.AnchoredExtension donorTree →
-        score Q (DynamicProgramming.repertoire Q R) ≤ score Q (DynamicProgramming.repertoire Q deepNet)) ∧
+        score Q (DynamicProgramming.repertoire Q R) ≤
+          score Q (DynamicProgramming.repertoire Q deepNet)) ∧
       (∀ R : RootedNetwork, R.AnchoredExtension donorTree →
         (∀ R' : RootedNetwork, R'.AnchoredExtension donorTree →
-          score Q (DynamicProgramming.repertoire Q R') ≤ score Q (DynamicProgramming.repertoire Q R)) →
+          score Q (DynamicProgramming.repertoire Q R') ≤
+            score Q (DynamicProgramming.repertoire Q R)) →
         deepNet.reticulationCount ≤ R.reticulationCount) := by
   classical
   -- `deepNet` displays every quartet of `Q`, so its score is `|Q|`, the largest possible
