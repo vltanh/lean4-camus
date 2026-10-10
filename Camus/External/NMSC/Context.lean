@@ -19,6 +19,13 @@ The rest of `N` is a network `K : Net (Option X)` with one leaf labelled `none`,
 `none`; its kernel, followed by the population above the root, is nice, and the gene trees it
 produces are complete binary trees on the four lineages, whose score is the indicator of the split
 `{0, 1} | {2, 3}`.
+
+The argument does not use the cycle: for any subnetwork `C` of `N` (below a cut edge), the rest of
+`N` acts on the forest at the root of `C` by a nice kernel (`Brooqs.exists_context_kernel`), and if
+at least three of the four lineages are sampled below the root of `C`, the quartet CF is the
+expected score of the forest there (`Brooqs.quartetCF_eq_sum_subnet`, of which
+`Brooqs.quartetCF_eq_sum_top` is the case of the top node of a cycle). These two generalizations
+were added to the copy from lean4-brooqs for the analysis of Section 3.3 of CAMUS.
 -/
 
 @[expose] public noncomputable section
@@ -427,15 +434,42 @@ private theorem ns_context_nice (K : Net (Option X)) (hKnd : K.leaves.Nodup)
 
 end Kernel
 
+/-- The rest of `N` around a subnetwork `C` (its context) acts on the forest at the top of `C` by a
+nice kernel, which adds the lineages sampled from the taxa outside `C`. -/
+theorem exists_context_kernel {X : Type u} [DecidableEq X] (N : Net X) (hN : N.leaves.Nodup)
+    {C : Net X} (hCmem : C ∈ N.subnets) (s : Fin 4 → X) (hsN : ∀ l, s l ∈ N.taxa) :
+    ∃ M : Matrix (Finset (Finset (Fin 4))) (Finset (Finset (Fin 4))) ℝ,
+      N.forestDist s = C.forestDist s ᵥ* M ∧
+        NiceKernel (univ.filter fun l => s l ∉ C.taxa) M := by
+  obtain ⟨K, hK, hNK⟩ := ns_net_context C N hCmem
+  obtain ⟨hKnd, -, hKC⟩ := ns_context_nodup hN hK hNK
+  obtain ⟨M, hM⟩ := ns_net_linear (sampledInput s) K (List.count_eq_one_of_mem hKnd hK)
+  have hMF : ∀ F G, M F G =
+      K.forestDistOf (fun o => o.elim (Pi.single F 1) (sampledInput s)) G := by
+    intro F G
+    rw [hM]
+    simp
+  have hS : (univ.filter fun l => some (s l) ∈ K.leaves) = univ.filter fun l => s l ∉ C.taxa := by
+    ext l
+    simp only [mem_filter, mem_univ, true_and, Net.taxa, List.mem_toFinset]
+    constructor
+    · exact fun h => hKC _ h
+    · intro h
+      have hl := hsN l
+      simp only [Net.taxa, List.mem_toFinset] at hl
+      exact (ns_context_cover hNK hl).resolve_left h
+  refine ⟨M, ?_, hS ▸ ns_context_nice K hKnd hK s M hMF⟩
+  rw [Net.forestDist_eq, Net.forestDist_eq, hNK, Net.forestDistOf_bind, ← hM]
+  congr 1
+  funext o
+  cases o <;> rfl
+
 /-- The quartet CF of four taxa of `N` (one lineage sampled from each), at least three of them below
-the top node of the cycle `Ω`, is the expected score of the forest arriving at the top node of
-`Ω`. -/
-theorem quartetCF_eq_sum_top {X : Type u} [DecidableEq X] (N : Net X) (hN : N.leaves.Nodup)
-    (Ω : N.Cycle) (s : Fin 4 → X) (hsN : ∀ l, s l ∈ N.taxa)
-    (h3 : 3 ≤ #(univ.filter fun l => s l ∈ Ω.top.taxa)) :
-    N.quartetCF (s 0) (s 1) (s 2) (s 3) = ∑ F, Ω.top.forestDist s F * quartetScore F := by
-  have hCmem : Ω.top ∈ N.subnets := Ω.mem
-  generalize Ω.top = C at hCmem h3 ⊢
+the root of a subnetwork `C`, is the expected score of the forest arriving at the root of `C`. -/
+theorem quartetCF_eq_sum_subnet {X : Type u} [DecidableEq X] (N : Net X) (hN : N.leaves.Nodup)
+    {C : Net X} (hCmem : C ∈ N.subnets) (s : Fin 4 → X) (hsN : ∀ l, s l ∈ N.taxa)
+    (h3 : 3 ≤ #(univ.filter fun l => s l ∈ C.taxa)) :
+    N.quartetCF (s 0) (s 1) (s 2) (s 3) = ∑ F, C.forestDist s F * quartetScore F := by
   -- the context `K` of `C` in `N`, and its kernel `M`
   obtain ⟨K, hK, hNK⟩ := ns_net_context C N hCmem
   obtain ⟨hKnd, hCnd, hKC⟩ := ns_context_nodup hN hK hNK
@@ -522,5 +556,14 @@ theorem quartetCF_eq_sum_top {X : Type u} [DecidableEq X] (N : Net X) (hN : N.le
   · rw [hG, zero_mul, zero_mul]
   obtain ⟨hGg, hGu⟩ := hfinal F G hFg hFS hFu hG
   rw [quartetScore_eq_of_univ_mem hGg hGu]
+
+/-- The quartet CF of four taxa of `N` (one lineage sampled from each), at least three of them below
+the top node of the cycle `Ω`, is the expected score of the forest arriving at the top node of
+`Ω`. -/
+theorem quartetCF_eq_sum_top {X : Type u} [DecidableEq X] (N : Net X) (hN : N.leaves.Nodup)
+    (Ω : N.Cycle) (s : Fin 4 → X) (hsN : ∀ l, s l ∈ N.taxa)
+    (h3 : 3 ≤ #(univ.filter fun l => s l ∈ Ω.top.taxa)) :
+    N.quartetCF (s 0) (s 1) (s 2) (s 3) = ∑ F, Ω.top.forestDist s F * quartetScore F :=
+  quartetCF_eq_sum_subnet N hN Ω.mem s hsN h3
 
 end Brooqs
