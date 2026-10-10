@@ -78,7 +78,7 @@ How it was made:
   the paper's versions.
 - **The audit.** The main session rewrote the audit script, the routes of the paper's proofs, CI,
   and wrote [`REPORT.md`](REPORT.md) and [`README.md`](README.md), renumbering the findings in the paper's order and adding
-  three (E1, E2, E7). A sub-agent
+  three (E1, E2 and the typos, E9 since the third round). A sub-agent
   checked every finding of the report and every summary of another work against its source, and the
   main session applied its corrections.
 

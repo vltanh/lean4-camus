@@ -70,9 +70,8 @@ set), with probability converging to 1." Here the multiset is that of the quarte
 SNPs, `a`, `b` in one state and `c`, `d` in the other, and "gene trees" means sites (the report's
 E9).
 
-**The Lean statement.** The model is [`External.SiteModel`](SiteModel.lean#L303) in
-[`Camus/External/WarnowTabatabaeeEvans/SiteModel.lean`](SiteModel.lean) (its parameters, with the constraints of
-Section 4.2, are [`External.SiteParameters`](SiteModel.lean#L282)), and the convergence is [`External.support_tendsto`](Sampling.lean#L99) in
+**The Lean statement.** The model is [`External.SiteModel`](SiteModel.lean#L316) in
+[`Camus/External/WarnowTabatabaeeEvans/SiteModel.lean`](SiteModel.lean) (its parameters, with the constraints of Section 4.2 and their designation of the reticulation edges, at least one of the two edges into each reticulation, are [`External.SiteParameters`](SiteModel.lean#L290)), and the convergence is [`External.support_tendsto`](Sampling.lean#L99) in
 [`Camus/External/WarnowTabatabaeeEvans/Sampling.lean`](Sampling.lean): for independent sites with the law of the
 model, the probability that the support of the multiset of the quartets of the SNPs among the first
 `m` sites is the set of quartets displayed by `N` tends to 1. Sequences of independent sites with
@@ -83,15 +82,15 @@ tree edges, and the step "it is easy to see" needs it: if the state must change 
 no site that changes only on another edge exists. For the tree `(((A,B),C),D)` with the state always
 changing on the edge above `((A,B),C)`, which meets every constraint of Section 4.2, no SNP of
 positive probability has the clade `{A, B}`, and the quartet `AB|CD` of the tree is never observed
-([`External.theorem6_step_needs_stay`](Theorem6.lean#L183), in [`Camus/External/WarnowTabatabaeeEvans/Theorem6.lean`](Theorem6.lean)).
+([`External.theorem6_step_needs_stay`](Theorem6.lean#L186), in [`Camus/External/WarnowTabatabaeeEvans/Theorem6.lean`](Theorem6.lean)).
 Theorem 6 then fails for this network. Their Theorem 7 assumes `0 < p_on ≤ p(e, s, s)`, and so does
-[`External.SiteModel`](SiteModel.lean#L303) (its field `stay_pos`). Substitution probabilities of a continuous-time Markov
+[`External.SiteModel`](SiteModel.lean#L316) (its field `stay_pos`). Substitution probabilities of a continuous-time Markov
 chain, as in the standard models, satisfy it.
 
 **The proof.** WTE's, for quartets in place of clades. If `N` displays `q`, some switching has an
 edge into a vertex of indegree 1 whose clade cuts `q` ([`RootedNetwork.displays_iff_treeEdge_cladeBelow`](../../Network/Clades.lean#L205)).
 The history that follows this switching and changes state on that edge alone has positive
-probability ([`External.SiteModel.exists_snp`](SiteModel.lean#L1028), [`External.SiteModel.quartetProb_pos`](SiteModel.lean#L1043)), and every
-quartet of an SNP is displayed by `N` ([`External.SiteHistory.displays_of_mem_quartets`](SiteModel.lean#L892)). With
+probability ([`External.SiteModel.exists_snp`](SiteModel.lean#L1041), [`External.SiteModel.quartetProb_pos`](SiteModel.lean#L1056)), and every
+quartet of an SNP is displayed by `N` ([`External.SiteHistory.displays_of_mem_quartets`](SiteModel.lean#L905)). With
 finitely many quartets, a union bound with `(1 − p)^m → 0` gives the convergence.
 

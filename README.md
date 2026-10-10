@@ -7,8 +7,9 @@ phylogenetic network estimation*, Bioinformatics 42, Supplement 1 (2026), btag24
 <https://doi.org/10.1093/bioinformatics/btag245>. CAMUS takes a rooted binary tree `T` and a
 multiset `Q` of quartet trees, and adds edges to `T` to obtain a rooted level-1 phylogenetic network
 that displays as many quartets of `Q` as possible. The paper's Theorem 1 says that its dynamic
-program over `T` finds such a network. The formalization proves Theorem 1 and Lemmas 1 and 2, by the
-paper's arguments, against every network built on `T` in the sense of Definition 1; the running time
+program over `T` finds such a network. The formalization proves Lemmas 1 and 2 and Theorem 1, by the
+paper's arguments except at two steps, Theorem 1 against every network built on `T` in the sense of
+Definition 1, whose root may lie above the root of `T`; the running time
 and memory of Section 2.3, for CAMUS written as a program in a cost semantics; the claim of
 Section 2.4, for the networks returned by backtracking through a recurrence of its own; and the
 steps of the paper's statistical arguments (Sections 3.2 and 3.4) inside the models they use. It is
@@ -17,9 +18,9 @@ of Warnow, Tabatabaee and Evans (2025), are proved here, and the coalescent prob
 a Lean formalization of Allman, Degnan and Rhodes (2011). Four claims of the paper are false, and
 the formalization refutes them: the best score with exactly `k` reticulations can decrease as `k`
 grows, and the stopping rule can stop before a better score (Section 2.4); the true network need not
-be the unique optimum, even with the fewest reticulations and cycles of length at least five, so
-that the SNP pipeline can fail under every hypothesis of its consistency argument; and a tree of a
-network need not be a basis for it (Section 3.2).
+be the unique optimum, even with the fewest reticulations, cycles of length at least five and an
+outgroup, so that the SNP pipeline can fail under every hypothesis of its consistency argument; and
+a tree of a network need not be a basis for it (Section 3.2).
 
 ## What is proved
 
@@ -28,22 +29,24 @@ network need not be a basis for it (Section 3.2).
   Definition 1's class [`Camus.theorem1_builtOn`](Camus/DP/Definition1.lean#L76)), the running time `O(n²(|Q| + n))` and memory
   `O(n⁴)` of Section 2.3 for CAMUS as a program, with `δ_T` in constant time
   ([`Complexity.camus_array`](Camus/Complexity/Program.lean#L1090), [`Complexity.camus_time`](Camus/Complexity/Program.lean#L1193), [`Complexity.time_delta`](Camus/Complexity/Delta.lean#L746),
-  [`Complexity.storedIntegers_bound`](Camus/Complexity/Memory.lean#L177)), the networks `N_k` of Section 2.4 returned by backtracking
-  ([`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61), [`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499)), with the running time
-  `O(n²(|Q| + m³n))` ([`Complexity.camusBudget_time`](Camus/Complexity/BudgetProgram.lean#L679)) and the bound of `n − 1` reticulations
+  [`Complexity.storedIntegers_bound`](Camus/Complexity/Memory.lean#L180)), the networks `N_k` of Section 2.4 returned by backtracking
+  ([`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61), [`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499)), the running time
+  `O(n²(|Q| + m³n))` of computing the modified array ([`Complexity.camusBudget_time`](Camus/Complexity/BudgetProgram.lean#L680)), and the bound
+  of `n − 1` reticulations
   ([`RootedNetwork.anchored_reticulation_bound`](Camus/Network/Reticulations.lean#L227)), the steps of Section 3.2's consistency argument in
-  the site model of Warnow et al. ([`astral_maximizer_tendsto`](Camus/Pipelines/Astral.lean#L543), [`snp_recovery_tendsto`](Camus/Pipelines/SNP.lean#L79)), and the test
+  the site model of Warnow et al. ([`astral_maximizer_tendsto`](Camus/Pipelines/Astral.lean#L543), [`snp_recovery_tendsto`](Camus/Pipelines/SNP.lean#L81)), and the test
   of Algorithm 1 with its motivation under the multispecies coalescent
   ([`Coalescent.msc_filterQuartets`](Camus/Pipelines/Coalescent.lean#L250)). Two steps depart from the paper: uniqueness in Lemma 1, and the
   networks of Definition 1 whose root lies above the root of `T` (see the audit summary).
 - The cited results: Observation 2 of Warnow, Tabatabaee and Evans ([`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186)), proved
   from general facts about switchings and cycles, and the convergence of the quartets of SNPs under
   their site model ([`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99)), with a hypothesis their model omits.
-- The refutations ([`not_exactCountMonotone`](Camus/Restriction/Monotonicity.lean#L37), [`not_exactStoppingRule`](Camus/Restriction/StoppingRule.lean#L461), [`not_atMostStoppingRule`](Camus/Restriction/StoppingRule.lean#L480),
-  [`not_uniqueOptimum`](Camus/Pipelines/Uniqueness.lean#L49), [`Counterexamples.shallow_not_identifiable`](Camus/Pipelines/Inclusion.lean#L218),
-  [`Counterexamples.deeperDonor_meets_hypotheses`](Camus/Pipelines/SNPCondition.lean#L316), [`Counterexamples.camus_output_not_rootAboveNet`](Camus/Network/RootAbove/Example.lean#L414)),
+- The refutations ([`not_exactCountMonotone`](Camus/Restriction/Monotonicity.lean#L37), [`not_exactStoppingRule`](Camus/Restriction/StoppingRule.lean#L462), [`not_atMostStoppingRule`](Camus/Restriction/StoppingRule.lean#L481),
+  [`not_uniqueOptimum`](Camus/Pipelines/Uniqueness.lean#L49), [`Counterexamples.shallow_not_identifiable`](Camus/Pipelines/Inclusion.lean#L219),
+  [`Counterexamples.deeperDonor_meets_hypotheses`](Camus/Pipelines/SNPCondition.lean#L321), with an outgroup,
+  [`Counterexamples.camus_output_not_rootAboveNet`](Camus/Network/RootAbove/Example.lean#L414)),
   with CAMUS itself returning the wrong network ([`camus_may_add_edge`](Camus/Pipelines/Uniqueness.lean#L134),
-  [`Counterexamples.camus_may_return_deep`](Camus/Pipelines/Inclusion.lean#L373)), and the corrected Section 3.2 ([`Camus.recovery`](Camus/Pipelines/Uniqueness.lean#L151)).
+  [`Counterexamples.camus_may_return_deep`](Camus/Pipelines/Inclusion.lean#L374)), and the corrected Section 3.2 ([`Camus.recovery`](Camus/Pipelines/Uniqueness.lean#L151)).
 - `lake build` succeeds with no `sorry` outside [`Challenge.lean`](Challenge.lean) and no `axiom`;
   `lake env lean scripts/Audit.lean` checks that every declaration depends only on [`propext`](https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#propext),
   [`Classical.choice`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Classical.choice) and [`Quot.sound`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Quot.sound).
@@ -100,8 +103,8 @@ From [`REPORT.md`](REPORT.md):
   Section 2.4 (E5), whose stopping rule can stop before a better score (E6). The true network need
   not be the unique optimal network, even with the fewest reticulations and cycles of length at
   least five, and CAMUS may return another, contrary to Section 3.2; in the site model of Warnow et
-  al. this happens with probability tending to 1 under every hypothesis of the section's argument
-  (E7). A tree of a network need not be a basis for it, contrary to Section 3.2 (E8). Theorem 1 is
+  al. such a tie occurs with probability tending to 1 under every hypothesis of the section's
+  argument, an outgroup included (E7). A tree of a network need not be a basis for it, contrary to Section 3.2 (E8). Theorem 1 is
   unaffected.
 - **Gaps.** Lemma 1's proof derives uniqueness from Observation 2, which gives only existence;
   uniqueness follows from the vertex-disjointness of the cycles (E1). Section 2.2 calls `M[r]` the
@@ -159,7 +162,7 @@ From [`REPORT.md`](REPORT.md), Section 10 (search of 10 October 2026):
 
 ## What's next
 
-Identifiability under inclusion fails even for networks whose cycles have at least five vertices
+Identifiability under inclusion fails even for networks whose cycles have length at least five
 (E7); a second tie-break toward the fewest displayed quartets selects the true network in the
 counterexample, and whether it recovers every such network is open. The stopping rule of
 Section 2.4 has no guarantee (E6); computing all `n − 1` columns does. Theorem 1 splits into
