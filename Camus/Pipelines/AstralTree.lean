@@ -587,8 +587,8 @@ end Quartet
 namespace PhyloTree
 
 /-- The tree `s`, with the tree `up` hanging from the edge above its root, rooted on the edge to the
-leaf `o` of `s`: the subtrees met on the path from the root of `s` down to `o` are hung, in reverse
-order, on the path from the new root up to `up`. -/
+leaf `o` of `s`: the subtrees met on the path from the root of `s` down to `o` hang, in reverse
+order, from the path that runs from the root of the result up to `up`. -/
 def graftAt (o : ℕ) : PhyloTree → PhyloTree → PhyloTree
   | .leaf a, up => .fork (.leaf a) up
   | .fork a b, up => if o ∈ a.taxa then graftAt o a (.fork b up) else graftAt o b (.fork a up)
