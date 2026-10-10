@@ -29,7 +29,7 @@ table (`Complexity.prefix_iff_lca`).
 * `Complexity.preprocess`: the preprocessing, as a program.
 * `Complexity.preprocess_correct`: the tables agree with `parent`, `List.length`, the kinds of the
   vertices, the leaves of the taxa and `Camus.lca` on the vertices of `T`
-  (`Complexity.Tables.Correct`).
+  (`Complexity.Tables.Correct`, `Complexity.Tables.Correct.leafOf_eq`).
 * `Complexity.preprocess_time`: the preprocessing takes at most `20 |V(T)|²` operations.
 -/
 
@@ -329,6 +329,19 @@ structure Tables.Correct (t : PhyloTree) (T : Tables) : Prop where
   leafOf_sound : ∀ a p, T.leafOf a = some p → t.nodeAt p = some (.leaf a)
   leafOf_complete : ∀ a ∈ t.taxa, ∃ p, T.leafOf a = some p
   lca : ∀ p ∈ t.nodes, ∀ q ∈ t.nodes, T.lca (p, q) = Camus.lca p q
+
+/-- With correct tables of a well-labelled tree, the table of leaves gives the leaf address of
+each taxon (`Realization.leafAddress`), and nothing for the other labels. -/
+theorem Tables.Correct.leafOf_eq {t : PhyloTree} {T : Tables} (hT : T.Correct t)
+    (ht : t.WellLabelled) (a : ℕ) :
+    T.leafOf a = if a ∈ t.taxa then some (Realization.leafAddress t a) else none := by
+  split_ifs with ha
+  · obtain ⟨p, hp⟩ := hT.leafOf_complete a ha
+    rw [hp, Realization.leafAddress_eq ht (hT.leafOf_sound a p hp)]
+  · cases h : T.leafOf a with
+    | none => rfl
+    | some p =>
+      exact (ha (List.mem_toFinset.mpr (PhyloTree.leaf_label_mem (hT.leafOf_sound a p h)))).elim
 
 section Lemmas
 
