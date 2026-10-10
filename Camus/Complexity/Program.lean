@@ -42,7 +42,7 @@ The program (`Complexity.camus`) follows the paper.
   the buckets are the sets Pairs(v).
 
 Backtracking, within the same bound, is in `Camus/Complexity/Backtracking.lean`, and the memory in
-`Camus/Complexity/Memory.lean`.
+`Camus/Complexity/Memory.lean` (the final tables) and `Camus/Complexity/PeakMemory.lean` (the peak).
 
 The weights are computed with the test of `Camus/Complexity/Delta.lean`, which returns
 `EdgeAbove.satisfies`; that its sum is Equation (1) is

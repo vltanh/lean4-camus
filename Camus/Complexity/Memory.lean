@@ -18,7 +18,8 @@ stored at these keys, one table entry per key and six integers per distinct quar
 the program writes nowhere else is `Complexity.preprocess_support`, `Complexity.enumerate_support`
 and `Complexity.fill_support`. The count is at most three times `Complexity.scalarSpace` of
 `Camus/Complexity/Counts.lean`, hence `O(n⁴)` by `Complexity.scalarSpace_bound`. It counts the
-final tables, not the peak memory of a run.
+final tables; the peak memory of a run, in a cost semantics with a space component, is in
+`Camus/Complexity/PeakMemory.lean` (`Complexity.camus_memory`).
 
 ## Main results
 

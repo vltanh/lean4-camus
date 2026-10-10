@@ -13,8 +13,10 @@ time of the overall algorithm goes from O(n²(|Q|+n)) to O(n²(|Q|+m³n))". The 
 recurrence for the matrix; the formalization's is `BudgetDP.cases` (`Camus/Defs.lean`). This file
 writes the matrix version as a program in the cost monad and proves, for that recurrence, that the
 computed rows satisfy it for the budgets `0, …, m` (the program computes the `m + 1` columns
-`0, …, m`), and that it performs at most `1000 n²(|Q| + m³n)` operations for `m ≥ 1`. The time of
-backtracking through the matrix is not bounded here.
+`0, …, m`), and that it performs at most `1000 n²(|Q| + m³n)` operations for `m ≥ 1`. Backtracking
+through the matrix, for every budget, is in `Camus/Complexity/BudgetBacktracking.lean`
+(`Complexity.camusBudgetNetworks_time`), and the peak memory in
+`Camus/Complexity/PeakMemoryBudget.lean`.
 
 The program (`Complexity.camusBudget`) shares the preprocessing, the enumeration of the candidate
 pairs with their weights, and the walks of `Camus/Complexity/Program.lean`. A cell of the matrix is
