@@ -28,6 +28,11 @@ hybrid component when it hangs from this side (`Brooqs.Side.displayed`).
   of a subnetwork or disjoint from them.
 * `Brooqs.Net.displays_of_subnet`: if a subnetwork contains exactly two of four taxa, `x` and `y`,
   the network displays `xy|zw` and neither `xz|yw` nor `xw|yz`.
+* `Brooqs.Net.restrict_displayed`, `Brooqs.Net.extend_displayed`: the displayed trees of `N` and of
+  a subnetwork.
+* `Brooqs.Side.cluster_of_mem_displayed`, `Brooqs.Side.tail_mem_displayed`: the clusters along a
+  side are those of its pendant networks and those of the top nodes of its lower parts
+  (`Brooqs.Side.tails`).
 -/
 
 @[expose] public section
@@ -399,6 +404,323 @@ theorem Side.compatible_of_mem_subnets :
         · exact Or.inr (Or.inr ((hd.mono_left
             (Net.subset_taxa_of_mem_displayed hK₂ A hA)).mono_right hMt))
 end
+
+/-! ### Displayed trees of a subnetwork -/
+
+mutual
+/-- The clusters of a displayed tree of `N` are the clusters of a displayed tree of a subnetwork
+`C`, or contain the taxa of `C`, or avoid them. -/
+theorem Net.restrict_displayed :
+    ∀ {N C : Net X}, N.leaves.Nodup → C ∈ N.subnets → ∀ K ∈ N.displayed,
+      ∃ K' ∈ C.displayed, ∀ A ∈ K, A ∈ K' ∨ C.taxa ⊆ A ∨ Disjoint A C.taxa
+  | .leaf _, C, _, hC, K, hK => by
+      simp only [Net.subnets, List.mem_singleton] at hC
+      subst hC
+      exact ⟨K, hK, fun A hA => Or.inl hA⟩
+  | .tree ℓ₁ N₁ ℓ₂ N₂, C, hN, hC, K, hK => by
+      have hN' : (N₁.leaves ++ N₂.leaves).Nodup := hN
+      have hd : Disjoint N₁.taxa N₂.taxa := dd_disjoint hN'
+      simp only [Net.subnets, List.mem_cons, List.mem_append] at hC
+      rcases hC with rfl | hC | hC
+      · exact ⟨K, hK, fun A hA => Or.inl hA⟩
+      all_goals
+        simp only [Net.displayed, List.mem_flatMap, List.mem_map] at hK
+        obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+        have hCt := Net.taxa_subset_of_mem_subnets hC
+      · obtain ⟨K', hK', h⟩ := Net.restrict_displayed (dd_nodup_left hN') hC K₁ hK₁
+        refine ⟨K', hK', fun A hA => ?_⟩
+        rcases mem_insert.1 hA with rfl | hA
+        · exact Or.inr (Or.inl (hCt.trans subset_union_left))
+        rcases mem_union.1 hA with hA | hA
+        · exact h A hA
+        · exact Or.inr (Or.inr ((hd.symm.mono_left
+            (Net.subset_taxa_of_mem_displayed hK₂ A hA)).mono_right hCt))
+      · obtain ⟨K', hK', h⟩ := Net.restrict_displayed (dd_nodup_right hN') hC K₂ hK₂
+        refine ⟨K', hK', fun A hA => ?_⟩
+        rcases mem_insert.1 hA with rfl | hA
+        · exact Or.inr (Or.inl (hCt.trans subset_union_right))
+        rcases mem_union.1 hA with hA | hA
+        · exact Or.inr (Or.inr ((hd.mono_left
+            (Net.subset_taxa_of_mem_displayed hK₁ A hA)).mono_right hCt))
+        · exact h A hA
+  | .cycle γ S₁ S₂ ℓ N, C, hN, hC, K, hK => by
+      have hN' : (S₁.leaves ++ S₂.leaves ++ N.leaves).Nodup := hN
+      have h12 : (S₁.leaves ++ S₂.leaves).Nodup := dd_nodup_left hN'
+      have hS₁ : S₁.leaves.Nodup := dd_nodup_left h12
+      have hS₂ : S₂.leaves.Nodup := dd_nodup_right h12
+      have hN₀ : N.leaves.Nodup := dd_nodup_right hN'
+      have d12 : Disjoint S₁.taxa S₂.taxa := dd_disjoint h12
+      have d3 : Disjoint (S₁.taxa ∪ S₂.taxa) N.taxa := by
+        have := dd_disjoint hN'
+        rwa [List.toFinset_append] at this
+      have d13 : Disjoint S₁.taxa N.taxa := d3.mono_left subset_union_left
+      have d23 : Disjoint S₂.taxa N.taxa := d3.mono_left subset_union_right
+      simp only [Net.subnets, List.mem_cons, List.mem_append] at hC
+      rcases hC with rfl | (hC | hC) | hC
+      · exact ⟨K, hK, fun A hA => Or.inl hA⟩
+      · -- `C` hangs from the side `S₁`
+        have hCt := Side.taxa_subset_of_mem_subnets hC
+        simp only [Net.displayed, List.mem_flatMap, List.mem_append, List.mem_map] at hK
+        obtain ⟨K₀, hK₀, ⟨K₁, hK₁, K₂, hK₂, rfl⟩ | ⟨K₁, hK₁, K₂, hK₂, rfl⟩⟩ := hK
+        all_goals
+          obtain ⟨K', hK', h⟩ := Side.restrict_displayed hS₁ hC _
+            (by first | exact d13.symm | exact disjoint_empty_left _) K₁ hK₁
+          refine ⟨K', hK', fun A hA => ?_⟩
+          rcases mem_insert.1 hA with rfl | hA
+          · exact Or.inr (Or.inl (hCt.trans (subset_union_left.trans subset_union_left)))
+          rcases mem_union.1 hA with hA | hA
+          · rcases mem_union.1 hA with hA | hA
+            · exact Or.inr (Or.inr ((d13.symm.mono_left
+                (Net.subset_taxa_of_mem_displayed hK₀ A hA)).mono_right hCt))
+            · exact h A hA
+          · refine Or.inr (Or.inr (Disjoint.mono_right hCt ?_))
+            rcases Side.cluster_cases hK₂ A hA with h' | ⟨-, h'⟩
+            · exact d12.symm.mono_left h'
+            · refine Disjoint.mono_left h' (disjoint_union_left.2 ⟨?_, d12.symm⟩)
+              first | exact disjoint_empty_left _ | exact d13.symm
+      · -- `C` hangs from the side `S₂`
+        have hCt := Side.taxa_subset_of_mem_subnets hC
+        simp only [Net.displayed, List.mem_flatMap, List.mem_append, List.mem_map] at hK
+        obtain ⟨K₀, hK₀, ⟨K₁, hK₁, K₂, hK₂, rfl⟩ | ⟨K₁, hK₁, K₂, hK₂, rfl⟩⟩ := hK
+        all_goals
+          obtain ⟨K', hK', h⟩ := Side.restrict_displayed hS₂ hC _
+            (by first | exact d23.symm | exact disjoint_empty_left _) K₂ hK₂
+          refine ⟨K', hK', fun A hA => ?_⟩
+          rcases mem_insert.1 hA with rfl | hA
+          · exact Or.inr (Or.inl (hCt.trans (subset_union_right.trans subset_union_left)))
+          rcases mem_union.1 hA with hA | hA
+          · rcases mem_union.1 hA with hA | hA
+            · exact Or.inr (Or.inr ((d23.symm.mono_left
+                (Net.subset_taxa_of_mem_displayed hK₀ A hA)).mono_right hCt))
+            · refine Or.inr (Or.inr (Disjoint.mono_right hCt ?_))
+              rcases Side.cluster_cases hK₁ A hA with h' | ⟨-, h'⟩
+              · exact d12.mono_left h'
+              · refine Disjoint.mono_left h' (disjoint_union_left.2 ⟨?_, d12⟩)
+                first | exact disjoint_empty_left _ | exact d23.symm
+          · exact h A hA
+      · -- `C` lies below the hybrid node
+        have hCt := Net.taxa_subset_of_mem_subnets hC
+        simp only [Net.displayed, List.mem_flatMap, List.mem_append, List.mem_map] at hK
+        obtain ⟨K₀, hK₀, ⟨K₁, hK₁, K₂, hK₂, rfl⟩ | ⟨K₁, hK₁, K₂, hK₂, rfl⟩⟩ := hK
+        all_goals
+          obtain ⟨K', hK', h⟩ := Net.restrict_displayed hN₀ hC K₀ hK₀
+          refine ⟨K', hK', fun A hA => ?_⟩
+          rcases mem_insert.1 hA with rfl | hA
+          · exact Or.inr (Or.inl (hCt.trans subset_union_right))
+          rcases mem_union.1 hA with hA | hA
+          · rcases mem_union.1 hA with hA | hA
+            · exact h A hA
+            · rcases Side.cluster_cases hK₁ A hA with h' | ⟨h₁, h₂⟩
+              · exact Or.inr (Or.inr ((d13.mono_left h').mono_right hCt))
+              · first
+                  | exact Or.inr (Or.inl (hCt.trans h₁))
+                  | exact Or.inr (Or.inr ((d13.mono_left
+                      (h₂.trans (by rw [empty_union]))).mono_right hCt))
+          · rcases Side.cluster_cases hK₂ A hA with h' | ⟨h₁, h₂⟩
+            · exact Or.inr (Or.inr ((d23.mono_left h').mono_right hCt))
+            · first
+                | exact Or.inr (Or.inl (hCt.trans h₁))
+                | exact Or.inr (Or.inr ((d23.mono_left
+                    (h₂.trans (by rw [empty_union]))).mono_right hCt))
+
+/-- The same for the networks hanging from a side, when the taxa `T` below its hybrid edge are
+not below the side. -/
+theorem Side.restrict_displayed :
+    ∀ {S : Side X} {C : Net X}, S.leaves.Nodup → C ∈ S.subnets → ∀ T, Disjoint T S.taxa →
+      ∀ K ∈ S.displayed T, ∃ K' ∈ C.displayed, ∀ A ∈ K, A ∈ K' ∨ C.taxa ⊆ A ∨ Disjoint A C.taxa
+  | .hyb _, C, _, hC, _, _, _, _ => by simp [Side.subnets] at hC
+  | .node ℓ b P S, C, hS, hC, T, hT, K, hK => by
+      have hS' : (P.leaves ++ S.leaves).Nodup := hS
+      have hd : Disjoint P.taxa S.taxa := dd_disjoint hS'
+      rw [Side.taxa_node] at hT
+      have hTP : Disjoint T P.taxa := hT.mono_right subset_union_left
+      have hTS : Disjoint T S.taxa := hT.mono_right subset_union_right
+      simp only [Side.displayed, List.mem_flatMap, List.mem_map] at hK
+      obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+      simp only [Side.subnets, List.mem_append] at hC
+      rcases hC with hC | hC
+      · have hCt := Net.taxa_subset_of_mem_subnets hC
+        obtain ⟨K', hK', h⟩ := Net.restrict_displayed (dd_nodup_left hS') hC K₂ hK₂
+        refine ⟨K', hK', fun A hA => ?_⟩
+        rcases mem_insert.1 hA with rfl | hA
+        · exact Or.inr (Or.inl (hCt.trans subset_union_right))
+        rcases mem_union.1 hA with hA | hA
+        · refine Or.inr (Or.inr (Disjoint.mono_right hCt ?_))
+          rcases Side.cluster_cases hK₁ A hA with h' | ⟨-, h'⟩
+          · exact hd.symm.mono_left h'
+          · exact Disjoint.mono_left h' (disjoint_union_left.2 ⟨hTP, hd.symm⟩)
+        · exact h A hA
+      · have hCt := Side.taxa_subset_of_mem_subnets hC
+        obtain ⟨K', hK', h⟩ := Side.restrict_displayed (dd_nodup_right hS') hC T hTS K₁ hK₁
+        refine ⟨K', hK', fun A hA => ?_⟩
+        rcases mem_insert.1 hA with rfl | hA
+        · exact Or.inr (Or.inl (hCt.trans (subset_union_right.trans subset_union_left)))
+        rcases mem_union.1 hA with hA | hA
+        · exact h A hA
+        · exact Or.inr (Or.inr ((hd.mono_left
+            (Net.subset_taxa_of_mem_displayed hK₂ A hA)).mono_right hCt))
+end
+
+mutual
+/-- Every displayed tree of a subnetwork `C` of `N` extends to a displayed tree of `N`. -/
+theorem Net.extend_displayed :
+    ∀ {N C : Net X}, C ∈ N.subnets → ∀ K' ∈ C.displayed, ∃ K ∈ N.displayed, K' ⊆ K
+  | .leaf _, C, hC, K', hK' => by
+      simp only [Net.subnets, List.mem_singleton] at hC
+      subst hC
+      exact ⟨K', hK', subset_rfl⟩
+  | .tree ℓ₁ N₁ ℓ₂ N₂, C, hC, K', hK' => by
+      simp only [Net.subnets, List.mem_cons, List.mem_append] at hC
+      rcases hC with rfl | hC | hC
+      · exact ⟨K', hK', subset_rfl⟩
+      · obtain ⟨K₁, hK₁, h⟩ := Net.extend_displayed hC K' hK'
+        obtain ⟨K₂, hK₂⟩ := List.exists_mem_of_ne_nil _ (Net.displayed_ne_nil N₂)
+        refine ⟨insert (N₁.taxa ∪ N₂.taxa) (K₁ ∪ K₂), ?_, h.trans
+          (subset_union_left.trans (subset_insert _ _))⟩
+        simp only [Net.displayed, List.mem_flatMap, List.mem_map]
+        exact ⟨K₁, hK₁, K₂, hK₂, rfl⟩
+      · obtain ⟨K₂, hK₂, h⟩ := Net.extend_displayed hC K' hK'
+        obtain ⟨K₁, hK₁⟩ := List.exists_mem_of_ne_nil _ (Net.displayed_ne_nil N₁)
+        refine ⟨insert (N₁.taxa ∪ N₂.taxa) (K₁ ∪ K₂), ?_, h.trans
+          (subset_union_right.trans (subset_insert _ _))⟩
+        simp only [Net.displayed, List.mem_flatMap, List.mem_map]
+        exact ⟨K₁, hK₁, K₂, hK₂, rfl⟩
+  | .cycle γ S₁ S₂ ℓ N, C, hC, K', hK' => by
+      simp only [Net.subnets, List.mem_cons, List.mem_append] at hC
+      obtain ⟨K₀, hK₀⟩ := List.exists_mem_of_ne_nil _ (Net.displayed_ne_nil N)
+      obtain ⟨K₁, hK₁⟩ := List.exists_mem_of_ne_nil _ (Side.displayed_ne_nil S₁ N.taxa)
+      obtain ⟨K₂, hK₂⟩ := List.exists_mem_of_ne_nil _ (Side.displayed_ne_nil S₂ ∅)
+      have hmem : ∀ {K₀ K₁ K₂}, K₀ ∈ N.displayed → K₁ ∈ S₁.displayed N.taxa →
+          K₂ ∈ S₂.displayed ∅ → insert (S₁.taxa ∪ S₂.taxa ∪ N.taxa) (K₀ ∪ K₁ ∪ K₂) ∈
+            (Net.cycle γ S₁ S₂ ℓ N).displayed := fun hK₀ hK₁ hK₂ => by
+        simp only [Net.displayed, List.mem_flatMap, List.mem_append, List.mem_map]
+        exact ⟨_, hK₀, Or.inl ⟨_, hK₁, _, hK₂, rfl⟩⟩
+      rcases hC with rfl | (hC | hC) | hC
+      · exact ⟨K', hK', subset_rfl⟩
+      · obtain ⟨K₁', hK₁', h⟩ := Side.extend_displayed hC N.taxa K' hK'
+        exact ⟨_, hmem hK₀ hK₁' hK₂, h.trans (subset_union_right.trans
+          (subset_union_left.trans (subset_insert _ _)))⟩
+      · obtain ⟨K₂', hK₂', h⟩ := Side.extend_displayed hC ∅ K' hK'
+        exact ⟨_, hmem hK₀ hK₁ hK₂', h.trans (subset_union_right.trans (subset_insert _ _))⟩
+      · obtain ⟨K₀', hK₀', h⟩ := Net.extend_displayed hC K' hK'
+        exact ⟨_, hmem hK₀' hK₁ hK₂, h.trans (subset_union_left.trans
+          (subset_union_left.trans (subset_insert _ _)))⟩
+
+/-- The same for the networks hanging from a side. -/
+theorem Side.extend_displayed :
+    ∀ {S : Side X} {C : Net X}, C ∈ S.subnets → ∀ T, ∀ K' ∈ C.displayed,
+      ∃ K ∈ S.displayed T, K' ⊆ K
+  | .hyb _, C, hC, _, _, _ => by simp [Side.subnets] at hC
+  | .node ℓ b P S, C, hC, T, K', hK' => by
+      simp only [Side.subnets, List.mem_append] at hC
+      have hmem : ∀ {K₁ K₂}, K₁ ∈ S.displayed T → K₂ ∈ P.displayed →
+          insert (T ∪ S.taxa ∪ P.taxa) (K₁ ∪ K₂) ∈ (Side.node ℓ b P S).displayed T :=
+        fun hK₁ hK₂ => by
+          simp only [Side.displayed, List.mem_flatMap, List.mem_map]
+          exact ⟨_, hK₁, _, hK₂, rfl⟩
+      rcases hC with hC | hC
+      · obtain ⟨K₂, hK₂, h⟩ := Net.extend_displayed hC K' hK'
+        obtain ⟨K₁, hK₁⟩ := List.exists_mem_of_ne_nil _ (Side.displayed_ne_nil S T)
+        exact ⟨_, hmem hK₁ hK₂, h.trans (subset_union_right.trans (subset_insert _ _))⟩
+      · obtain ⟨K₁, hK₁, h⟩ := Side.extend_displayed hC T K' hK'
+        obtain ⟨K₂, hK₂⟩ := List.exists_mem_of_ne_nil _ (Net.displayed_ne_nil P)
+        exact ⟨_, hmem hK₁ hK₂, h.trans (subset_union_left.trans (subset_insert _ _))⟩
+end
+
+/-! ### The clusters along a side -/
+
+/-- The lower parts of a side, from the side itself to its hybrid edge: the side `S` hangs the
+networks of its nodes above the lower part `S'` in `node ℓ b M S'`. -/
+def Side.tails : Side X → List (Side X)
+  | .hyb ℓ => [.hyb ℓ]
+  | .node ℓ b M S => .node ℓ b M S :: S.tails
+
+/-- A cluster along a side lies in a pendant network, or is the cluster `T ∪ U.taxa` of the top
+node of a lower part `U` of the side. -/
+theorem Side.cluster_of_mem_displayed :
+    ∀ {S : Side X} {T : Finset X} {K : Finset (Finset X)}, K ∈ S.displayed T → ∀ A ∈ K,
+      (∃ n ∈ S.nodes, ∃ K' ∈ n.2.2.displayed, A ∈ K') ∨ ∃ U ∈ S.tails, A = T ∪ U.taxa
+  | .hyb _, T, K, hK, A, hA => by
+      simp only [Side.displayed, List.mem_singleton] at hK
+      subst hK
+      exact absurd hA (notMem_empty A)
+  | .node ℓ b M S, T, K, hK, A, hA => by
+      simp only [Side.displayed, List.mem_flatMap, List.mem_map] at hK
+      obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+      rcases mem_insert.1 hA with rfl | hA
+      · refine Or.inr ⟨.node ℓ b M S, by simp [Side.tails], ?_⟩
+        rw [Side.taxa_node]
+        ext x
+        simp only [mem_union]
+        tauto
+      rcases mem_union.1 hA with hA | hA
+      · rcases Side.cluster_of_mem_displayed hK₁ A hA with ⟨n, hn, K', hK', h⟩ | ⟨U, hU, h⟩
+        · exact Or.inl ⟨n, by simp [Side.nodes, hn], K', hK', h⟩
+        · exact Or.inr ⟨U, by simp [Side.tails, hU], h⟩
+      · exact Or.inl ⟨(ℓ, b, M), by simp [Side.nodes], K₂, hK₂, hA⟩
+
+/-- The cluster of the top node of every lower part of a side with a node is a cluster of every
+displayed tree along the side. -/
+theorem Side.tail_mem_displayed :
+    ∀ {S : Side X} {T : Finset X} {K : Finset (Finset X)}, K ∈ S.displayed T → ∀ U ∈ S.tails,
+      U.nodes ≠ [] → T ∪ U.taxa ∈ K
+  | .hyb _, T, K, _, U, hU, hne => by
+      simp only [Side.tails, List.mem_singleton] at hU
+      subst hU
+      simp [Side.nodes] at hne
+  | .node ℓ b M S, T, K, hK, U, hU, hne => by
+      simp only [Side.displayed, List.mem_flatMap, List.mem_map] at hK
+      obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+      simp only [Side.tails, List.mem_cons] at hU
+      rcases hU with rfl | hU
+      · rw [Side.taxa_node]
+        convert mem_insert_self _ _ using 1
+        ext x
+        simp only [mem_union]
+        tauto
+      · exact mem_insert_of_mem (mem_union_left _ (Side.tail_mem_displayed hK₁ U hU hne))
+
+omit [DecidableEq X] in
+/-- The lower parts of a side are its suffixes: their nodes are the last nodes of the side. -/
+theorem Side.nodes_of_mem_tails :
+    ∀ {S U : Side X}, U ∈ S.tails → U.nodes = S.nodes.drop (S.nodes.length - U.nodes.length)
+  | .hyb _, U, hU => by
+      simp only [Side.tails, List.mem_singleton] at hU
+      subst hU
+      simp [Side.nodes]
+  | .node ℓ b M S, U, hU => by
+      simp only [Side.tails, List.mem_cons] at hU
+      rcases hU with rfl | hU
+      · simp
+      · have h := Side.nodes_of_mem_tails hU
+        have hle : U.nodes.length ≤ S.nodes.length := by
+          rw [h]
+          simp
+        simp only [Side.nodes, List.length_cons]
+        rw [show S.nodes.length + 1 - U.nodes.length = (S.nodes.length - U.nodes.length) + 1 by
+          omega, List.drop_succ_cons, ← h]
+
+omit [DecidableEq X] in
+/-- A side has a lower part with each number of nodes up to its own. -/
+theorem Side.exists_tail : ∀ (S : Side X) (k : ℕ), k ≤ S.nodes.length →
+    ∃ U ∈ S.tails, U.nodes.length = k
+  | .hyb ℓ, k, hk => ⟨.hyb ℓ, by simp [Side.tails], by simp [Side.nodes] at hk ⊢; omega⟩
+  | .node ℓ b M S, k, hk => by
+      simp only [Side.nodes, List.length_cons] at hk
+      rcases Nat.lt_or_ge k (S.nodes.length + 1) with h | h
+      · obtain ⟨U, hU, hUk⟩ := Side.exists_tail S k (by omega)
+        exact ⟨U, by simp [Side.tails, hU], hUk⟩
+      · exact ⟨.node ℓ b M S, by simp [Side.tails], by simp [Side.nodes]; omega⟩
+
+/-- The taxa below a side are those of its pendant networks. -/
+theorem Side.mem_taxa_iff {S : Side X} {x : X} : x ∈ S.taxa ↔ ∃ n ∈ S.nodes, x ∈ n.2.2.taxa := by
+  simp only [Side.taxa, List.mem_toFinset, Side.leaves_eq_flatten, List.mem_flatten, List.mem_map,
+    Net.taxa]
+  constructor
+  · rintro ⟨_, ⟨n, hn, rfl⟩, hx⟩
+    exact ⟨n, hn, hx⟩
+  · rintro ⟨n, hn, hx⟩
+    exact ⟨_, ⟨n, hn, rfl⟩, hx⟩
 
 /-! ### Displayed quartets -/
 

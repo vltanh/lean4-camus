@@ -815,4 +815,40 @@ theorem nmsc_quartetCF {X : Type u} [DecidableEq X] (N : Net X) (hN : N.WellForm
       ring
   exact key
 
+/-- The quartet CF of four taxa `s 0, …, s 3` in four distinct components of a cycle `Ω`, at the
+positions `pos l`, is the CF of the induced metric quarnet: the `γ`-mixture of the CFs of the
+quartet trees that the positions induce on the path `0 — 1 — ⋯ — d` with the hybrid component at
+position `0` or at position `d`. (This wraps the steps of `Brooqs.nmsc_quartetCF` for four given
+taxa; it was added to the copy from lean4-brooqs for the analysis of Section 3.3 of CAMUS.) -/
+theorem quartetCF_eq_of_components {X : Type u} [DecidableEq X] (N : Net X) (hN : N.WellFormed)
+    (Ω : N.Cycle) (s : Fin 4 → X) {pos : Fin 4 → ℕ} (hinj : Function.Injective pos)
+    (hlt : ∀ l, pos l < Ω.size) (hs : ∀ l, s l ∈ Ω.component (pos l)) :
+    N.quartetCF (s 0) (s 1) (s 2) (s 3) =
+      Ω.γ * pathCF Ω.edgeLen (pos 0) (pos 1) (pos 2) (pos 3) +
+        (1 - Ω.γ) * pathCF Ω.edgeLen (toRightEnd Ω.size (pos 0)) (toRightEnd Ω.size (pos 1))
+          (toRightEnd Ω.size (pos 2)) (toRightEnd Ω.size (pos 3)) := by
+  have hcomp : ∀ l h, s l ∈ Ω.component h ↔ pos l = h := fun l h =>
+    ⟨fun hm => by
+      by_contra hne
+      exact disjoint_left.1 (Net.Cycle.component_disjoint Ω hN.2 hne) (hs l) hm,
+     fun he => he ▸ hs l⟩
+  have hsN : ∀ l, s l ∈ N.taxa := fun l => nc_component_subset Ω _ (hs l)
+  have h3 : 3 ≤ #(univ.filter fun l => s l ∈ Ω.top.taxa) := by
+    have hout : #(univ.filter fun l => ¬ s l ∈ Ω.top.taxa) ≤ 1 := by
+      refine (card_le_card fun l hl => ?_).trans
+        (nc_card_filter_le_one hinj (Ω.side₁.nodes.length + 1))
+      simp only [mem_filter, mem_univ, true_and] at hl ⊢
+      by_contra hne
+      exact hl (nc_component_subset_top Ω (Or.inr hne) (hs l))
+    have := card_filter_add_card_filter_not (s := (univ : Finset (Fin 4)))
+      (fun l => s l ∈ Ω.top.taxa)
+    rw [card_univ, Fintype.card_fin] at this
+    omega
+  rw [quartetCF_eq_sum_top N hN.2 Ω s hsN h3, nc_sum_top Ω hN.2 s hinj hlt hs]
+
+/-- The taxa of the components of a cycle are taxa of the network. -/
+theorem Net.Cycle.component_subset_taxa {X : Type u} [DecidableEq X] {N : Net X} (Ω : N.Cycle)
+    (i : ℕ) : Ω.component i ⊆ N.taxa :=
+  nc_component_subset Ω i
+
 end Brooqs
