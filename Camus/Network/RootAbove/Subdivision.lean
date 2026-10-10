@@ -341,33 +341,7 @@ noncomputable def toOutgroup (H : DisplayedSubdivision t N S) (hN : N.RootedBina
           · exact Or.inr (Or.inr (Or.inr he))
         · rw [H.outgroupWire_cons_true ρ ℓ hp'0] at he
           exact Or.inr (Or.inr (Or.inl ⟨p', Finset.mem_erase.mpr ⟨hp'0, hp'⟩, he⟩))
-  switching := by
-    have hSN := H.switching.1
-    refine ⟨Finset.insert_subset_insert _ (Finset.insert_subset_insert _ hSN), ?_⟩
-    intro v hv hvρ
-    rw [RootedNetwork.withOutgroup_filter_in hN hρ hℓ hSN v]
-    have hempty : ∀ x, x ∉ N.vertices → (S.filter (fun e => e.2 = x)).card = 0 := by
-      intro x hx
-      apply Finset.card_eq_zero.mpr
-      apply Finset.eq_empty_iff_forall_notMem.mpr
-      intro e he
-      obtain ⟨heS, hex⟩ := Finset.mem_filter.mp he
-      exact hx (hex ▸ (hN.2.1 e (hSN heS)).2)
-    rcases RootedNetwork.withOutgroup_mem_vertices.mp hv with h | h | h
-    · exact absurd h hvρ
-    · subst v
-      rw [hempty ℓ hℓ, ite_eq_left rfl,
-        ite_eq_right (show N.root ≠ ℓ from fun h' => hℓ (h' ▸ hN.1))]
-    · have hℓv : ℓ ≠ v := fun h' => hℓ (h' ▸ h)
-      rw [ite_eq_right hℓv]
-      by_cases hr : N.root = v
-      · subst hr
-        have hle : (S.filter (fun e => e.2 = N.root)).card ≤ N.indegree N.root :=
-          Finset.card_le_card (Finset.filter_subset_filter _ hSN)
-        rw [hN.2.2.2.1] at hle
-        rw [ite_eq_left rfl]
-        omega
-      · rw [ite_eq_right hr, H.switching.2 v h (Ne.symm hr)]
+  switching := RootedNetwork.withOutgroup_switching hN hρ hℓ H.switching
 
 /-- The pairs extracted from `N⁺` through `H.toOutgroup` (the pairs `(u, w)` of vertices of `T⁺`
 directly below the two ends of its non-tree edges) are pairs `(true :: u, true :: w)` of vertices

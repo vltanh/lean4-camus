@@ -17,6 +17,8 @@ binary level-1 network (`RootedNetwork.withOutgroup_levelOne`), with the reticul
 * `RootedNetwork.withOutgroup_reticulationCount`: `N⁺` has as many reticulations as `N`.
 * `RootedNetwork.withOutgroup_indegree`, `RootedNetwork.withOutgroup_outdegree`: the degrees of
   `N⁺`.
+* `RootedNetwork.withOutgroup_switching`, `RootedNetwork.withOutgroup_switching_cases`: the
+  switchings of `N⁺` are those of `N` with the two edges out of the new root.
 -/
 
 @[expose] public section
@@ -419,6 +421,133 @@ theorem withOutgroup_reticulationCount (hN : N.RootedBinaryLevelOne) (hρ : ρ �
         omega
       exact ⟨Or.inr (Or.inr h), by rw [ite_eq_right hvℓ, ite_eq_right hr]; omega⟩
   rw [hfilter]
+
+/-- A switching `S` of `N`, with the two edges out of the new root, is a switching of `N⁺`. -/
+theorem withOutgroup_switching (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vertices)
+    (hℓ : ℓ ∉ N.vertices) {S : Finset (ℕ × ℕ)} (hS : N.Switching S) :
+    (N.withOutgroup z ρ ℓ).Switching (insert (ρ, N.root) (insert (ρ, ℓ) S)) := by
+  classical
+  have hSN := hS.1
+  refine ⟨Finset.insert_subset_insert _ (Finset.insert_subset_insert _ hSN), ?_⟩
+  intro v hv hvρ
+  rw [withOutgroup_filter_in hN hρ hℓ hSN v]
+  have hempty : ∀ x, x ∉ N.vertices → (S.filter (fun e => e.2 = x)).card = 0 := by
+    intro x hx
+    apply Finset.card_eq_zero.mpr
+    apply Finset.eq_empty_iff_forall_notMem.mpr
+    intro e he
+    obtain ⟨heS, hex⟩ := Finset.mem_filter.mp he
+    exact hx (hex ▸ (hN.2.1 e (hSN heS)).2)
+  rcases withOutgroup_mem_vertices.mp hv with h | h | h
+  · exact absurd h hvρ
+  · subst v
+    rw [hempty ℓ hℓ, ite_eq_left rfl,
+      ite_eq_right (show N.root ≠ ℓ from fun h' => hℓ (h' ▸ hN.1))]
+  · have hℓv : ℓ ≠ v := fun h' => hℓ (h' ▸ h)
+    rw [ite_eq_right hℓv]
+    by_cases hr : N.root = v
+    · subst hr
+      have hle : (S.filter (fun e => e.2 = N.root)).card ≤ N.indegree N.root :=
+        Finset.card_le_card (Finset.filter_subset_filter _ hSN)
+      rw [hN.2.2.2.1] at hle
+      rw [ite_eq_left rfl]
+      omega
+    · rw [ite_eq_right hr, hS.2 v h (Ne.symm hr)]
+
+/-- Every switching of `N⁺` is a switching `S` of `N` with the two edges out of the new root,
+which are the only edges into the new leaf and into the root of `N`. -/
+theorem withOutgroup_switching_cases (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vertices)
+    (hℓ : ℓ ∉ N.vertices) (hρℓ : ρ ≠ ℓ) {S' : Finset (ℕ × ℕ)}
+    (hS' : (N.withOutgroup z ρ ℓ).Switching S') :
+    ∃ S, N.Switching S ∧ S' = insert (ρ, N.root) (insert (ρ, ℓ) S) := by
+  classical
+  have hrootℓ : N.root ≠ ℓ := fun h => hℓ (h ▸ hN.1)
+  have hrootρ : N.root ≠ ρ := fun h => hρ (h ▸ hN.1)
+  -- the edge of `S'` into a vertex `v ≠ ρ` of `N⁺`
+  have hinto : ∀ v, v ∈ (N.withOutgroup z ρ ℓ).vertices → v ≠ ρ →
+      ∃ e ∈ S', e.2 = v := by
+    intro v hv hvρ
+    have hc := hS'.2 v hv hvρ
+    obtain ⟨e, he⟩ := Finset.card_pos.mp (show 0 < (S'.filter (fun e => e.2 = v)).card by omega)
+    exact ⟨e, (Finset.mem_filter.mp he).1, (Finset.mem_filter.mp he).2⟩
+  have hℓS : (ρ, ℓ) ∈ S' := by
+    obtain ⟨e, he, heℓ⟩ := hinto ℓ (withOutgroup_mem_vertices.mpr (Or.inr (Or.inl rfl))) hρℓ.symm
+    have heP := hS'.1 he
+    obtain ⟨x, y⟩ := e
+    simp only at heℓ
+    subst y
+    rcases withOutgroup_mem_edges.mp heP with h | h | h
+    · exact absurd h.2.symm hrootℓ
+    · exact h.1 ▸ he
+    · exact absurd (hN.2.1 _ h).2 hℓ
+  have hrootS : (ρ, N.root) ∈ S' := by
+    obtain ⟨e, he, her⟩ := hinto N.root
+      (withOutgroup_mem_vertices.mpr (Or.inr (Or.inr hN.1))) hrootρ
+    have heP := hS'.1 he
+    obtain ⟨x, y⟩ := e
+    simp only at her
+    subst y
+    rcases withOutgroup_mem_edges.mp heP with h | h | h
+    · exact h.1 ▸ he
+    · exact absurd h.2 hrootℓ
+    · have hpos : 0 < N.indegree N.root :=
+        Finset.card_pos.mpr ⟨_, Finset.mem_filter.mpr ⟨h, rfl⟩⟩
+      rw [hN.2.2.2.1] at hpos
+      omega
+  refine ⟨S'.filter (· ∈ N.edges), ⟨fun e he => (Finset.mem_filter.mp he).2, ?_⟩, ?_⟩
+  · intro v hv hvr
+    have hvP : v ∈ (N.withOutgroup z ρ ℓ).vertices :=
+      withOutgroup_mem_vertices.mpr (Or.inr (Or.inr hv))
+    have hvρ : v ≠ ρ := fun h => hρ (h ▸ hv)
+    have hc := hS'.2 v hvP hvρ
+    have hsplit : S'.filter (fun e => e.2 = v) =
+        (S'.filter (· ∈ N.edges)).filter (fun e => e.2 = v) := by
+      ext e
+      simp only [Finset.mem_filter]
+      constructor
+      · rintro ⟨he, hev⟩
+        refine ⟨⟨he, ?_⟩, hev⟩
+        rcases withOutgroup_mem_edges.mp (hS'.1 he) with h | h | h
+        · exact absurd (hev ▸ h.2) hvr
+        · have hvℓ : v = ℓ := hev ▸ h.2
+          exact absurd (hvℓ ▸ hv) hℓ
+        · exact h
+      · rintro ⟨⟨he, _⟩, hev⟩
+        exact ⟨he, hev⟩
+    rw [← hsplit]
+    exact hc
+  · ext e
+    simp only [Finset.mem_insert, Finset.mem_filter]
+    constructor
+    · intro he
+      rcases withOutgroup_mem_edges.mp (hS'.1 he) with h | h | h
+      · exact Or.inl (Prod.ext h.1 h.2)
+      · exact Or.inr (Or.inl (Prod.ext h.1 h.2))
+      · exact Or.inr (Or.inr ⟨he, h⟩)
+    · rintro (rfl | rfl | ⟨he, _⟩)
+      · exact hrootS
+      · exact hℓS
+      · exact he
+
+/-- A directed path of the switching of `N⁺` from a vertex of `N` uses only edges of the switching
+of `N`: the new edges leave the new root, which no edge enters. -/
+theorem withOutgroup_reach (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vertices)
+    {S : Finset (ℕ × ℕ)} (hS : S ⊆ N.edges) {y v : ℕ} (hy : y ∈ N.vertices)
+    (h : Relation.ReflTransGen (fun a b => (a, b) ∈ insert (ρ, N.root) (insert (ρ, ℓ) S)) y v) :
+    Relation.ReflTransGen (fun a b => (a, b) ∈ S) y v := by
+  induction h with
+  | refl => exact Relation.ReflTransGen.refl
+  | @tail b c _ hbc ih =>
+    have hb : b ∈ N.vertices := by
+      rcases Relation.ReflTransGen.cases_tail ih with h | ⟨a, _, hab⟩
+      · exact h ▸ hy
+      · exact (hN.2.1 _ (hS hab)).2
+    have hbρ : b ≠ ρ := fun h => hρ (h ▸ hb)
+    rcases Finset.mem_insert.mp hbc with h | h
+    · exact absurd (Prod.ext_iff.mp h).1 hbρ
+    rcases Finset.mem_insert.mp h with h | h
+    · exact absurd (Prod.ext_iff.mp h).1 hbρ
+    · exact ih.tail h
 
 end RootedNetwork
 
