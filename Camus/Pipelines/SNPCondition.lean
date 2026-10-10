@@ -2,7 +2,7 @@ module
 
 public import Camus.Network.Realization.SupportClades
 public import Camus.Pipelines.Astral
-public import Camus.Pipelines.SNP
+public import Camus.Pipelines.InclusionOutgroup
 
 /-!
 # Section 3.2: the hypotheses of the consistency argument can be met
@@ -20,11 +20,13 @@ tree `t`, only contributes quartets induced by `t`, since the clades of that swi
 of `t` (`Realization.cladeBelow_support_code`, `Realization.induced_of_mem_quartets_support`), and
 it evolves down that switching with probability close to 1.
 
-In particular the deeper-donor example meets every hypothesis of the paper's argument: the true
-network `Counterexamples.shallowNet` is built on `Counterexamples.donorTree`, the tree displayed
-by it, and under some site model the quartets of `donorTree` are the most probable; yet, with
-probability tending to 1, the network `Counterexamples.deepNet`, not isomorphic to the true
-network, is optimal for `Q_m` with the fewest reticulations among the optimal networks
+In particular the deeper-donor example with an outgroup
+(`Camus/Pipelines/InclusionOutgroup.lean`) meets every hypothesis of the paper's argument: the
+true network `Counterexamples.outgroupShallowNet` is built on `Counterexamples.outgroupTree`, the
+tree displayed by it, whose outgroup is a child of the root, the root of the network lies on no
+cycle, and under some site model the quartets of the tree are the most probable; yet, with
+probability tending to 1, the network `Counterexamples.outgroupDeepNet`, not isomorphic to the
+true network, is optimal for `Q_m` with the fewest reticulations among the optimal networks
 (`Counterexamples.deeperDonor_meets_hypotheses`).
 
 ## Main results
@@ -34,7 +36,7 @@ network, is optimal for `Q_m` with the fewest reticulations among the optimal ne
 * `Realization.lowTransfer`: a site model on `Realization.graph t E`.
 * `Realization.exists_mostProbable`: under it, `t` induces the most probable quartets.
 * `Counterexamples.deeperDonor_meets_hypotheses`: E7 under every hypothesis of the paper's
-  argument.
+  argument, with an outgroup.
 -/
 
 @[expose] public section
@@ -306,41 +308,52 @@ end Realization
 
 namespace Counterexamples
 
-/-- Section 3.2, E7 under every hypothesis of the paper's consistency argument. Take for the true
-network `shallowNet`, built on the tree `donorTree`, and a site model on it with two states under
-which `donorTree` induces the most probable quartet on every four taxa (it exists by
-`Realization.exists_mostProbable`). Then, for independent sites with the law of this model
-(`External.SiteModel.sites`), the probability that `deepNet`, which is built on `donorTree` and
-not isomorphic to `shallowNet`, displays as many quartets of `Q_m` as any network built on
-`donorTree`, with the fewest reticulations among those, tends to 1. -/
+/-- Section 3.2, the report's E7 under every hypothesis of the paper's consistency argument, with
+an outgroup. The true network `outgroupShallowNet` is built on the tree
+`outgroupTree = (O,((A,B),(C,(F,(D,E)))))`, which it displays. The outgroup `O = 6` is a child of
+the root of the tree, its leaf is a child of the root of the network, and the root of the network
+lies on no cycle, so that the tree can be rooted on the edge to the outgroup ("provided we have
+an outgroup"). Under some site model with two states, the tree induces the most probable quartet
+on every four taxa (`Realization.exists_mostProbable`). Yet, for independent sites with the law
+of this model (`External.SiteModel.sites`), the probability that `outgroupDeepNet`, built on the
+same tree and not isomorphic to the true network, displays as many quartets of `Q_m` as any
+network built on the tree, with the fewest reticulations among those, tends to 1. -/
 theorem deeperDonor_meets_hypotheses :
-    ∃ M : External.SiteModel shallowNet Bool,
-      shallowNet.AnchoredExtension donorTree ∧ MostProbableQuartets M donorTree ∧
-      Tendsto (fun m => M.sites shallowNet_anchored.1 {ω |
-        (∀ R : RootedNetwork, R.AnchoredExtension donorTree →
-          score (External.sampleQuartets (fun n ω => ω n) m ω)
-              (DynamicProgramming.repertoire (External.sampleQuartets (fun n ω => ω n) m ω) R) ≤
-            score (External.sampleQuartets (fun n ω => ω n) m ω)
-              (DynamicProgramming.repertoire (External.sampleQuartets (fun n ω => ω n) m ω)
-                deepNet)) ∧
-        (∀ R : RootedNetwork, R.AnchoredExtension donorTree →
-          (∀ R' : RootedNetwork, R'.AnchoredExtension donorTree →
+    outgroupTree.nodeAt [false] = some (.leaf 6) ∧
+      (outgroupShallowNet.root, outgroupShallowNet.leaf 6) ∈ outgroupShallowNet.edges ∧
+      (∀ v (c : outgroupShallowNet.underlying.Walk v v), c.IsCycle →
+        outgroupShallowNet.root ∉ c.support) ∧
+      outgroupShallowNet.AnchoredExtension outgroupTree ∧
+      ∃ M : External.SiteModel outgroupShallowNet Bool, MostProbableQuartets M outgroupTree ∧
+        Tendsto (fun m => M.sites outgroupShallowNet_anchored.1 {ω |
+          (∀ R : RootedNetwork, R.AnchoredExtension outgroupTree →
             score (External.sampleQuartets (fun n ω => ω n) m ω)
                 (DynamicProgramming.repertoire (External.sampleQuartets (fun n ω => ω n) m ω)
-                  R') ≤
+                  R) ≤
               score (External.sampleQuartets (fun n ω => ω n) m ω)
                 (DynamicProgramming.repertoire (External.sampleQuartets (fun n ω => ω n) m ω)
-                  R)) →
-          deepNet.reticulationCount ≤ R.reticulationCount) ∧
-        IsEmpty (deepNet.Iso shallowNet)}) atTop (𝓝 1) := by
-  obtain ⟨M, hM⟩ : ∃ M : External.SiteModel shallowNet Bool, MostProbableQuartets M donorTree :=
-    Realization.exists_mostProbable donorTree donorTree_wellLabelled {shallowPair}
-      shallowPair_separated
-  have h := snp_deeperDonor_tendsto M
-    (fun n (ω : ℕ → External.SiteHistory shallowNet Bool) => ω n)
-    (M.sites_iIndepFun shallowNet_anchored.1) (M.sites_identDistrib shallowNet_anchored.1)
-    (M.sites_law shallowNet_anchored.1)
-  exact ⟨M, shallowNet_anchored, hM, h⟩
+                  outgroupDeepNet)) ∧
+          (∀ R : RootedNetwork, R.AnchoredExtension outgroupTree →
+            (∀ R' : RootedNetwork, R'.AnchoredExtension outgroupTree →
+              score (External.sampleQuartets (fun n ω => ω n) m ω)
+                  (DynamicProgramming.repertoire (External.sampleQuartets (fun n ω => ω n) m ω)
+                    R') ≤
+                score (External.sampleQuartets (fun n ω => ω n) m ω)
+                  (DynamicProgramming.repertoire (External.sampleQuartets (fun n ω => ω n) m ω)
+                    R)) →
+            outgroupDeepNet.reticulationCount ≤ R.reticulationCount) ∧
+          IsEmpty (outgroupDeepNet.Iso outgroupShallowNet)}) atTop (𝓝 1) := by
+  obtain ⟨M, hM⟩ : ∃ M : External.SiteModel outgroupShallowNet Bool,
+      MostProbableQuartets M outgroupTree :=
+    Realization.exists_mostProbable outgroupTree outgroupTree_wellLabelled {outgroupShallowPair}
+      (Realization.single_separated outgroupShallowPair_mem)
+  have h := snp_outgroup_tendsto M
+    (fun n (ω : ℕ → External.SiteHistory outgroupShallowNet Bool) => ω n)
+    (M.sites_iIndepFun outgroupShallowNet_anchored.1)
+    (M.sites_identDistrib outgroupShallowNet_anchored.1)
+    (M.sites_law outgroupShallowNet_anchored.1)
+  exact ⟨outgroupTree_child, outgroup_leaf_child, fun _ c hc => outgroup_root_not_on_cycle c hc,
+    outgroupShallowNet_anchored, M, hM, h⟩
 
 end Counterexamples
 

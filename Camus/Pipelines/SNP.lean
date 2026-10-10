@@ -30,9 +30,11 @@ with its hypothesis `support_convergence` proved (`snp_correctedStatisticalConsi
 identifiability under inclusion the conclusion fails, even with the tie-break: for the true
 network `Counterexamples.shallowNet` and every site model on it, the network
 `Counterexamples.deepNet`, which is not isomorphic to it, is optimal with the fewest
-reticulations with probability tending to 1 (`snp_deeperDonor_tendsto`). Under some site model the
-example also meets the paper's condition on `t` (`Counterexamples.deeperDonor_meets_hypotheses`
-in `Camus/Pipelines/SNPCondition.lean`). The model assumes `p(e, s, s) > 0` on the tree edges
+reticulations with probability tending to 1 (`snp_deeperDonor_tendsto`). That example has no
+outgroup; the same holds for an example with an outgroup (`snp_outgroup_tendsto` in
+`Camus/Pipelines/InclusionOutgroup.lean`), which under some site model meets every hypothesis of
+the paper's argument (`Counterexamples.deeperDonor_meets_hypotheses` in
+`Camus/Pipelines/SNPCondition.lean`). The model assumes `p(e, s, s) > 0` on the tree edges
 (`External.SiteModel`), which step 2 needs and WTE's constraints do not give
 (`External.theorem6_step_needs_stay`).
 
