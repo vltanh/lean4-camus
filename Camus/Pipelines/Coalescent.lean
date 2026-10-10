@@ -2,57 +2,63 @@ module
 
 public import Camus.Pipelines.Coalescent.Frequencies
 public import Camus.Pipelines.Coalescent.Quartets
+public import Camus.Pipelines.Coalescent.Topology
 public import Mathlib.Probability.StrongLaw
 
 /-!
 # Section 3.4: Quartet Filtering under the multispecies coalescent
 
-Section 3.4 explains Algorithm 1 (Quartet Filtering) by the multispecies coalescent (MSC): "when
-the gene trees evolve down the tree under the MSC ... for large numbers of gene trees, we expect
+Section 3.4 explains Algorithm 1 (Quartet Filtering) by the multispecies coalescent (MSC): when
+"the gene trees evolve down the tree under the MSC ... for large numbers of gene trees, we expect
 the distribution on quartet tree topologies to be close to the expected values under the MSC,
-which is f1 > f2 = f3 ... as the number of genes increases, the gap between f2 and f3 will
-approach 0", so that only the most frequent quartet tree is kept; and "for t small enough
-(specifically, t < (f2−f3)/(f2+f3)), then we will include q2". This file proves both statements
-for gene trees drawn independently from a distribution: under the MSC on a rooted binary species
-tree, for every threshold `t > 0`, almost surely, for all large numbers of genes, Algorithm 1 keeps
-on every four taxa exactly the copies of the quartet tree of the species tree; and when the two
-least probable topologies have probabilities `p₂ > p₃` (as under a network with reticulations)
-and `t < (p₂ − p₃)/(p₂ + p₃)`, almost surely, for all large numbers of genes, it keeps the second
-most frequent topology too.
+which is f1>f2=f3. For finite numbers of gene trees, we would not expect f2=f3, but as the number
+of genes increases, the gap between f2 and f3 will approach 0", so that Algorithm 1 keeps only
+the most frequent quartet tree; and the second most frequent is kept "for t small enough
+(specifically, t<(f2−f3)/(f2+f3))". This file proves the corresponding statements for gene trees
+drawn independently from a distribution. Under the MSC on a rooted binary species tree, for every
+threshold `t > 0`, almost surely, for all large numbers of genes, Algorithm 1 keeps on every four
+taxa exactly the copies of the quartet tree of the species tree. When the two least probable
+topologies have probabilities `p₂ > p₃` (as under a network with reticulations) and
+`t < (p₂ − p₃)/(p₂ + p₃)`, almost surely, for all large numbers of genes, it keeps the second
+topology too.
 
-The gene trees are random variables `G n : Ω → Finset (Finset L)` (unrooted trees on the taxa `L`
-in the representation of lean4-adr11, `Camus/Pipelines/Coalescent/Quartets.lean`), independent
+The gene trees are random variables `G n : Ω → Finset (Finset L)`, unrooted trees on the taxa `L`
+in the representation of lean4-adr11 (`Camus/Pipelines/Coalescent/Quartets.lean`), independent
 (`ProbabilityTheory.iIndepFun`) and identically distributed (`ProbabilityTheory.IdentDistrib`).
-Under the MSC, `G 0` has the distribution `σ.unrootedDist id`. The multiset `Q` given to
-Algorithm 1 is `geneQuartets`: every quartet tree induced by each of the first `n` gene trees.
+Under the MSC on `σ`, `G 0` has the distribution `σ.unrootedDist id`. The multiset `Q` given to
+Algorithm 1 is `geneQuartets`: all quartet trees induced by the first `n` gene trees, each gene
+tree contributing one copy of each quartet tree it induces.
 
 ## Main results
 
-* `Coalescent.geneQuartets`, `Coalescent.count_geneQuartets`: the multiset of the quartet trees of
-  the first `n` gene trees, and its multiplicities.
+* `Coalescent.geneQuartets`, `Coalescent.count_geneQuartets`: the multiset `Q` of the quartet
+  trees of the first `n` gene trees, and its multiplicities.
 * `Coalescent.ae_tendsto_frequency`: the strong law of large numbers for the relative frequency of
   a quartet tree.
 * `Coalescent.measureReal_induces`: under the MSC, the probability that a gene tree induces a
   quartet tree is `quartetProb`.
-* `Coalescent.msc_filterBlock`: under the MSC and for `t > 0`, almost surely, eventually Algorithm 1
-  keeps on four taxa exactly the copies of the quartet tree of the species tree.
-* `Coalescent.msc_filterQuartets`: the same on all sets of four taxa at once: almost surely,
-  eventually `filterQuartets t Q` is the multiset of the quartet trees of `Q` induced by the
-  species tree.
+* `Coalescent.msc_filterBlock`: under the MSC and for `t > 0`, almost surely, eventually
+  Algorithm 1 keeps on four taxa exactly the copies of the quartet tree of the species tree.
+* `Coalescent.msc_filterQuartets`, `Coalescent.msc_filterQuartets_induced`: the same on all sets
+  of four taxa at once: almost surely, eventually `filterQuartets t Q` is the multiset of the
+  quartet trees of `Q` induced by the species tree, that is, of those in Q(T) for the species
+  tree `T` as a tree of CAMUS.
 * `Coalescent.filterBlock_keeps_second`: if `p₁ ≥ p₂ > p₃` and `t < (p₂ − p₃)/(p₂ + p₃)`, almost
   surely, eventually Algorithm 1 keeps every copy of the two most probable topologies and none of
   the third.
 
-## Proof
+## Proof (the paper's)
 
-By the strong law of large numbers (`ProbabilityTheory.strong_law_ae_real`, applied to the
-indicator that a gene tree induces the quartet tree), the relative frequencies `fᵢ` converge almost
-surely to the probabilities `pᵢ` of the three topologies. Under the MSC these satisfy
-`p₁ > p₂ = p₃ > 0` (`Coalescent.msc_pattern_of_induces`), so eventually `f₁` is the largest
-frequency and `(f₂ − f₃)/n → 0 < 2 t p₂ = lim t (f₂ + f₃)/n`, and the test of Algorithm 1 fails
-(`Algorithm1.eventually_msc_pattern`). Under `p₃ < p₂ ≤ p₁`, eventually `f₃` is the smallest and
-the test, which holds for the limits, holds for the frequencies
-(`Algorithm1.eventually_retain_pattern`).
+* Under the MSC, the probabilities of the three topologies on four taxa are `p₁ > p₂ = p₃ > 0`,
+  `p₁` for the topology of the species tree (`Coalescent.msc_pattern_of_induces`, Section 3.3).
+* For large numbers of gene trees the relative frequencies approach these probabilities: almost
+  surely `fᵢ → pᵢ`, by the strong law of large numbers applied to the indicator that a gene tree
+  induces the quartet tree (`Coalescent.ae_tendsto_frequency`).
+* The gap between `f₂` and `f₃` approaches `0`, while `t (f₂ + f₃) → 2 t p₂ > 0`, so the test of
+  Algorithm 1 eventually fails, and the topology of the species tree is eventually the most
+  frequent (`Algorithm1.eventually_msc_pattern`).
+* For the converse, the test holds for `p₂` against `p₃`, hence for `p₁`, and eventually for the
+  frequencies (`Algorithm1.eventually_retain_pattern`).
 -/
 
 @[expose] public section
@@ -73,6 +79,7 @@ def mkQuartet (x : ℕ × ℕ × ℕ × ℕ × Fin 3) : Option Quartet :=
     some ⟨x.1, x.2.1, x.2.2.1, x.2.2.2.1, h.1, h.2.1, h.2.2, x.2.2.2.2⟩
   else none
 
+/-- A quartet tree comes from at most one tuple. -/
 theorem mkQuartet_inj (x x' : ℕ × ℕ × ℕ × ℕ × Fin 3) (q : Quartet) (h : q ∈ mkQuartet x)
     (h' : q ∈ mkQuartet x') : x = x' := by
   obtain ⟨a, b, c, d, s⟩ := x
@@ -88,6 +95,7 @@ theorem mkQuartet_inj (x x' : ℕ × ℕ × ℕ × ℕ × Fin 3) (q : Quartet) (
 def quartetsOn (L : Finset ℕ) : Finset Quartet :=
   (L ×ˢ L ×ˢ L ×ˢ L ×ˢ (univ : Finset (Fin 3))).filterMap mkQuartet mkQuartet_inj
 
+/-- The quartet trees on taxa of `L` are those whose four taxa are in `L`. -/
 theorem mem_quartetsOn {q : Quartet} : q ∈ quartetsOn L ↔ q.taxa ⊆ L := by
   simp only [quartetsOn, mem_filterMap, mem_product, mem_univ, and_true]
   constructor
@@ -104,6 +112,7 @@ theorem mem_quartetsOn {q : Quartet} : q ∈ quartetsOn L ↔ q.taxa ⊆ L := by
 /-- The quartet trees induced by the gene tree `T`. -/
 def quartetsOf (T : Finset (Finset L)) : Finset Quartet := (quartetsOn L).filter (Induces T)
 
+/-- The quartet trees of `T` are those that `T` induces. -/
 theorem mem_quartetsOf {T : Finset (Finset L)} {q : Quartet} :
     q ∈ quartetsOf T ↔ Induces T q := by
   rw [quartetsOf, mem_filter, mem_quartetsOn]
@@ -136,8 +145,9 @@ variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasur
   [MeasurableSpace (Finset (Finset L))] [MeasurableSingletonClass (Finset (Finset L))]
 
 /-- The strong law of large numbers for quartet trees: for independent and identically
-distributed gene trees, almost surely, the relative frequency of the quartet tree `q` among the
-quartet trees of the first `n` gene trees tends to the probability that a gene tree induces `q`. -/
+distributed gene trees, almost surely, the proportion of the first `n` gene trees that induce the
+quartet tree `q` (its multiplicity in `Q` divided by `n`) tends to the probability that a gene tree
+induces `q`. -/
 theorem ae_tendsto_frequency (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
     (hid : ∀ n, IdentDistrib (G n) (G 0) P P) (q : Quartet) :
     ∀ᵐ ω ∂P, Tendsto (fun n : ℕ => ((geneQuartets (fun i => G i ω) n).count q : ℝ) / n) atTop
@@ -194,13 +204,15 @@ theorem frequencies_map (Q : Multiset Quartet) (k : QuartetKey) (s : Fin 3) :
     frequencies (Q.map quartetEquiv) k s = Q.count (k.quartet s) :=
   encoded_frequency Q (k.quartet s)
 
+/-- The multiplicity of `(k, s)` in the encoded multiset is that of the quartet tree of topology
+`s` on the four taxa of `k`. -/
 theorem count_map_quartetEquiv (Q : Multiset Quartet) (k : QuartetKey) (s : Fin 3) :
     (Q.map quartetEquiv).count (k, s) = Q.count (k.quartet s) :=
   encoded_frequency Q (k.quartet s)
 
-/-- **Section 3.4, Quartet Filtering under the MSC.** Let the gene trees be independent, each with
-the distribution of the multispecies coalescent on a rooted binary species tree `σ`, and let
-`a < b < c < d` be four taxa of `σ`, on which `σ` induces the topology `s`. For every threshold
+/-- Section 3.4: Quartet Filtering under the multispecies coalescent. Let the gene trees be
+independent, each with the distribution of the MSC on a rooted binary species tree `σ`, and let
+`a < b < c < d` be the four taxa of `k`, on which `σ` induces the topology `s`. For every threshold
 `t > 0`, almost surely, for all large numbers `n` of genes, Algorithm 1 applied to the quartet
 trees of the first `n` gene trees keeps on these four taxa exactly the copies of the quartet tree
 of `σ`: the most frequent topology is eventually that of `σ`, since `f₁ → p₁ > p₂ = p₃`, and the
@@ -229,23 +241,8 @@ theorem msc_filterBlock {σ : SpeciesTree L} (hσ : σ.IsBinary) (G : ℕ → Ω
   simp only [← frequencies_map] at hn
   rw [filterBlock_eq_replicate hn.1 hn.2, count_map_quartetEquiv]
 
-/-- The output of Algorithm 1 on four taxa is part of its input. -/
-theorem count_filterBlock_le {K : Type*} [DecidableEq K] (t : ℝ) (Q : Multiset (K × Fin 3))
-    (k : K) (x : K × Fin 3) : (filterBlock t Q k).count x ≤ Q.count x := by
-  by_cases hx : x.1 = k
-  · obtain ⟨y, s⟩ := x
-    obtain rfl : y = k := hx
-    rcases rank_covers (frequencies Q y) s with rfl | rfl | rfl
-    · rw [filterBlock_top_count]
-    · rw [filterBlock_second_count]
-      split_ifs <;> simp
-    · rw [filterBlock_third_count]
-      exact Nat.zero_le _
-  · rw [Multiset.count_eq_zero.2 fun h => hx (fst_of_mem_filterBlock h)]
-    exact Nat.zero_le _
-
-/-- **Section 3.4, Quartet Filtering under the MSC, on all sets of four taxa.** Let the gene trees
-be independent, each with the distribution of the multispecies coalescent on a rooted binary
+/-- Section 3.4: Quartet Filtering under the multispecies coalescent, on all sets of four taxa.
+Let the gene trees be independent, each with the distribution of the MSC on a rooted binary
 species tree `σ`. For every threshold `t > 0`, almost surely, for all large numbers `n` of genes,
 Algorithm 1 applied to the multiset `Q` of the quartet trees of the first `n` gene trees returns
 exactly the quartet trees of `Q` that the species tree induces, with their multiplicities. -/
@@ -256,7 +253,6 @@ theorem msc_filterQuartets {σ : SpeciesTree L} (hσ : σ.IsBinary)
     ∀ᵐ ω ∂P, ∀ᶠ n in atTop,
       filterQuartets t (geneQuartets (fun i => G i ω) n) =
         (geneQuartets (fun i => G i ω) n).filter (Induces (unroot σ.clusters)) := by
-  classical
   -- the sets of four taxa of `σ`, and the topology that `σ` induces on each
   set keys := (quartetsOn L).image Quartet.key
   have hkeys : ∀ k ∈ keys, keyTaxa k ⊆ L := by
@@ -306,32 +302,34 @@ theorem msc_filterQuartets {σ : SpeciesTree L} (hσ : σ.IsBinary)
     rw [hqk, h0] at this
     omega
 
+/-- Section 3.4: Quartet Filtering under the multispecies coalescent, with the species tree as a
+tree of CAMUS. Let the gene trees be independent, each with the distribution of the MSC on a
+species tree `σ` whose rooted topology is the tree `tree` of CAMUS (`σ` is then binary). For every
+threshold `t > 0`, almost surely, for all large numbers `n` of genes, Algorithm 1 applied to the
+multiset `Q` of the quartet trees of the first `n` gene trees returns exactly the quartet trees of
+`Q` that belong to Q(tree), with their multiplicities. -/
+theorem msc_filterQuartets_induced {σ : SpeciesTree L} {tree : PhyloTree}
+    (htree : HasTopology σ tree) (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
+    (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = σ.unrootedDist id T) {t : ℝ} (ht : 0 < t) :
+    ∀ᵐ ω ∂P, ∀ᶠ n in atTop,
+      filterQuartets t (geneQuartets (fun i => G i ω) n) =
+        (geneQuartets (fun i => G i ω) n).filter fun q => q.induced tree = true := by
+  filter_upwards [msc_filterQuartets (isBinary_of_hasTopology htree) G hind hid hlaw ht]
+    with ω hω
+  filter_upwards [hω] with n hn
+  rw [hn]
+  exact Multiset.filter_congr fun q _ => induces_iff_induced htree q
+
 /-! ### The converse signal -/
 
-theorem fin_three_cases {s₁ s₂ s₃ s : Fin 3} (h₁₂ : s₁ ≠ s₂) (h₁₃ : s₁ ≠ s₃) (h₂₃ : s₂ ≠ s₃)
-    (hs : s ≠ s₃) : s = s₁ ∨ s = s₂ := by
-  revert s₁ s₂ s₃ s
-  decide
-
-/-- If `0 ≤ p₃ < p₂ ≤ p₁` and the test of Algorithm 1 holds for `p₂` against `p₃`, it holds for
-`p₁` against `p₃`. -/
-theorem retainSecond_of_le {t p₁ p₂ p₃ : ℝ} (h₃ : 0 ≤ p₃) (h₂₃ : p₃ < p₂) (h₁₂ : p₂ ≤ p₁)
-    (h : retainSecond t p₂ p₃) : retainSecond t p₁ p₃ := by
-  unfold retainSecond at *
-  -- the test forces `t < 1`
-  have ht : t < 1 := by
-    by_contra ht
-    have ht' : 1 ≤ t := le_of_not_gt ht
-    nlinarith
-  nlinarith
-
-/-- **Section 3.4, the converse signal.** Let the gene trees be independent and identically
+/-- Section 3.4: the converse signal. Let the gene trees be independent and identically
 distributed (for instance under a network with reticulations, not formalized here), and let the
 three topologies `s₁, s₂, s₃` on the four taxa `a < b < c < d` of `k` have probabilities
 `p s₁ ≥ p s₂ > p s₃`. For every threshold `t < (p s₂ − p s₃)/(p s₂ + p s₃)`, almost surely, for all
 large numbers `n` of genes, Algorithm 1 keeps on these four taxa every copy of the two most
-probable topologies and no copy of `s₃`: "for t small enough (specifically,
-t < (f2−f3)/(f2+f3)), then we will include q2". -/
+probable topologies and no copy of `s₃`, in the limit of the paper's "for t small enough
+(specifically, t<(f2−f3)/(f2+f3)), then we will include q2". -/
 theorem filterBlock_keeps_second (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
     (hid : ∀ n, IdentDistrib (G n) (G 0) P P) (k : QuartetKey) (p : Fin 3 → ℝ)
     (hp : ∀ s, P.real {ω | Induces (G 0 ω) (k.quartet s)} = p s) {s₁ s₂ s₃ : Fin 3}

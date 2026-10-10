@@ -9,27 +9,39 @@ public import Mathlib.Order.Filter.AtTopBot.Basic
 /-!
 # Section 3.4: Algorithm 1 on converging frequencies
 
-Section 3.4 motivates Algorithm 1 by the limit of many genes: under the multispecies coalescent the
-relative frequencies of the three topologies on four taxa approach probabilities `p₁ > p₂ = p₃`,
-so "the gap between f₂ and f₃ will approach 0", and the test `f₂ − f₃ > t · (f₂ + f₃)` eventually
-fails; when `p₂ > p₃` and `t < (p₂ − p₃)/(p₂ + p₃)`, it eventually holds. This file proves both
-facts for any sequence of counts whose relative frequencies converge, and what Algorithm 1 then
-returns. The probabilities and the convergence are in `Camus/Pipelines/Coalescent.lean`.
+Section 3.4 explains Algorithm 1 by the limit of many genes. Under the multispecies coalescent the
+relative frequencies `f₁, f₂, f₃` of the three topologies on four taxa approach probabilities
+`p₁ > p₂ = p₃`, so "the gap between f2 and f3 will approach 0" and the test
+`f₂ − f₃ > t · (f₂ + f₃)` eventually fails; and when `p₂ > p₃` and `t < (p₂ − p₃)/(p₂ + p₃)`, the
+test eventually holds. This file proves both facts for any counts whose relative frequencies
+converge, and what Algorithm 1 then returns. The probabilities and the almost sure convergence are
+in `Camus/Pipelines/Coalescent.lean`.
 
-Counts are `f n : Fin 3 → ℕ` (the number of copies of each topology among the first `n` genes),
-and their relative frequencies are `f n s / n`.
+The counts are `f n : Fin 3 → ℕ`, the numbers of copies of the three topologies among the quartet
+trees of `n` genes; their relative frequencies are `f n s / n`.
 
 ## Main results
 
-* `Algorithm1.eventually_msc_pattern`: if the limits satisfy `p(s₁) > p(s) = p(s') > 0` for the
-  two topologies `s, s'` other than `s₁` and `t > 0`, eventually `s₁` has strictly the largest
-  count and the test fails for the other two topologies.
-* `Algorithm1.eventually_retain_pattern`: if `p(s₃)` is strictly the smallest limit and the test
+* `Algorithm1.eventually_msc_pattern`: if the limits satisfy `p s₁ > p s = p s' > 0` for the two
+  topologies `s, s'` other than `s₁`, and `t > 0`, eventually `s₁` has strictly the largest count
+  and the test fails for the two other topologies.
+* `Algorithm1.eventually_retain_pattern`: if `p s₃` is strictly the smallest limit and the test
   holds for the limits, eventually `s₃` has strictly the smallest count and the test holds.
 * `Algorithm1.filterBlock_eq_replicate`, `Algorithm1.filterBlock_count_of_retain`: the output of
   Algorithm 1 in these two situations.
-* `Algorithm1.count_filterQuartets`: the multiplicity of a quartet in the output of Algorithm 1 on
-  every set of four taxa is its multiplicity in the output on its own set of four taxa.
+* `Algorithm1.count_filterQuartets`: the multiplicity of a quartet tree in the output of
+  Algorithm 1 is its multiplicity in the output on its own four taxa.
+* `Algorithm1.count_filterBlock_le`: the output of Algorithm 1 on four taxa is part of its input.
+
+## Proof (the paper's)
+
+Under the multispecies coalescent the limits are `p₁ > p₂ = p₃ > 0`. The relative frequency of
+the topology of `p₁` eventually exceeds the two others, so it is `q₁` (`rank_fst_eq_of_lt`). The
+gap between the two others tends to `0` while `t` times their sum tends to `2 t p₂ > 0`, so the
+test fails, whichever of them is `q₂` (`eventually_msc_pattern`), and Algorithm 1 keeps the copies
+of `q₁` only (`filterBlock_eq_replicate`). For the converse, the topology of `p₃` eventually has
+the smallest count, so it is `q₃` (`rank_snd_snd_eq_of_lt`), and the test, which holds for the
+limits, holds for the counts (`eventually_retain_pattern`, `filterBlock_count_of_retain`).
 -/
 
 @[expose] public section
@@ -77,6 +89,22 @@ theorem fst_of_mem_filterBlock {t : ℝ} {Q : Multiset (K × Fin 3)} {k : K} {p 
   · split_ifs at hp with h
     · rw [Multiset.eq_of_mem_replicate hp]
     · exact absurd hp (Multiset.notMem_zero p)
+
+/-- The output of Algorithm 1 on the set of four taxa `k` is part of its input: every topology is
+kept with all its copies or not at all. -/
+theorem count_filterBlock_le (t : ℝ) (Q : Multiset (K × Fin 3)) (k : K) (x : K × Fin 3) :
+    (filterBlock t Q k).count x ≤ Q.count x := by
+  by_cases hx : x.1 = k
+  · obtain ⟨y, s⟩ := x
+    obtain rfl : y = k := hx
+    rcases rank_covers (frequencies Q y) s with rfl | rfl | rfl
+    · rw [filterBlock_top_count]
+    · rw [filterBlock_second_count]
+      split_ifs <;> simp
+    · rw [filterBlock_third_count]
+      exact Nat.zero_le _
+  · rw [Multiset.count_eq_zero.2 fun h => hx (fst_of_mem_filterBlock h)]
+    exact Nat.zero_le _
 
 /-- The multiplicity of a quartet `q` in the output of Algorithm 1 on every set of four taxa
 (`filterQuartets`) is its multiplicity in the output on the four taxa of `q`. -/
@@ -130,12 +158,30 @@ theorem filterBlock_count_of_retain {t : ℝ} {Q : Multiset (K × Fin 3)} {k : K
   · rw [ite_eq_right h23, filterBlock_second_count, h3, ite_eq_left (hkeep _ h23)]
   · rw [ite_eq_left h3, filterBlock_third_count]
 
-/-- Section 3.4, the multispecies coalescent pattern in the limit. Let `f n s` be the count of the
-topology `s` on four taxa among `n` genes, with relative frequencies `f n s / n → p s`. If `s₁` is
-strictly the most probable topology and the two others have the same positive probability (the
-pattern of the multispecies coalescent), then for every threshold `t > 0`, eventually `s₁` has
+/-- If `0 ≤ p₃ < p₂ ≤ p₁` and the test of Algorithm 1 holds for `p₂` against `p₃`, it holds for
+`p₁` against `p₃`. -/
+theorem retainSecond_of_le {t p₁ p₂ p₃ : ℝ} (h₃ : 0 ≤ p₃) (h₂₃ : p₃ < p₂) (h₁₂ : p₂ ≤ p₁)
+    (h : retainSecond t p₂ p₃) : retainSecond t p₁ p₃ := by
+  unfold retainSecond at *
+  -- the test forces `t < 1`
+  have ht : t < 1 := by
+    by_contra ht
+    have ht' : 1 ≤ t := le_of_not_gt ht
+    nlinarith
+  nlinarith
+
+/-- Of three distinct topologies, every topology other than the third is one of the first two. -/
+theorem fin_three_cases {s₁ s₂ s₃ s : Fin 3} (h₁₂ : s₁ ≠ s₂) (h₁₃ : s₁ ≠ s₃) (h₂₃ : s₂ ≠ s₃)
+    (hs : s ≠ s₃) : s = s₁ ∨ s = s₂ := by
+  revert s₁ s₂ s₃ s
+  decide
+
+/-- Section 3.4: the pattern of the multispecies coalescent in the limit. Let `f n s` be the count
+of the topology `s` on four taxa among `n` genes, with relative frequencies `f n s / n → p s`. If
+`s₁` is strictly the most probable topology and the two others have the same positive probability
+(the pattern of the multispecies coalescent), then for every threshold `t > 0`, eventually `s₁` has
 strictly the largest count and the test `f₂ − f₃ > t · (f₂ + f₃)` fails for the two other
-topologies, in either order: "the gap between f₂ and f₃ will approach 0", while `f₂ + f₃` stays
+topologies, in either order: "the gap between f2 and f3 will approach 0", while `f₂ + f₃` stays
 proportional to `n`. -/
 theorem eventually_msc_pattern {f : ℕ → Fin 3 → ℕ} {p : Fin 3 → ℝ} {s₁ : Fin 3} {t : ℝ}
     (hf : ∀ s, Tendsto (fun n : ℕ => (f n s : ℝ) / n) atTop (𝓝 (p s)))
@@ -182,7 +228,7 @@ theorem eventually_msc_pattern {f : ℕ → Fin 3 → ℕ} {p : Fin 3 → ℝ} {
       exact (div_lt_div_iff_of_pos_right hn).2 hret
     linarith [le_abs_self ((f n s : ℝ) / n - (f n s' : ℝ) / n)]
 
-/-- Section 3.4, the converse signal in the limit. Let `f n s` be the count of the topology `s` on
+/-- Section 3.4: the converse signal in the limit. Let `f n s` be the count of the topology `s` on
 four taxa among `n` genes, with relative frequencies `f n s / n → p s`. If `s₃` is strictly the
 least probable topology and the test of Algorithm 1 holds for the probabilities of each other
 topology against `s₃`, then eventually `s₃` has strictly the smallest count and the test holds for

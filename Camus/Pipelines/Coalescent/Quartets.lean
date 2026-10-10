@@ -7,23 +7,26 @@ public import ADR11.MSC.Marginal
 /-!
 # Section 3.3: quartet trees of gene trees under the multispecies coalescent
 
-Section 3.3 motivates Algorithm 1 by the multispecies coalescent (MSC), "under which, for every
-four species, the most probable quartet tree matches the species tree and the other two quartet
-trees have the same lower probability". This file proves this statement for rooted binary species
-trees with edge lengths, from the MSC of lean4-adr11 (Allman, Degnan and Rhodes 2011), and states
-it with the quartet trees of CAMUS.
+Section 3.3 motivates Algorithm 1 by "the multi-species coalescent (MSC) model (Takahata 1989)
+under which, for every four species, the most probable quartet tree matches the species tree and
+the other two quartet trees have the same lower probability". This file proves this statement for
+rooted binary species trees, from the MSC of lean4-adr11 (a formalization of Allman, Degnan and
+Rhodes 2011), and states it with the quartet trees of CAMUS (`msc_pattern`).
 
-**Bridge between the two representations.** The taxa form a finite set `L` of labels (natural
-numbers, as in CAMUS). A species tree is an `ADR11.SpeciesTree L`: its clusters, with a positive
-length on every edge. A gene tree is an unrooted tree on `L` in ADR11's representation, the set
-`T : Finset (Finset L)` of the sides of its splits; under the MSC with one lineage per taxon it has
-probability `σ.unrootedDist id T`. A CAMUS quartet tree `q` on the taxa `a < b < c < d` has
-topology `q.split`: `0` is ab|cd, `1` is ac|bd, `2` is ad|bc. The gene tree `T` induces `q`
-(`Induces T q`) when a side of a split of `T` meets `{a, b, c, d}` in a side of `q`, the analogue
-for splits of `Quartet.induced` for clades. For the four taxa of a key `k`, relabelled `0, 1, 2, 3`
-in increasing order (`keyTaxon`), the topology `s` is the unrooted tree of ADR11 on `Fin 4` with
-the split `side s | (side s)ᶜ`, `side s = {0, s + 1}`: `treeOfClusters {{0, 1}}` is AB|CD,
-`treeOfClusters {{0, 2}}` is AC|BD and `treeOfClusters {{0, 3}}` is AD|BC.
+## Representation
+
+The taxa form a finite set `L` of labels, natural numbers as in CAMUS. A species tree is an
+`ADR11.SpeciesTree L`: its clusters, with a positive length on every edge. A gene tree is an
+unrooted tree on `L` in the representation of ADR11, the set `T : Finset (Finset L)` of the sides
+of its splits; under the MSC with one lineage per taxon it has probability `σ.unrootedDist id T`.
+A quartet tree of CAMUS on the taxa `a < b < c < d` has the topology `split`: `0` is ab|cd, `1` is
+ac|bd, `2` is ad|bc. The gene tree `T` induces the quartet tree `q` (`Induces T q`) when a side of
+a split of `T` meets `{a, b, c, d}` in a side of `q`: `Quartet.induced`, with splits in place of
+clades. The four taxa of a key `k` (`QuartetKey`), relabelled `0, 1, 2, 3` in increasing order
+(`keyTaxon`), give the quartet species tree `quartetSpeciesTree σ k` on `Fin 4`, and the topology
+`s` is the unrooted tree of ADR11 on `Fin 4` with the split `side s | (side s)ᶜ`,
+`side s = {0, s + 1}`: `treeOfClusters {{0, 1}}` is AB|CD, `treeOfClusters {{0, 2}}` is AC|BD and
+`treeOfClusters {{0, 3}}` is AD|BC (`treeOfClusters_side`).
 
 ## Main results
 
@@ -32,24 +35,28 @@ the split `side s | (side s)ᶜ`, `side s = {0, s + 1}`: `treeOfClusters {{0, 1}
 * `Coalescent.quartetSpeciesTree`: the species tree that `σ` induces on four taxa, on `Fin 4`.
 * `Coalescent.quartetProb_eq`: the probability that a gene tree induces the topology `s` on four
   taxa is the probability of the quartet tree `treeOfClusters {side s}` under the MSC on the
-  induced species tree (ADR11's Lemma 5, marginalization).
-* `Coalescent.induces_species_iff`: the species tree induces the topology `s` iff `side s` is a
-  split of the induced species tree.
-* `Coalescent.existsUnique_species`: a binary species tree induces exactly one topology on four
-  taxa.
+  quartet species tree.
+* `Coalescent.induces_species_iff`, `Coalescent.existsUnique_species`: the species tree induces
+  the topology `s` iff `side s` is the split of the quartet species tree; a binary species tree
+  induces exactly one topology on four taxa.
 * `Coalescent.quartetProb_species`, `Coalescent.quartetProb_other`: the probabilities
-  `1 − (2/3) e^{−x}` and `(1/3) e^{−x}`, `x > 0` the length of the internal edge of the induced
-  quartet species tree (Section 4.1 of Allman, Degnan and Rhodes).
+  `1 − (2/3) e^{−x}` and `(1/3) e^{−x}`, where `x > 0` is the length of the internal edge of the
+  quartet species tree.
 * `Coalescent.msc_pattern`: Section 3.3's description of the MSC.
 
 ## Proof
 
-The topology induced by a gene tree on four taxa depends only on its induced quartet tree, the
-restriction of its splits to the four taxa (`induces_iff`). By marginalization (ADR11's dropping
-of lineages and pruning of the species tree, with a relabelling), the induced quartet tree is
-distributed as the gene tree of the MSC on the induced species tree (`quartetSpeciesTree_unrootedDist`).
-That species tree is binary, its unrooted topology has one nontrivial split, and ADR11's four-taxon
-formulas give the probabilities of the three quartet trees.
+The paper cites the MSC for this description. The proof here uses Allman, Degnan and Rhodes. The
+topology that a gene tree induces on four taxa depends only on its quartet tree on them, the
+restriction of its splits to the four taxa (`induces_iff`). That quartet tree is distributed as the
+gene tree of the MSC on the quartet species tree (`quartetSpeciesTree_unrootedDist`): this is
+their Lemma 5 (marginalization), from ADR11's dropping of lineages
+(`ADR11.SpeciesTree.unrootedDist_comp_embedding`) and pruning of the species tree
+(`ADR11.SpeciesTree.rootedDist_restrict`), with a relabelling. The quartet species tree of a binary
+species tree is binary (`ADR11.SpeciesTree.restrict_isBinary`), so its unrooted topology has one
+nontrivial split, the topology of `σ` on the four taxa (`existsUnique_species`), and the formulas of
+their Section 4.1 (`ADR11.four_unrootedDist_of_mem`, `ADR11.four_unrootedDist_of_ne_of_isBinary`)
+give the probabilities `1 − (2/3) e^{−x}` for it and `(1/3) e^{−x}` for each other topology.
 -/
 
 @[expose] public section
@@ -72,6 +79,7 @@ separates the two sides of `q`. -/
 def Induces (T : Finset (Finset L)) (q : Quartet) : Prop :=
   q.taxa ⊆ L ∧ ∃ A ∈ T, q.cutBy (A.map (label L)) = true
 
+/-- Whether a gene tree induces a quartet tree is decidable. -/
 instance (T : Finset (Finset L)) (q : Quartet) : Decidable (Induces T q) := by
   unfold Induces
   infer_instance
@@ -86,11 +94,13 @@ noncomputable def quartetProb (σ : SpeciesTree L) (q : Quartet) : ℝ :=
 /-- The four taxa `{a, b, c, d}` of the key `k`. -/
 def keyTaxa (k : QuartetKey) : Finset ℕ := {k.a, k.b, k.c, k.d}
 
+/-- The three quartet trees on the key `k` have the four taxa of `k`. -/
 theorem taxa_quartet (k : QuartetKey) (s : Fin 3) : (k.quartet s).taxa = keyTaxa k := rfl
 
 /-- The labels `a, b, c, d` of the key `k`, in increasing order. -/
 def keyLabel (k : QuartetKey) : Fin 4 → ℕ := ![k.a, k.b, k.c, k.d]
 
+/-- The four labels of a key are distinct. -/
 theorem keyLabel_injective (k : QuartetKey) : Function.Injective (keyLabel k) := by
   have hab := k.ab
   have hbc := k.bc
@@ -98,6 +108,7 @@ theorem keyLabel_injective (k : QuartetKey) : Function.Injective (keyLabel k) :=
   intro i j h
   fin_cases i <;> fin_cases j <;> simp [keyLabel] at h ⊢ <;> omega
 
+/-- The labels of a key are its taxa. -/
 theorem keyLabel_mem (k : QuartetKey) (i : Fin 4) : keyLabel k i ∈ keyTaxa k := by
   fin_cases i <;> simp [keyLabel, keyTaxa]
 
@@ -110,6 +121,7 @@ def keyTaxon (k : QuartetKey) (hk : keyTaxa k ⊆ L) : Fin 4 ↪ L where
 /-- The four taxa of the key `k`, as a set of taxa of `L`. -/
 def keySet (k : QuartetKey) (hk : keyTaxa k ⊆ L) : Finset L := univ.map (keyTaxon k hk)
 
+/-- The four taxa of a key form a nonempty set. -/
 theorem keySet_nonempty (k : QuartetKey) (hk : keyTaxa k ⊆ L) : (keySet k hk).Nonempty :=
   ⟨keyTaxon k hk 0, mem_map_of_mem _ (mem_univ 0)⟩
 
@@ -120,6 +132,7 @@ noncomputable def keyEquiv (k : QuartetKey) (hk : keyTaxa k ⊆ L) : Fin 4 ≃ k
       obtain ⟨i, -, rfl⟩ := mem_map.1 hy
       exact ⟨i, rfl⟩⟩
 
+/-- The taxon labelled `i` by `keyEquiv` is `keyTaxon k hk i`. -/
 theorem keyEquiv_apply (k : QuartetKey) (hk : keyTaxa k ⊆ L) (i : Fin 4) :
     ((keyEquiv k hk i : keySet k hk) : L) = keyTaxon k hk i := rfl
 
@@ -129,12 +142,16 @@ theorem keyEquiv_apply (k : QuartetKey) (hk : keyTaxa k ⊆ L) (i : Fin 4) :
 topologies `0, 1, 2` of CAMUS are AB|CD, AC|BD and AD|BC. -/
 def side (s : Fin 3) : Finset (Fin 4) := {0, s.succ}
 
+/-- Each side has two of the four taxa. -/
 theorem side_card : ∀ s : Fin 3, #(side s) = 2 := by decide
 
+/-- Distinct topologies have distinct splits. -/
 theorem side_ne : ∀ s s' : Fin 3, s ≠ s' → side s ≠ side s' ∧ side s ≠ (side s')ᶜ := by decide
 
+/-- Every pair of the four taxa is a side of the split of one of the three topologies. -/
 theorem exists_side : ∀ A : Finset (Fin 4), #A = 2 → ∃ s, A = side s ∨ A = (side s)ᶜ := by decide
 
+/-- The two sides of each split are nonempty. -/
 theorem side_nonempty : ∀ s : Fin 3, (side s).Nonempty ∧ (side s)ᶜ.Nonempty := by decide
 
 /-- On `Fin 4`, the quartet tree `treeOfClusters {side s'}` has a side `side s` or its complement
@@ -159,7 +176,8 @@ variable (k : QuartetKey) (hk : keyTaxa k ⊆ L)
 complement. -/
 theorem sides_quartet (s : Fin 3) :
     (k.quartet s).sides = ((side s).image (keyLabel k), (side s)ᶜ.image (keyLabel k)) := by
-  have hc : ∀ s : Fin 3, (side s)ᶜ = if s = 0 then {2, 3} else if s = 1 then {1, 3} else {1, 2} := by
+  have hc : ∀ s : Fin 3,
+      (side s)ᶜ = if s = 0 then {2, 3} else if s = 1 then {1, 3} else {1, 2} := by
     decide
   rw [hc s]
   fin_cases s <;> simp [Quartet.sides, QuartetKey.quartet, side, keyLabel, Finset.image_insert]
@@ -175,17 +193,22 @@ theorem keyLabel_mem_map_iff (A : Finset L) (i : Fin 4) :
   · intro h
     exact ⟨_, h, rfl⟩
 
+/-- The labels of the taxa `I` of `k` are labels of taxa of `A` iff `I` is contained in the pattern
+of `A` on the four taxa, the set of the indices `i` with `keyTaxon k hk i ∈ A`. -/
 theorem image_subset_map_iff (A : Finset L) (I : Finset (Fin 4)) :
     I.image (keyLabel k) ⊆ A.map (label L) ↔ I ⊆ univ.filter fun i => keyTaxon k hk i ∈ A := by
   rw [image_subset_iff]
   simp only [subset_iff, mem_filter, mem_univ, true_and, keyLabel_mem_map_iff k hk]
 
+/-- The labels of the taxa `I` of `k` avoid the labels of the taxa of `A` iff `I` avoids the
+pattern of `A` on the four taxa. -/
 theorem disjoint_image_map_iff (A : Finset L) (I : Finset (Fin 4)) :
     Disjoint (I.image (keyLabel k)) (A.map (label L)) ↔
       Disjoint I (univ.filter fun i => keyTaxon k hk i ∈ A) := by
   simp only [disjoint_left, forall_mem_image, mem_filter, mem_univ, true_and,
     keyLabel_mem_map_iff k hk]
 
+/-- `D` contains `C` and avoids its complement iff `D = C`. -/
 theorem subset_and_disjoint_compl_iff {α : Type*} [Fintype α] [DecidableEq α] (C D : Finset α) :
     C ⊆ D ∧ Disjoint Cᶜ D ↔ D = C := by
   constructor
@@ -196,13 +219,14 @@ theorem subset_and_disjoint_compl_iff {α : Type*} [Fintype α] [DecidableEq α]
   · rintro rfl
     exact ⟨Subset.rfl, disjoint_compl_left⟩
 
+/-- `D` contains the complement of `C` and avoids `C` iff `D = Cᶜ`. -/
 theorem compl_subset_and_disjoint_iff {α : Type*} [Fintype α] [DecidableEq α] (C D : Finset α) :
     Cᶜ ⊆ D ∧ Disjoint C D ↔ D = Cᶜ := by
   have h := subset_and_disjoint_compl_iff Cᶜ D
   rwa [compl_compl] at h
 
-/-- A set `A` of taxa cuts the topology `s` on the four taxa of `k` iff the set of the indices
-`i` with `keyTaxon k hk i ∈ A` is `side s` or its complement. -/
+/-- A set `A` of taxa cuts the topology `s` on the four taxa of `k` iff its pattern on them, the set
+of the indices `i` with `keyTaxon k hk i ∈ A`, is `side s` or its complement. -/
 theorem cutBy_iff (A : Finset L) (s : Fin 3) :
     (k.quartet s).cutBy (A.map (label L)) = true ↔
       (univ.filter fun i => keyTaxon k hk i ∈ A) = side s ∨
@@ -310,9 +334,9 @@ theorem quartetSpeciesTree_rootedDist (σ : SpeciesTree L) (k : QuartetKey) (hk 
       = (σ.restrict (keySet k hk) (keySet_nonempty k hk)).rootedDist (keyEquiv k hk) G := h
     _ = σ.rootedDist (keyTaxon k hk) G := σ.rootedDist_restrict _ _ _ G
 
-/-- **Marginalization.** The quartet tree that the gene tree of the MSC on `σ` induces on the four
+/-- Marginalization: the quartet tree that the gene tree of the MSC on `σ` induces on the four
 taxa of `k` (`restrictUnrooted`) is distributed as the gene tree of the MSC on the quartet species
-tree: Lemma 5 of Allman, Degnan and Rhodes, with the four taxa relabelled `0, 1, 2, 3`. -/
+tree. This is Lemma 5 of Allman, Degnan and Rhodes, with the four taxa relabelled `0, 1, 2, 3`. -/
 theorem quartetSpeciesTree_unrootedDist (σ : SpeciesTree L) (k : QuartetKey)
     (hk : keyTaxa k ⊆ L) (T' : Finset (Finset (Fin 4))) :
     (quartetSpeciesTree σ k hk).unrootedDist id T' =
@@ -355,7 +379,7 @@ theorem sum_ite_comp {α β : Type*} [Fintype α] [Fintype β] [DecidableEq β] 
     · rw [ite_eq_left ha, ite_eq_right (ha ▸ hb)]
     · rw [ite_eq_right ha]
 
-/-- **Bridge to ADR11's quartet trees.** The probability that the gene tree of the MSC on `σ`
+/-- The bridge to the quartet trees of ADR11. The probability that the gene tree of the MSC on `σ`
 induces the topology `s` on the four taxa `a < b < c < d` of `k` is the probability of the quartet
 tree `treeOfClusters {side s}` (AB|CD, AC|BD, AD|BC for `s = 0, 1, 2`) under the MSC on the quartet
 species tree. -/
@@ -463,7 +487,7 @@ theorem msc_pattern_of_induces {σ : SpeciesTree L} (hσ : σ.IsBinary) (k : Qua
   · rw [quartetProb_other hσ k hk hs hs']
     positivity
 
-/-- **Section 3.3**: "the multi-species coalescent (MSC) model (Takahata 1989) under which, for
+/-- Section 3.3: "the multi-species coalescent (MSC) model (Takahata 1989) under which, for
 every four species, the most probable quartet tree matches the species tree and the other two
 quartet trees have the same lower probability". Under the MSC on a rooted binary species tree `σ`
 (with positive edge lengths, as every `ADR11.SpeciesTree`), with one lineage per taxon, on every
