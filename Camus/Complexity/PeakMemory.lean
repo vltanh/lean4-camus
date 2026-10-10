@@ -47,6 +47,8 @@ that their entries are at the keys of these arrays.
 * `Complexity.peak_camusS`: at most `9 |V(T)| + 3 |V(T)|²` cells at every step.
 * `Complexity.peak_camusS_le`: at most `48 n²`, the paper's "O(n²)".
 * `Complexity.camus_memory`: with the input, at most `68 n⁴`, the paper's "O(n⁴)".
+* `Complexity.camusS_section23`: the array, the running time and the memory of Section 2.3
+  together.
 * `Complexity.camusNetworkS`, `Complexity.peak_camusNetworkS`: with backtracking, at most
   `11 |V(T)| + 4 |V(T)|²` cells besides the input.
 
@@ -344,10 +346,13 @@ theorem peak_camusS (t : PhyloTree) (Q : Multiset Quartet) :
   have hT := preprocess_correct t
   have hpre := preprocess_order t
   obtain ⟨hB, -⟩ := enumerate_buckets hT Q
+  -- the preprocessing tables: `O(n²)` cells
   obtain ⟨hk1, hp1⟩ := preprocessS_memory t
   have hP : (preprocessS t).run.val = (preprocess t).val := by rw [run_preprocessS]
+  -- the buckets and the weights: `O(n²)` cells
   obtain ⟨hk2, hp2⟩ := enumerateS_memory (preprocessS t).run.val.1 Q (preprocessS t).run.val.2
   rw [hP, hpre, PhyloTree.preorder_length] at hk2 hp2
+  -- the array `M` and the hanging subtrees of one pair: `O(n)` cells
   obtain ⟨hk4, hp4⟩ := fillS_memory hT (fun v e => (hB v).2 e)
     (enumerate (preprocess t).val.1 Q t.preorder).val.2 t.preorder.reverse
   rw [List.length_reverse, PhyloTree.preorder_length] at hk4 hp4
@@ -386,7 +391,9 @@ memory usage is O(n⁴)". -/
 theorem camus_memory {t : PhyloTree} (ht : t.WellLabelled) (Q : Multiset Quartet)
     (hQ : ∀ q ∈ Q.toFinset, q.taxa ⊆ t.taxa) :
     inputCells t Q + (camusS t Q).peak ≤ 68 * t.taxa.card ^ 4 := by
+  -- the data structures: `O(n²)` cells
   have h := peak_camusS_le ht Q
+  -- `Q`: at most `3 n⁴` distinct quartets, six cells each
   have hq := observedQuartets_bound t Q hQ
   have hnodes := t.nodes_count
   have htaxa : t.taxa.card = t.labels.length := List.toFinset_card_of_nodup ht
@@ -397,6 +404,19 @@ theorem camus_memory {t : PhyloTree} (ht : t.WellLabelled) (Q : Multiset Quartet
   have hn2 : t.labels.length ≤ t.labels.length ^ 2 := by nlinarith
   have hn4 : t.labels.length ^ 2 ≤ t.labels.length ^ 4 := by nlinarith
   omega
+
+/-- **Section 2.3**, for the program with its memory. For a well-labelled tree `T` with `n` leaves
+and a multiset `Q` with `|Q|` distinct quartets, all on taxa of `T`, the program of `camusS`
+computes the array of Section 2.2 (`camus_array`), in at most `600 n² (|Q| + n)` operations
+(`camus_time`), and its input and the cells that it holds at any step number at most `68 n⁴`
+(`camus_memory`). -/
+theorem camusS_section23 {t : PhyloTree} (ht : t.WellLabelled) (Q : Multiset Quartet)
+    (hQ : ∀ q ∈ Q.toFinset, q.taxa ⊆ t.taxa) :
+    DynamicProgramming.Array t (edgeWeight t Q) (camusS t Q).run.val ∧
+      (camusS t Q).run.time ≤ 600 * t.taxa.card ^ 2 * (Q.toFinset.card + t.taxa.card) ∧
+      inputCells t Q + (camusS t Q).peak ≤ 68 * t.taxa.card ^ 4 := by
+  rw [run_camusS]
+  exact ⟨camus_array ht Q, camus_time ht Q, camus_memory ht Q hQ⟩
 
 /-! ### Backtracking (Section 2.2) -/
 

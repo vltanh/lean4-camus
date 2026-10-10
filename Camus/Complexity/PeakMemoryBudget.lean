@@ -45,6 +45,8 @@ The matrix, the knapsack table and the table of the budgets are written at the k
 * `Complexity.peak_camusBudgetNetworksS`: at most `5 |V(T)|² + 3 m |V(T)| + 14 |V(T)| + 4 m + 3`
   cells.
 * `Complexity.camusBudgetNetworks_memory`: with the input, at most `85 n⁴ + 6 m n + 4 m`.
+* `Complexity.camusBudgetNetworksS_section24`: the traces, the running time and the memory of
+  Section 2.4 with backtracking together.
 -/
 
 @[expose] public section
@@ -830,5 +832,26 @@ theorem camusBudgetNetworks_memory {t : PhyloTree} (ht : t.WellLabelled) (Q : Mu
   have hn2 : n ≤ n ^ 2 := by nlinarith
   have hn4 : n ^ 2 ≤ n ^ 4 := by nlinarith
   omega
+
+/-- **Section 2.4 with backtracking**, for the program with its memory. For a well-labelled tree
+`T` with `n` leaves, a multiset `Q` with `|Q|` distinct quartets, all on taxa of `T`, `m ≥ 1`
+budget columns, and a solution `A` of the recurrence with the weights of Equation (1), the program
+of `camusBudgetNetworksS` returns, for every `k ≤ m` whose row at the root is nonempty, a
+backtracking trace from the root with budget `k` (`camusBudgetNetworks_trace`), whose network is
+the network `N_k` (`camusBudgetNetworks_networks`); it performs at most `2100 n² (|Q| + m³ n)`
+operations (`camusBudgetNetworks_time`); and its input and the cells that it holds at any step
+number at most `85 n⁴ + 6 m n + 4 m` (`camusBudgetNetworks_memory`). -/
+theorem camusBudgetNetworksS_section24 {t : PhyloTree} (ht : t.WellLabelled)
+    (Q : Multiset Quartet) (hQ : ∀ q ∈ Q.toFinset, q.taxa ⊆ t.taxa) {m : ℕ} (hm : 1 ≤ m)
+    {A : Address → ℕ → Finset ℕ} (hA : BudgetDP.Array t (edgeWeight t Q) A) :
+    (∀ k ≤ m, (A [] k).Nonempty → BudgetDP.Trace t (edgeWeight t Q) A [] k
+        ((camusBudgetNetworksS t Q m).run.val k).toFinset) ∧
+      (camusBudgetNetworksS t Q m).run.time ≤
+        2100 * t.taxa.card ^ 2 * (Q.toFinset.card + m ^ 3 * t.taxa.card) ∧
+      inputCells t Q + (camusBudgetNetworksS t Q m).peak ≤
+        85 * t.taxa.card ^ 4 + 6 * (m * t.taxa.card) + 4 * m := by
+  rw [run_camusBudgetNetworksS]
+  exact ⟨fun k hk hrow => camusBudgetNetworks_trace ht Q m hA hk hrow,
+    camusBudgetNetworks_time ht Q hm, camusBudgetNetworks_memory ht Q hQ m⟩
 
 end Camus.Complexity

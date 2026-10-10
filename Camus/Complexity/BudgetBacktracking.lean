@@ -347,7 +347,7 @@ theorem val_knapsackTable (R : Address × ℕ → WithBot ℕ) (L : List Address
       have hne : ¬(i = S.1 + 1 ∧ b ≤ j) := fun h => by omega
       simp only [hne, ↓reduceIte]
       rw [hS2 i (by omega) b hb, List.take_append_of_le_length (by omega)]
-    · -- the new row: one more subtree, convolved with the previous row
+    · -- the row of `r`: its column convolved with the row before it
       simp only [hS1, true_and, hb, ↓reduceIte]
       rw [val_convAt, List.take_of_length_le (by simp), List.reverse_append,
         List.reverse_singleton, List.singleton_append, forest, rowMax_best,
