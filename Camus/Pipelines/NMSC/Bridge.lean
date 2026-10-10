@@ -2,6 +2,7 @@ module
 
 public import Camus.Pipelines.NMSC.BaseTree
 public import Camus.Network.RootAbove.Display
+public import Camus.Network.Reticulations
 
 /-!
 # A level-1 network of the NMSC and its graph display the same quartet trees
@@ -12,7 +13,8 @@ constraint tree `T`, and with the set Q(N_r) of the quartet trees that it displa
 shows that the graph `Realization.graph (baseTree N) (pairs N)` of CAMUS, obtained from the base
 tree of `N` by adding an edge above each pair of `NMSC.pairs N` (Definition 3), displays exactly
 the quartet trees that `N` displays (`NMSC.graph_displaysQuartet_iff`), and that it is a rooted
-binary level-1 network built on the base tree (`NMSC.graph_anchoredExtension`).
+binary level-1 network built on the base tree (`NMSC.graph_anchoredExtension`), a displayed tree
+of `N` (`NMSC.displaysTree_baseTree`).
 
 ## Main results
 
@@ -22,6 +24,9 @@ binary level-1 network built on the base tree (`NMSC.graph_anchoredExtension`).
   of `N`.
 * `NMSC.graph_displaysQuartet_iff`: the graph of `N` displays the quartet trees that `N` displays.
 * `NMSC.graph_anchoredExtension`: the graph of `N` is built on the base tree of `N`.
+* `NMSC.baseClusters`, `NMSC.displaysTree_baseTree`: the base tree is a displayed tree of `N`.
+* `NMSC.cycleCount`, `NMSC.graph_reticulationCount`: the graph of `N` has one reticulation for each
+  cycle of `N`.
 
 ## Proof
 
@@ -698,6 +703,172 @@ theorem cutSets_detachTree : ∀ (S : Brooqs.Side L), S.IsMetric → S.leaves.No
       tauto
 end
 
+/-! ### The base tree is a displayed tree of `N` -/
+
+mutual
+/-- The clusters of the displayed tree of `N` that, at each cycle, deletes the hybrid edge of the
+side `S₂` if `S₂` has a node, and the hybrid edge of `S₁` otherwise: the tree `NMSC.baseTree N`. -/
+def baseClusters : Brooqs.Net L → Finset (Finset L)
+  | .leaf x => {{x}}
+  | .tree _ N₁ _ N₂ => insert (N₁.taxa ∪ N₂.taxa) (baseClusters N₁ ∪ baseClusters N₂)
+  | .cycle _ S₁ S₂ _ H =>
+      if hasNode S₂ then
+        insert (S₁.taxa ∪ S₂.taxa ∪ H.taxa)
+          (baseClusters H ∪ sideBaseClusters S₁ H.taxa ∪ sideBaseClusters S₂ ∅)
+      else
+        insert (S₁.taxa ∪ S₂.taxa ∪ H.taxa)
+          (baseClusters H ∪ sideBaseClusters S₁ ∅ ∪ sideBaseClusters S₂ H.taxa)
+
+/-- The clusters along a side in the displayed tree `NMSC.baseClusters`, with the taxa `T` below
+its hybrid edge. -/
+def sideBaseClusters : Brooqs.Side L → Finset L → Finset (Finset L)
+  | .hyb _, _ => ∅
+  | .node _ _ M S, T => insert (T ∪ S.taxa ∪ M.taxa) (sideBaseClusters S T ∪ baseClusters M)
+end
+
+mutual
+/-- `NMSC.baseClusters N` is a displayed tree of `N`. -/
+theorem baseClusters_mem_displayed : ∀ N : Brooqs.Net L, baseClusters N ∈ N.displayed
+  | .leaf x => by simp [baseClusters, Brooqs.Net.displayed]
+  | .tree _ N₁ _ N₂ => by
+      simp only [baseClusters, Brooqs.Net.displayed, List.mem_flatMap, List.mem_map]
+      exact ⟨_, baseClusters_mem_displayed N₁, _, baseClusters_mem_displayed N₂, rfl⟩
+  | .cycle _ S₁ (.hyb ℓ') _ H => by
+      simp only [baseClusters, hasNode_hyb, Bool.false_eq_true, ↓reduceIte,
+        Brooqs.Net.displayed, List.mem_flatMap, List.mem_append, List.mem_map]
+      exact ⟨_, baseClusters_mem_displayed H, Or.inr ⟨_, sideBaseClusters_mem_displayed S₁ ∅,
+        _, sideBaseClusters_mem_displayed _ H.taxa, rfl⟩⟩
+  | .cycle _ S₁ (.node ℓ' b M S) _ H => by
+      simp only [baseClusters, hasNode_node, ↓reduceIte, Brooqs.Net.displayed,
+        List.mem_flatMap, List.mem_append, List.mem_map]
+      exact ⟨_, baseClusters_mem_displayed H, Or.inl ⟨_, sideBaseClusters_mem_displayed S₁ H.taxa,
+        _, sideBaseClusters_mem_displayed _ ∅, rfl⟩⟩
+
+/-- `NMSC.sideBaseClusters S T` is among the clusters along the side `S` of the displayed
+trees. -/
+theorem sideBaseClusters_mem_displayed :
+    ∀ (S : Brooqs.Side L) (T : Finset L), sideBaseClusters S T ∈ S.displayed T
+  | .hyb _, T => by simp [sideBaseClusters, Brooqs.Side.displayed]
+  | .node _ _ M S, T => by
+      simp only [sideBaseClusters, Brooqs.Side.displayed, List.mem_flatMap, List.mem_map]
+      exact ⟨_, sideBaseClusters_mem_displayed S T, _, baseClusters_mem_displayed M, rfl⟩
+end
+
+/-- The taxa of `N` form a cluster of its displayed tree `NMSC.baseClusters N`. -/
+theorem taxa_mem_baseClusters : ∀ N : Brooqs.Net L, N.taxa ∈ baseClusters N
+  | .leaf x => by simp [baseClusters, Brooqs.Net.taxa_leaf]
+  | .tree _ N₁ _ N₂ => by rw [Brooqs.Net.taxa_tree]; exact mem_insert_self _ _
+  | .cycle _ S₁ S₂ _ H => by
+      rw [Brooqs.Net.taxa_cycle]
+      unfold baseClusters
+      split <;> exact mem_insert_self _ _
+
+theorem clades_toFinset_fork (l r : PhyloTree) :
+    (PhyloTree.fork l r).clades.toFinset =
+      insert (l.taxa ∪ r.taxa) (l.clades.toFinset ∪ r.clades.toFinset) := by
+  ext C
+  simp only [List.mem_toFinset, clades_fork, mem_insert, mem_union]
+
+mutual
+/-- The clades of the base tree of `N` are the clusters of the displayed tree
+`NMSC.baseClusters N`, as sets of natural numbers. -/
+theorem clades_baseTree : ∀ N : Brooqs.Net L, N.WellFormed →
+    (baseTree N).clades.toFinset = (baseClusters N).image (Finset.map (Coalescent.label L))
+  | .leaf x, _ => by simp [baseTree, baseClusters, PhyloTree.clades]
+  | .tree _ N₁ _ N₂, h => by
+      have h₁ : N₁.WellFormed := ⟨h.1.2.2.1, (List.nodup_append.1 h.2).1⟩
+      have h₂ : N₂.WellFormed := ⟨h.1.2.2.2, (List.nodup_append.1 h.2).2.1⟩
+      change (PhyloTree.fork (baseTree N₁) (baseTree N₂)).clades.toFinset = _
+      rw [clades_toFinset_fork, clades_baseTree N₁ h₁, clades_baseTree N₂ h₂,
+        taxa_baseTree h₁.1, taxa_baseTree h₂.1]
+      simp only [baseClusters, image_insert, image_union, map_union]
+  | .cycle _ S₁ (.hyb ℓ') _ H, h => by
+      have hS₁ : S₁.IsMetric := h.1.2.2.2.1
+      have hS₂ : (Brooqs.Side.hyb ℓ' : Brooqs.Side L).IsMetric := h.1.2.2.2.2.1
+      have hH : H.IsMetric := h.1.2.2.2.2.2.1
+      obtain ⟨hn₁, hn₂, hnH, -, -⟩ := nodup_cycle h.2
+      have h1 : S₁.nodes ≠ [] := h.1.2.2.2.2.2.2.resolve_right (by simp [Brooqs.Side.nodes])
+      have hd : hasNode S₁ := by
+        cases S₁ with
+        | hyb _ => simp [Brooqs.Side.nodes] at h1
+        | node _ _ _ _ => rfl
+      rw [baseTree_cycle_hyb, clades_toFinset_fork,
+        clades_attachTree _ _ H.taxa hS₂ hn₂ (taxa_baseTree hH),
+        clades_detachTree S₁ hS₁ hn₁ hd, clades_baseTree H ⟨hH, hnH⟩, taxa_attachTree hS₂,
+        taxa_detachTree hS₁ h1, taxa_baseTree hH]
+      simp only [baseClusters, hasNode_hyb, Bool.false_eq_true, ↓reduceIte, sideBaseClusters,
+        image_insert, image_union, image_empty, empty_union, union_empty, Brooqs.Side.taxa_hyb,
+        map_empty, map_union]
+      ext C
+      simp only [mem_union, mem_insert]
+      rw [show S₁.taxa.map (Coalescent.label L) ∪ H.taxa.map (Coalescent.label L) =
+        H.taxa.map (Coalescent.label L) ∪ S₁.taxa.map (Coalescent.label L) from union_comm _ _]
+  | .cycle _ S₁ (.node ℓ' b' M S) _ H, h => by
+      have hS₁ : S₁.IsMetric := h.1.2.2.2.1
+      have hS₂ : (Brooqs.Side.node ℓ' b' M S).IsMetric := h.1.2.2.2.2.1
+      have hH : H.IsMetric := h.1.2.2.2.2.2.1
+      obtain ⟨hn₁, hn₂, hnH, -, -⟩ := nodup_cycle h.2
+      rw [baseTree_cycle_node, clades_toFinset_fork,
+        clades_attachTree S₁ _ H.taxa hS₁ hn₁ (taxa_baseTree hH),
+        clades_detachTree _ hS₂ hn₂ rfl, clades_baseTree H ⟨hH, hnH⟩, taxa_attachTree hS₁,
+        taxa_detachTree hS₂ (by simp [Brooqs.Side.nodes]), taxa_baseTree hH]
+      simp only [baseClusters, hasNode_node, ↓reduceIte, image_insert, image_union, map_union]
+      ext C
+      simp only [mem_union, mem_insert]
+      rw [show S₁.taxa.map (Coalescent.label L) ∪ H.taxa.map (Coalescent.label L) ∪
+          (Brooqs.Side.node ℓ' b' M S).taxa.map (Coalescent.label L) =
+        S₁.taxa.map (Coalescent.label L) ∪ (Brooqs.Side.node ℓ' b' M S).taxa.map
+          (Coalescent.label L) ∪ H.taxa.map (Coalescent.label L) by
+          rw [union_assoc, union_assoc, union_comm (H.taxa.map _)]]
+      tauto
+
+/-- The clades of the tree of a side with `X` attached, for `X` with the taxa `T`: the clusters
+along the side in `NMSC.sideBaseClusters S T`, and the clades of `X`. -/
+theorem clades_attachTree : ∀ (S : Brooqs.Side L) (X : PhyloTree) (T : Finset L), S.IsMetric →
+    S.leaves.Nodup → X.taxa = T.map (Coalescent.label L) →
+    (attachTree S X).clades.toFinset =
+      (sideBaseClusters S T).image (Finset.map (Coalescent.label L)) ∪ X.clades.toFinset
+  | .hyb _, X, T, _, _, _ => by simp [attachTree, sideBaseClusters]
+  | .node ℓ b M S, X, T, hS, hnd, hX => by
+      obtain ⟨hnM, hnS⟩ := nodup_node hnd
+      change (PhyloTree.fork (baseTree M) (attachTree S X)).clades.toFinset = _
+      rw [clades_toFinset_fork, clades_baseTree M ⟨hS.2.2.1, hnM⟩,
+        clades_attachTree S X T hS.2.2.2 hnS hX, taxa_baseTree hS.2.2.1,
+        taxa_attachTree hS.2.2.2, hX]
+      simp only [sideBaseClusters, image_insert, image_union, map_union]
+      rw [show M.taxa.map (Coalescent.label L) ∪ (S.taxa.map (Coalescent.label L) ∪
+          T.map (Coalescent.label L)) = T.map (Coalescent.label L) ∪
+          S.taxa.map (Coalescent.label L) ∪ M.taxa.map (Coalescent.label L) by
+        rw [union_comm, union_comm (S.taxa.map _)]]
+      ext C
+      simp only [mem_union, mem_insert]
+      tauto
+
+/-- The clades of the tree of a side with a node whose hybrid edge is deleted: the clusters along
+the side in `NMSC.sideBaseClusters S ∅`. -/
+theorem clades_detachTree : ∀ (S : Brooqs.Side L), S.IsMetric → S.leaves.Nodup → hasNode S →
+    (detachTree S).clades.toFinset =
+      (sideBaseClusters S ∅).image (Finset.map (Coalescent.label L))
+  | .hyb _, _, _, h => by simp at h
+  | .node ℓ b M (.hyb ℓ'), hS, hnd, _ => by
+      obtain ⟨hnM, -⟩ := nodup_node hnd
+      rw [detachTree_single, clades_baseTree M ⟨hS.2.2.1, hnM⟩]
+      simp only [sideBaseClusters, Brooqs.Side.taxa_hyb, empty_union, union_empty]
+      rw [insert_eq_of_mem (taxa_mem_baseClusters M)]
+  | .node ℓ b M (.node ℓ' b' M' S), hS, hnd, _ => by
+      obtain ⟨hnM, hnS⟩ := nodup_node hnd
+      rw [detachTree_node, clades_toFinset_fork, clades_baseTree M ⟨hS.2.2.1, hnM⟩,
+        clades_detachTree _ hS.2.2.2 hnS rfl, taxa_baseTree hS.2.2.1,
+        taxa_detachTree hS.2.2.2 (by simp [Brooqs.Side.nodes])]
+      simp only [sideBaseClusters, image_insert, image_union, map_union, empty_union]
+      rw [show M.taxa.map (Coalescent.label L) ∪ (Brooqs.Side.node ℓ' b' M' S).taxa.map
+          (Coalescent.label L) = (Brooqs.Side.node ℓ' b' M' S).taxa.map (Coalescent.label L) ∪
+          M.taxa.map (Coalescent.label L) from union_comm _ _]
+      ext C
+      simp only [mem_union, mem_insert]
+      tauto
+end
+
 /-! ### The graph of `N` -/
 
 theorem induced_iff_clades (q : Quartet) (t : PhyloTree) :
@@ -765,6 +936,108 @@ theorem graph_anchoredExtension {N : Brooqs.Net L} (hN : N.WellFormed) :
   ⟨Realization.levelOne _ (wellLabelled_baseTree hN) _ (separated_pairs N),
     Realization.supportEdges _ _,
     ⟨Realization.support _ (wellLabelled_baseTree hN) _ (separated_pairs N)⟩⟩
+
+/-- **Section 3.2: the base tree is a displayed tree of `N`.** For a metric level-1 network `N`
+with distinct leaf labels on the taxa `L`, the base tree of `N` is in T(N) (`NMSC.DisplaysTree`):
+the displayed tree `NMSC.baseClusters N` of `N` induces exactly the quartet trees that the base tree
+induces. -/
+theorem displaysTree_baseTree {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) : DisplaysTree N (baseTree N) := by
+  refine ⟨baseClusters N, baseClusters_mem_displayed N, fun q => ?_⟩
+  rw [induced_iff_clades, taxa_baseTree_eq hN.1 htaxa]
+  simp only [Coalescent.Induces]
+  refine and_congr_right fun _ => ?_
+  constructor
+  · rintro ⟨A, hA, h⟩
+    refine ⟨A.map (Coalescent.label L), ?_, h⟩
+    rw [← List.mem_toFinset, clades_baseTree N hN]
+    exact mem_image_of_mem _ hA
+  · rintro ⟨C, hC, h⟩
+    rw [← List.mem_toFinset, clades_baseTree N hN] at hC
+    obtain ⟨A, hA, rfl⟩ := mem_image.1 hC
+    exact ⟨A, hA, h⟩
+
+/-! ### Reticulations -/
+
+mutual
+/-- The number of cycles of `N`. -/
+def cycleCount : Brooqs.Net L → ℕ
+  | .leaf _ => 0
+  | .tree _ N₁ _ N₂ => cycleCount N₁ + cycleCount N₂
+  | .cycle _ S₁ S₂ _ H => cycleCount H + sideCycleCount S₁ + sideCycleCount S₂ + 1
+
+/-- The number of cycles in the networks hanging from the nodes of a side. -/
+def sideCycleCount : Brooqs.Side L → ℕ
+  | .hyb _ => 0
+  | .node _ _ M S => cycleCount M + sideCycleCount S
+end
+
+theorem card_liftPairs (b : Bool) (E : Finset (Address × Address)) :
+    #(liftPairs b E) = #E :=
+  card_image_of_injective _ fun e f h => by
+    simp only [Prod.mk.injEq, List.cons.injEq, true_and] at h
+    exact Prod.ext h.1 h.2
+
+theorem card_fork_pairs (E F : Finset (Address × Address)) :
+    #(liftPairs false E ∪ liftPairs true F) = #E + #F := by
+  have hdisj : Disjoint (liftPairs false E) (liftPairs true F) := by
+    rw [disjoint_left]
+    intro e he hf
+    obtain ⟨f, -, rfl⟩ := mem_liftPairs.1 he
+    obtain ⟨g, -, hg⟩ := mem_liftPairs.1 hf
+    simp at hg
+  rw [card_union_of_disjoint hdisj, card_liftPairs, card_liftPairs]
+
+theorem cycle_pair_notMem (u w : Address) (E F : Finset (Address × Address)) :
+    (true :: u, false :: w) ∉ liftPairs false E ∪ liftPairs true F := by
+  intro h
+  rcases mem_union.1 h with h | h <;> obtain ⟨f, -, hf⟩ := mem_liftPairs.1 h <;> simp at hf
+
+mutual
+/-- There is one pair for each cycle of `N`. -/
+theorem card_pairs : ∀ N : Brooqs.Net L, #(pairs N) = cycleCount N
+  | .leaf _ => rfl
+  | .tree _ N₁ _ N₂ => by
+      change #(liftPairs false (pairs N₁) ∪ liftPairs true (pairs N₂)) = _
+      rw [card_fork_pairs, card_pairs N₁, card_pairs N₂]
+      rfl
+  | .cycle _ S₁ (.hyb ℓ') _ H => by
+      rw [pairs_cycle_hyb, card_insert_of_notMem (cycle_pair_notMem _ _ _ _), card_fork_pairs,
+        card_attachPairs, card_detachPairs, card_pairs H]
+      simp only [cycleCount, sideCycleCount]
+      omega
+  | .cycle _ S₁ (.node ℓ' b M S) _ H => by
+      rw [pairs_cycle_node, card_insert_of_notMem (cycle_pair_notMem _ _ _ _), card_fork_pairs,
+        card_attachPairs, card_detachPairs, card_pairs H]
+      simp only [cycleCount]
+      omega
+
+/-- The pairs below a side, with the pairs `P` of the attached tree. -/
+theorem card_attachPairs : ∀ (S : Brooqs.Side L) (P : Finset (Address × Address)),
+    #(attachPairs S P) = sideCycleCount S + #P
+  | .hyb _, P => by simp [attachPairs, sideCycleCount]
+  | .node _ _ M S, P => by
+      change #(liftPairs false (pairs M) ∪ liftPairs true (attachPairs S P)) = _
+      rw [card_fork_pairs, card_pairs M, card_attachPairs S P]
+      simp only [sideCycleCount]
+      omega
+
+/-- The pairs below a side whose hybrid edge is deleted. -/
+theorem card_detachPairs : ∀ S : Brooqs.Side L, #(detachPairs S) = sideCycleCount S
+  | .hyb _ => rfl
+  | .node _ _ M (.hyb _) => by
+      rw [detachPairs_single, card_pairs M]
+      simp [sideCycleCount]
+  | .node _ _ M (.node ℓ b M' S) => by
+      rw [detachPairs_node, card_fork_pairs, card_pairs M, card_detachPairs]
+      rfl
+end
+
+/-- The graph of `N` has one reticulation for each cycle of `N`
+(`Realization.reticulationCount_eq_card`). -/
+theorem graph_reticulationCount (N : Brooqs.Net L) :
+    (Realization.graph (baseTree N) (pairs N)).reticulationCount = cycleCount N := by
+  rw [Realization.reticulationCount_eq_card _ _ (separated_pairs N), card_pairs]
 
 end NMSC
 
