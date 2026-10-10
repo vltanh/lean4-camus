@@ -3,12 +3,14 @@ module
 public import Camus.Galled.TreeIsomorphism
 
 /-!
-# Networks built on trees with the same clades
+# Networks built on trees equal up to the order of the children
 
 A `PhyloTree` is a plane tree: the two children of each vertex are ordered, and a vertex is its
 address, the path of left and right steps from the root. The paper's trees are unordered, and two
 `PhyloTree`s that differ in the order of the children at some vertices (`PhyloTree.RootedIso`)
-stand for the same tree. This file shows that the networks built on them are the same networks. A
+stand for the same tree. For well-labelled trees, this is having the same clades
+(`PhyloTree.ClusterEq`; `PhyloTree.rootedIso_of_clusterEq` in `Camus/Pipelines/AstralTree.lean`).
+This file shows that the networks built on two such trees are the same networks. A
 rooted isomorphism from `t` to `t'` maps the addresses of `t` onto those of `t'`, keeping the root,
 the parent of each vertex and the labels of the leaves (`PhyloTree.AddressMap`,
 `PhyloTree.RootedIso.addressMap`), so that a subdivision of `t'` in a network `N`, read through this
@@ -270,8 +272,9 @@ namespace PhyloTree
 
 variable {t t' : PhyloTree}
 
-/-- A network is built on `t` (with the root kept) if and only if it is built on a tree `t'` with
-the same clades, up to the order of the children (`RootedIso`). -/
+/-- A network is built on `t` (with the root kept) if and only if it is built on a tree `t'` equal
+to `t` up to the order of the children (`RootedIso`). For well-labelled trees with the same clades,
+see `ClusterEq.anchoredExtension_iff`. -/
 theorem RootedIso.anchoredExtension_iff (h : RootedIso t t') (N : RootedNetwork) :
     N.AnchoredExtension t ↔ N.AnchoredExtension t' := by
   obtain ⟨φ⟩ := h.addressMap
@@ -283,8 +286,7 @@ theorem RootedIso.anchoredExtension_iff (h : RootedIso t t') (N : RootedNetwork)
     exact ⟨hN, S, ⟨H.comap φ⟩⟩
 
 /-- A network is built on `t` in the sense of Definition 1 (`RootedNetwork.BuiltOn`) if and only
-if it is built on a tree `t'` with the same clades, up to the order of the children
-(`RootedIso`). -/
+if it is built on a tree `t'` equal to `t` up to the order of the children (`RootedIso`). -/
 theorem RootedIso.builtOn_iff (h : RootedIso t t') (N : RootedNetwork) :
     N.BuiltOn t ↔ N.BuiltOn t' := by
   obtain ⟨φ⟩ := h.addressMap

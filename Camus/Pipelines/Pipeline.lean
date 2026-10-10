@@ -13,13 +13,19 @@ of the SNPs is given to ASTRAL, which returns a tree `T` maximizing the quartet 
 optimal for `Q`. The section argues that, in the model of Warnow, Tabatabaee and Evans
 (`External.SiteModel`), this pipeline returns the true network `N` with probability tending to 1
 when some tree `t` displayed by `N` induces the most probable quartet on every four taxa. The
-library proves the steps separately: ASTRAL's step (`astral_maximizer_tendsto`), the support of
-`Q` (`External.support_tendsto`), and CAMUS's step, corrected (`snp_recovery_tendsto`). This file
-composes them into one statement about the pipeline (`pipeline_tendsto`). As the section notes,
-the pipeline always has an output, since ASTRAL always returns a tree, the outgroup roots it, and
-CAMUS always returns a network (`pipeline_output_exists`).
+library proves the steps separately, in probability: ASTRAL's step (`astral_maximizer_tendsto`),
+the support of `Q` (`External.support_tendsto`), and CAMUS's step, corrected
+(`snp_recovery_tendsto`). This file states the pipeline as one theorem (`pipeline_tendsto`). Its
+proof does not compose these three theorems: it derives steps 1 and 3 almost surely, for all large
+numbers of sites (`ae_eventually_mostFrequent`, `ae_eventually_support`), so that the two events
+can be intersected (`pipeline_ae_eventually`), and applies `recovery` on their intersection
+through `pipeline_recovery`. As the section notes, the pipeline always has an output, since ASTRAL
+always returns a tree, the outgroup roots it, and CAMUS always returns a network
+(`pipeline_output_exists`).
 
-Let `N` be built on `t`, with the leaf of an outgroup `o` a child of the root of `t`, and assume
+Let `N` be built on `t`, with the leaf of an outgroup `o` a child of the root of `t` (the paper's
+hypotheses, that `t` is a tree of `N` and that the leaf of the outgroup is a child of the root of
+`N`, give this: `RootedNetwork.BuiltOn.anchoredExtension_rootedAt`), and assume
 the paper's condition on `t` (`MostProbableQuartets`) and, as the correction of the report's E7
 requires, that `N` is identifiable under inclusion and that CAMUS breaks ties toward the fewest
 reticulations. Then, with probability tending to 1, the pipeline has an output (ASTRAL may return
@@ -30,16 +36,21 @@ identifiability under inclusion the pipeline may fail, also with an outgroup and
 hypothesis of the paper's argument: in the deeper-donor example of
 `Camus/Pipelines/InclusionOutgroup.lean`, with probability tending to 1, every tree of maximum
 score rooted at the outgroup gives a network that CAMUS may return and that is not isomorphic to
-the true network (`pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypotheses`).
+the true network (`pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypotheses`). The
+hypotheses of `pipeline_tendsto` can all be met (`pipeline_tendsto_tree`).
 
 ## Main results
 
 * `AstralOutput`, `CamusOutput`: the trees that ASTRAL may return, and the networks that CAMUS may
   return with the tie-break toward the fewest reticulations.
 * `pipeline_output_exists`: the pipeline always has an output.
+* `RootedNetwork.BuiltOn.anchoredExtension_rootedAt`: the paper's hypotheses on `N`, `t` and the
+  outgroup give those of `pipeline_tendsto`.
 * `pipeline_recovery`: the pipeline for one multiset `Q` whose support is `Q(N_r)` and in which the
   quartets of `t` are the most frequent.
-* `pipeline_tendsto`, `pipeline_output_tendsto`: Section 3.2's pipeline in WTE's model, corrected.
+* `pipeline_ae_eventually`, `pipeline_tendsto`, `pipeline_output_tendsto`: Section 3.2's pipeline
+  in WTE's model, corrected, almost surely for all large numbers of sites and in probability.
+* `pipeline_tendsto_tree`: the hypotheses of `pipeline_tendsto` can all be met.
 * `pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypotheses`: the pipeline fails in the
   deeper-donor example with an outgroup, which is not identifiable under inclusion.
 
@@ -59,8 +70,8 @@ the true network (`pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypothes
    identifiability under inclusion and the tie-break, `recovery`.
 
 The events of steps 1 and 3 hold together, almost surely for all large numbers of sites, so the
-probability of their intersection tends to 1 (`External.tendsto_measure_of_ae_eventually`); no
-measurability of the events is needed.
+probability of their intersection tends to 1 (`External.tendsto_measure_of_ae_eventually`, which
+needs no measurability of the events).
 -/
 
 @[expose] public section
@@ -71,10 +82,11 @@ namespace Camus
 
 open DynamicProgramming
 
-/-- Section 3.1: `T` is a tree that ASTRAL may return on the multiset `Q` of quartet trees and the
-taxa `X`, since "it solves its optimization problem exactly": a well-labelled tree on `X` whose
-quartet support score is the largest among the well-labelled trees on `X`. A `PhyloTree` stands
-for its unrooted form here: the score depends only on the quartets it induces. -/
+/-- Sections 3.1 and 3.2: `T` is a tree that ASTRAL may return on the multiset `Q` of quartet trees
+and the taxa `X`, since "it solves its optimization problem exactly" (Section 3.2): a well-labelled
+tree on `X` whose quartet support score (Section 3.1) is the largest among the well-labelled trees
+on `X`. A `PhyloTree` stands for its unrooted form here: the score depends only on the quartets it
+induces. -/
 def AstralOutput (Q : Multiset Quartet) (X : Finset ℕ) (T : PhyloTree) : Prop :=
   T.WellLabelled ∧ T.taxa = X ∧ ∀ T' : PhyloTree, T'.WellLabelled → T'.taxa = X →
     quartetSupport Q T' ≤ quartetSupport Q T
@@ -85,7 +97,10 @@ requires (the report's E7, `recovery`): `P` is built on `T`, displays as many qu
 multiplicity) as any network built on `T` (Theorem 1), and has the fewest reticulations among the
 networks built on `T` that do. For a fixed `T`, the number of quartets of `Q` displayed and the
 number satisfied differ by the number of quartets of `Q` that `T` induces, so both objectives have
-the same optimal networks. -/
+the same optimal networks.
+
+Departure from the paper: the tie-break toward the fewest reticulations is not in the paper's
+statement of CAMUS's problem; Section 3.2's argument needs it (the report's E7). -/
 def CamusOutput (Q : Multiset Quartet) (T : PhyloTree) (P : RootedNetwork) : Prop :=
   P.AnchoredExtension T ∧
     (∀ R : RootedNetwork, R.AnchoredExtension T →
@@ -95,8 +110,9 @@ def CamusOutput (Q : Multiset Quartet) (T : PhyloTree) (P : RootedNetwork) : Pro
         score Q (repertoire Q R') ≤ score Q (repertoire Q R)) →
       P.reticulationCount ≤ R.reticulationCount
 
-/-- CAMUS's problem is the same on two trees with the same clades, up to the order of the
-children: the same networks are built on them (`RootedIso.anchoredExtension_iff`). -/
+/-- CAMUS's problem is the same on two trees equal up to the order of the children: the same
+networks are built on them (`RootedIso.anchoredExtension_iff`). For well-labelled trees, this is
+having the same clades (`PhyloTree.rootedIso_of_clusterEq`). -/
 theorem PhyloTree.RootedIso.camusOutput_iff {T T' : PhyloTree} (h : T.RootedIso T')
     (Q : Multiset Quartet) (P : RootedNetwork) : CamusOutput Q T P ↔ CamusOutput Q T' P := by
   simp only [CamusOutput, h.anchoredExtension_iff]
@@ -143,8 +159,9 @@ theorem AstralOutput.reroot {Q : Multiset Quartet} {X : Finset ℕ} {T : PhyloTr
 every well-labelled tree `T`, for every multiset `Q`, CAMUS may return some network. Every
 network built on `T` is isomorphic to the network obtained from `T` by adding an edge above each
 pair of a cycle-separated family (`SupportSubdivision.canonical_iso`), with the same displayed
-quartets and the same number of reticulations, and these families are finitely many
-(`exists_optimal_fewest`). -/
+quartets and the same number of reticulations. These families form a finite set, contained in the
+powerset of `EdgeAbove.candidates T`, which has an optimal member with the fewest reticulations
+among the optimal members (`exists_optimal_fewest`). -/
 theorem exists_camusOutput (Q : Multiset Quartet) {T : PhyloTree} (hT : T.WellLabelled) :
     ∃ P : RootedNetwork, CamusOutput Q T P := by
   classical
@@ -245,13 +262,13 @@ theorem displays_of_optimal {N : RootedNetwork} {Q : Multiset Quartet}
   simp only [repertoire, Finset.mem_filter] at hmem
   exact hmem.2
 
-/-- Section 3.2, the pipeline for one multiset `Q`. Let `N` be built on `t`, rooted at the
-outgroup `o`, and identifiable under inclusion (as in `recovery`). Let the quartets of `Q` be
-exactly those displayed by `N`, and let the quartet that `t` induces on every four of its taxa
-have more copies in `Q` than the two other quartets on them. Then the pipeline has an output:
+/-- Section 3.2, the pipeline for one multiset `Q`. Let `N` be built on `t`, with `t` rooted at
+the outgroup `o`, and let `N` be identifiable under inclusion (as in `recovery`). Let the quartets
+of `Q` be exactly those displayed by `N`, and let the quartet that `t` induces on every four of its
+taxa have more copies in `Q` than the two other quartets on them. Then the pipeline has an output:
 ASTRAL may return `t`, and CAMUS may return `N` on `t`. And every output is isomorphic to `N`:
-for every tree `T` that ASTRAL may return, rooted at `o`, every network that CAMUS may return
-on `T` is isomorphic to `N`.
+for every tree `T` that ASTRAL may return, rooted at `o`, every network that CAMUS may return on
+`T` is isomorphic to `N`.
 
 Departure from the paper: the paper concludes that CAMUS returns `N` because `N` "is the unique
 network that can satisfy all the quartets in Q(Nr)", which is false (the report's E7);
@@ -342,10 +359,9 @@ theorem ae_eventually_mostFrequent (M : External.SiteModel N σ) (hN : N.RootedB
 
 /-- Section 3.2, "according to the theory given in Warnow et al. (2025)", in the almost sure form
 of `External.support_tendsto`: almost surely, for all large numbers `m` of sites, the quartets of
-`Q_m` are exactly those displayed by `N`. Every
-quartet displayed by `N` is contributed by a site with positive probability
-(`External.SiteModel.quartetProb_pos`), so its frequency in `Q_m` converges almost surely to a
-positive limit (`External.frequency_tendsto`). -/
+`Q_m` are exactly those displayed by `N`. Every quartet displayed by `N` is contributed by a site
+with positive probability (`External.SiteModel.quartetProb_pos`), so its frequency in `Q_m`
+converges almost surely to a positive limit (`External.frequency_tendsto`). -/
 theorem ae_eventually_support (M : External.SiteModel N σ) (hN : N.RootedBinaryLevelOne)
     [Nontrivial σ] {P : Measure Ω} [IsProbabilityMeasure P]
     (X : ℕ → Ω → External.SiteHistory N σ) (hind : iIndepFun X P)

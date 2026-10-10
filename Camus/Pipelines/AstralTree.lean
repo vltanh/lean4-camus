@@ -18,9 +18,10 @@ trees on the same taxa that induce the same quartets have the same splits
 (`PhyloTree.splits_eq_of_induced_eq`); if moreover the leaf of the same outgroup is a child of the
 root of both, they have the same clades (`PhyloTree.clusterEq_of_induced_eq`), and so they are
 equal up to the order of the children (`PhyloTree.rootedIso_of_induced_eq`), which leaves the
-networks built on them unchanged (`PhyloTree.RootedIso.anchoredExtension_iff`). Every tree with at
-least two taxa can be rooted at the outgroup without changing its quartets (`PhyloTree.reroot`,
-`PhyloTree.induced_reroot`, `PhyloTree.rootedAt_reroot`).
+networks built on them unchanged (`PhyloTree.RootedIso.anchoredExtension_iff`). Every
+well-labelled tree with at least two taxa, one of them the outgroup `o`, can be rooted at `o`
+without changing its quartets (`PhyloTree.reroot`, `PhyloTree.induced_reroot`,
+`PhyloTree.rootedAt_reroot`).
 
 ## Main results
 
@@ -42,15 +43,15 @@ least two taxa can be rooted at the outgroup without changing its quartets (`Phy
 The paper uses these facts without proof; the proof here is Steel's reconstruction, from
 lean4-adr11. The bridge `Coalescent.HasTopology` reads a tree `t` as a species tree `σ` of
 lean4-adr11, whose unrooted topology `unroot σ.clusters` is the set of the splits of `t`
-(`PhyloTree.mem_splits_iff`). A bipartition `A | Aᶜ` with two taxa on each side is a split of `σ`
-if and only if every quartet tree `aa'|bb'` with `a, a' ∈ A` and `b, b' ∉ A` is induced by `σ`
-(`ADR11.mem_unroot_iff_quartets`), and `σ` induces `aa'|bb'` if and only if `t` does
-(`Coalescent.separates_iff_induced`, through `Coalescent.induces_iff_induced`). So trees with the
-same quartets have the same splits (`Coalescent.unroot_subset_of_induced`). If the outgroup `o` is
-a child of the root, the clades of the tree are the set of all taxa, `{o}`, and the sides of its
-splits that do not contain `o` (`PhyloTree.mem_clades_iff_of_rootedAt`). Rooting at the outgroup
-moves the root down the path to `o`, one rotation `((a, b), c) ↦ (a, (b, c))` at a time, and a
-rotation keeps the quartets (`PhyloTree.induced_rotate`).
+(`PhyloTree.mem_splits_iff`). A bipartition `A | Aᶜ` with at least two taxa on each side is a
+split of `σ` if and only if every quartet tree `aa'|bb'` with `a, a' ∈ A` and `b, b' ∉ A` is
+induced by `σ` (`ADR11.mem_unroot_iff_quartets`), and `σ` induces `aa'|bb'` if and only if `t`
+does (`Coalescent.separates_iff_induced`, through `Coalescent.induces_iff_induced`). So trees with
+the same quartets have the same splits (`Coalescent.unroot_subset_of_induced`). If the outgroup
+`o` is a child of the root, the clades of the tree are the set of all taxa, `{o}`, and the sides
+of its splits that do not contain `o` (`PhyloTree.mem_clades_iff_of_rootedAt`). Rooting at the
+outgroup moves the root down the path to `o`, one rotation `((a, b), c) ↦ (a, (b, c))` at a time,
+and a rotation keeps the quartets (`PhyloTree.induced_rotate`).
 -/
 
 @[expose] public section
@@ -393,8 +394,9 @@ theorem separates_iff_induced {σ : SpeciesTree L} {t : PhyloTree} (h : HasTopol
 
 /-- If every quartet tree induced by the topology `t` of `σ` is induced by the topology `t'` of
 `σ'`, every split of the unrooted topology of `σ` is a split of that of `σ'`: a split with one
-taxon on a side is a split of every tree, and a split with two taxa on each side is determined by
-the quartet trees `aa'|bb'` across it (Steel's reconstruction, `ADR11.mem_unroot_iff_quartets`). -/
+taxon on a side is a split of every tree, and a split with at least two taxa on each side is
+determined by the quartet trees `aa'|bb'` across it (Steel's reconstruction,
+`ADR11.mem_unroot_iff_quartets`). -/
 theorem unroot_subset_of_induced {σ σ' : SpeciesTree L} {t t' : PhyloTree}
     (h : HasTopology σ t) (h' : HasTopology σ' t')
     (hq : ∀ q : Quartet, q.induced t = true → q.induced t' = true) :
@@ -415,7 +417,7 @@ theorem unroot_subset_of_induced {σ σ' : SpeciesTree L} {t t' : PhyloTree}
     intro hu
     have : A = ∅ := by rw [← compl_compl A, hu, compl_univ]
     exact hAne.ne_empty this
-  -- two taxa on each side: the quartet trees across the split
+  -- at least two taxa on each side: the quartet trees across the split
   rw [mem_unroot_iff_quartets σ' (by omega) (by omega)]
   intro a ha a' ha' b hb b' hb' haa hbb
   rw [mem_compl] at hb hb'
