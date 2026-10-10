@@ -154,6 +154,7 @@ meta def paperResults : List (String × Name) :=
    ("Sec 3.2, uniqueness fails (E6)", ``Camus.not_uniqueOptimum),
    ("Sec 3.2, CAMUS may add an edge (E6)", ``Camus.camus_may_add_edge),
    ("Sec 3.2, corrected", ``Camus.recovery),
+   ("Sec 3.2, corrected, trees are identifiable", ``Camus.tree_identifiable),
    ("Sec 3.2, corrected, in probability", ``Camus.correctedStatisticalConsistency),
    ("Sec 3.4, Algorithm 1", ``Camus.Algorithm1.filterQuartets_mono),
    ("Sec 3.4, threshold as a ratio", ``Camus.retainSecond_iff_ratio)]
@@ -164,7 +165,7 @@ meta def solutionResults : List Name :=
    ``Camus.Challenge.tree_displays_iff, ``Camus.Challenge.edgeWeight_eq,
    ``Camus.Challenge.reticulation_restriction, ``Camus.Challenge.exists_budgetArray,
    ``Camus.Challenge.not_exactCountMonotone, ``Camus.Challenge.not_uniqueOptimum,
-   ``Camus.Challenge.recovery]
+   ``Camus.Challenge.recovery, ``Camus.Challenge.tree_identifiable]
 
 /-- Lean's standard axioms. -/
 meta def standardAxioms : List Name := [``propext, ``Classical.choice, ``Quot.sound]

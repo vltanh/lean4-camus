@@ -35,7 +35,8 @@ verbatim copy of the shared block of `Camus/Defs.lean`.
   labelled leaves; `t.WellLabelled` says that the labels are distinct.
 * A quartet (`Quartet`) is written with its four taxa in increasing order `a < b < c < d` and a
   split: `0` for `ab|cd`, `1` for `ac|bd`, `2` for `ad|bc`. `q.induced t` says that `q` is a quartet
-  of the tree `t` (`q ∈ Q(t)`): some clade of `t` contains exactly one side of `q`.
+  of the tree `t` (`q ∈ Q(t)`): some clade of `t` contains one side of `q` and no taxon of the
+  other.
 * A network (`RootedNetwork`) is a finite directed graph on natural numbers with a root, a set of
   taxa and a leaf map. `N.RootedBinaryLevelOne` says that it is a rooted binary level-1
   phylogenetic network: acyclic; every vertex reachable from the root; the root of indegree 0 and
@@ -54,7 +55,8 @@ verbatim copy of the shared block of `Camus/Defs.lean`.
   (Definition 3); `Realization.graph t E` is the network obtained from `T` by adding an edge above
   each pair of `E`, and `Realization.graph t ∅` is `T` itself. The target of `(u, w)` is
   `lca(u, w)` (Definition 2), and `DynamicProgramming.pairsAt t v` is `Pairs(v)`: the pairs with
-  target `v` whose ends are not the root and whose recipient `w` is not an ancestor of the donor `u`.
+  target `v` whose ends are not the root and whose recipient `w` is neither an ancestor of the donor `u` nor `u`
+  itself.
 * Scores: `score Q D` is the number of elements of the multiset `Q`, with multiplicity, that lie in
   the finite set `D`. `DynamicProgramming.repertoire Q N` is the set of quartets of `Q` that `N`
   displays, and `DynamicProgramming.novel t Q N` the set of those that `N` satisfies: displayed by

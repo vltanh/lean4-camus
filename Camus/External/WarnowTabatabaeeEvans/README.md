@@ -14,24 +14,24 @@ of each reticulation (Definitions 5 and 6 of the source), and the networks are b
 
 **How the paper uses it.** The proof of Lemma 1 is the sentence "This lemma follows directly from
 Observation 2 in Warnow et al. (2025)." The formalization uses it for the existence half of
-Lemma 1 (`RootedNetwork.novel_edge_exists`); the uniqueness half needs another argument
+Lemma 1 ([`RootedNetwork.novel_edge_exists`](../../Preliminaries/Lemma1/Cuts.lean#L95)); the uniqueness half needs another argument
 (the report's E1).
 
-**The Lean statement.** `External.WarnowTabatabaeeEvansObservation2`, in
-[`Observation2.lean`](Observation2.lean): for every rooted binary level-1 network `N`
-(`RootedNetwork.RootedBinaryLevelOne`) and every quartet `q` on four of its taxa, `N` displays `q`
-(`RootedNetwork.DisplaysQuartet`: some switching of `N`, which keeps one incoming edge at every
+**The Lean statement.** [`External.WarnowTabatabaeeEvansObservation2`](Observation2.lean#L69), in
+[`Camus/External/WarnowTabatabaeeEvans/Observation2.lean`](Observation2.lean): for every rooted binary level-1 network `N`
+([`RootedNetwork.RootedBinaryLevelOne`](../../../Challenge.lean#L317)) and every quartet `q` on four of its taxa, `N` displays `q`
+([`RootedNetwork.DisplaysQuartet`](../../../Challenge.lean#L358): some switching of `N`, which keeps one incoming edge at every
 vertex other than the root, has an edge whose deletion separates the two pairs of `q`, each pair
 staying connected) if and only if deleting a cut edge of the underlying undirected graph
-separates them (`RootedNetwork.CutEdgeSeparates`), or deleting two edges of one cycle, at least one
-of them incident to a vertex of indegree 2 on that cycle, does (`RootedNetwork.CycleSeparates`).
+separates them ([`RootedNetwork.CutEdgeSeparates`](../../Defs.lean#L749)), or deleting two edges of one cycle, at least one
+of them incident to a vertex of indegree 2 on that cycle, does ([`RootedNetwork.CycleSeparates`](../../Defs.lean#L757)).
 This is the source's statement: a switching is a tree contained in `N`, and its unary vertices and
 unlabelled leaves change no split; a vertex of indegree 2 on a cycle of a level-1 network is the
 cycle's bottom node; and deleting both edges into the bottom node separates the same pairs as
 deleting the edge below it.
 
-**The proof.** `External.observation2`, from `External.observation2_forward` and
-`External.observation2_backward`. A switching is a spanning tree of the network, and every edge
+**The proof.** [`External.observation2`](Observation2.lean#L186), from [`External.observation2_forward`](Observation2.lean#L79) and
+[`External.observation2_backward`](Observation2.lean#L155). A switching is a spanning tree of the network, and every edge
 `d` that it leaves out closes a cycle with the path of the switching between its ends; the head of
 `d` is the cycle's reticulation. If a switching displays `q` through an edge `e`, either `e` is a
 cut edge of `N`, and deleting it leaves the same two components in `N` as in the switching, or `e`
