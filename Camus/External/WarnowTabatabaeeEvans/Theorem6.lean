@@ -43,17 +43,21 @@ open Realization
 def caterpillar : PhyloTree :=
   .fork (.fork (.fork (.leaf 0) (.leaf 1)) (.leaf 2)) (.leaf 3)
 
+/-- The leaf labels of `((A,B),C),D` are distinct. -/
 theorem caterpillar_wellLabelled : caterpillar.WellLabelled := by decide
 
+/-- The empty family of pairs is feasible. -/
 theorem empty_separated : EdgeAbove.CycleSeparated caterpillar ∅ := by
   simp [EdgeAbove.CycleSeparated]
 
 /-- The tree `((A,B),C),D` as a network with no reticulation. -/
 noncomputable abbrev treeNet : RootedNetwork := graph caterpillar ∅
 
+/-- `treeNet` is a rooted binary level-1 network. -/
 theorem treeNet_levelOne : treeNet.RootedBinaryLevelOne :=
   levelOne caterpillar caterpillar_wellLabelled ∅ empty_separated
 
+/-- The edges of `treeNet` are the edges of the tree. -/
 theorem treeNet_edges : treeNet.edges = supportEdges caterpillar ∅ := by
   simp [graph]
 
@@ -95,6 +99,7 @@ theorem indegree_ne_two {v : ℕ} (hv : v ∈ treeNet.vertices) : treeNet.indegr
 /-- The edge from the root to the parent of `(A,B)` and `C`. -/
 def topEdge : ℕ × ℕ := (Address.code [], Address.code [false])
 
+/-- `topEdge` is an edge of `treeNet`. -/
 theorem topEdge_mem : topEdge ∈ treeNet.edges := by
   rw [treeNet_edges]
   refine Finset.mem_biUnion.mpr ⟨[false], by decide, ?_⟩

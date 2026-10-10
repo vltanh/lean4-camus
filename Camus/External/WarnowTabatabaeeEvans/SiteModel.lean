@@ -92,6 +92,7 @@ noncomputable def onTaxa (X : Finset ℕ) : Finset Quartet :=
   (X ×ˢ (X ×ˢ (X ×ˢ (X ×ˢ (Finset.univ : Finset (Fin 3)))))).preimage Complexity.quartetKey
     Complexity.quartetKey_injective.injOn
 
+/-- A quartet is in `onTaxa X` if and only if its four taxa lie in `X`. -/
 theorem mem_onTaxa {X : Finset ℕ} {q : Quartet} : q ∈ onTaxa X ↔ q.taxa ⊆ X := by
   simp only [onTaxa, Finset.mem_preimage, Complexity.quartetKey, Finset.mem_product,
     Finset.mem_univ, and_true, taxa, Finset.insert_subset_iff, Finset.singleton_subset_iff]
@@ -336,6 +337,7 @@ theorem code_injective :
     · exact congrFun hst ⟨x, Finset.mem_insert_of_mem hx⟩
     · rw [h.state_off x hx, h'.state_off x hx, hroot]
 
+/-- There are finitely many histories. -/
 noncomputable instance [Fintype σ] : Fintype (SiteHistory N σ) :=
   Fintype.ofInjective _ code_injective
 
@@ -344,6 +346,7 @@ state of the root. -/
 noncomputable def extend (hr : N.root ∈ N.vertices) (f : N.vertices → σ) (x : ℕ) : σ :=
   if hx : x ∈ N.vertices then f ⟨x, hx⟩ else f ⟨N.root, hr⟩
 
+/-- On a vertex, `extend` is the given state. -/
 theorem extend_of_mem (hr : N.root ∈ N.vertices) (f : N.vertices → σ) {x : ℕ}
     (hx : x ∈ N.vertices) : extend hr f x = f ⟨x, hx⟩ := dite_eq_left hx
 
@@ -372,6 +375,7 @@ namespace Switchings
 
 variable {N : RootedNetwork}
 
+/-- There are finitely many switchings. -/
 noncomputable instance : Fintype {S // N.Switching S} := by
   classical
   exact Fintype.subtype (N.edges.powerset.filter N.Switching) fun S => by
@@ -399,11 +403,13 @@ noncomputable def pick (S : {S // N.Switching S}) (v : Slot N) : ℕ × ℕ :=
   Classical.choose (Finset.card_eq_one.mp (S.2.2 v.1 (Finset.mem_erase.mp v.2).2
     (Finset.mem_erase.mp v.2).1))
 
+/-- `pick S v` is the only edge of `S` into `v`. -/
 theorem pick_spec (S : {S // N.Switching S}) (v : Slot N) :
     S.1.filter (fun e => e.2 = v.1) = {pick S v} :=
   Classical.choose_spec (Finset.card_eq_one.mp (S.2.2 v.1 (Finset.mem_erase.mp v.2).2
     (Finset.mem_erase.mp v.2).1))
 
+/-- `pick S v` is an edge of `S` into `v`. -/
 theorem pick_mem (S : {S // N.Switching S}) (v : Slot N) :
     pick S v ∈ S.1 ∧ (pick S v).2 = v.1 := by
   have h : pick S v ∈ S.1.filter (fun e => e.2 = v.1) := by
@@ -415,6 +421,7 @@ theorem pick_mem (S : {S // N.Switching S}) (v : Slot N) :
 noncomputable def ofChoice (c : (v : Slot N) → Into N v) : Finset (ℕ × ℕ) :=
   Finset.univ.image fun v => (c v).1
 
+/-- The only edge of `ofChoice c` into `v` is `c v`. -/
 theorem ofChoice_filter (c : (v : Slot N) → Into N v) (v : Slot N) :
     (ofChoice c).filter (fun e => e.2 = v.1) = {(c v).1} := by
   ext e
@@ -428,6 +435,7 @@ theorem ofChoice_filter (c : (v : Slot N) → Into N v) (v : Slot N) :
   · rintro rfl
     exact ⟨⟨v, rfl⟩, (Finset.mem_filter.mp (c v).2).2⟩
 
+/-- `ofChoice c` is a switching. -/
 theorem ofChoice_switching (c : (v : Slot N) → Into N v) : N.Switching (ofChoice c) := by
   refine ⟨?_, fun v hv hvr => ?_⟩
   · intro e he
@@ -645,6 +653,7 @@ variable {N : RootedNetwork} {σ : Type*}
 /-- Histories form a finite set with every subset measurable. -/
 instance : MeasurableSpace (SiteHistory N σ) := ⊤
 
+/-- Every set of histories is measurable. -/
 instance : DiscreteMeasurableSpace (SiteHistory N σ) :=
   ⟨fun _ => MeasurableSpace.measurableSet_top⟩
 
@@ -659,6 +668,7 @@ noncomputable def law (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) :
     MeasureTheory.Measure (SiteHistory N σ) :=
   (M.pmf hN).toMeasure
 
+/-- The law of a site is a probability measure. -/
 instance (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) :
     MeasureTheory.IsProbabilityMeasure (M.law hN) := by
   unfold law
@@ -764,6 +774,7 @@ def changes (h : SiteHistory N σ) : Finset (ℕ × ℕ) :=
 two-state and homoplasy-free; WTE's Oracle selects these sites from the alignment. -/
 def IsSNP (h : SiteHistory N σ) : Prop := h.changes.card = 1
 
+/-- Being an SNP is decidable. -/
 instance : DecidablePred (IsSNP (N := N) (σ := σ)) :=
   fun h => inferInstanceAs (Decidable (h.changes.card = 1))
 
@@ -907,12 +918,15 @@ noncomputable def snp (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)} (h
 variable (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)} (hS : N.Switching S) {x y : ℕ}
   (hxy : (x, y) ∈ S) (s₀ s₁ : σ)
 
+/-- `snp` evolves down `S`. -/
 theorem snp_switching : (snp hN hS hxy s₀ s₁).switching = S := rfl
 
+/-- `snp` has the state `s₀` at the tail `x`. -/
 theorem snp_state_tail : (snp hN hS hxy s₀ s₁).state x = s₀ := by
   classical
   exact ite_eq_right (not_below_tail hN hS hxy)
 
+/-- `snp` has the state `s₁` at the head `y`. -/
 theorem snp_state_head : (snp hN hS hxy s₀ s₁).state y = s₁ := by
   classical
   exact ite_eq_left ReflTransGen.refl
@@ -949,6 +963,7 @@ theorem snp_quartets (hs : s₀ ≠ s₁) :
     (snp hN hS hxy s₀ s₁).quartets = cutQuartets N S y :=
   quartets_of_changes (snp_changes hN hS hxy hs)
 
+/-- With two different states, `snp` is an SNP. -/
 theorem snp_isSNP (hs : s₀ ≠ s₁) : (snp hN hS hxy s₀ s₁).IsSNP := by
   unfold IsSNP
   rw [snp_changes hN hS hxy hs, Finset.card_singleton]

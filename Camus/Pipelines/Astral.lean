@@ -60,7 +60,7 @@ open scoped NNReal ENNReal
 
 namespace Camus
 
-/-- **Section 3.1**: the quartet support score of the tree `T` for the multiset `Q`,
+/-- Section 3.1: the quartet support score of the tree `T` for the multiset `Q`,
 score(T) = ∑_{q ∈ Q(T)} w(q), where w(q) is the number of copies of `q` in `Q`: the number of
 quartets of `Q`, counted with multiplicity, induced by `T` (`quartetSupport_eq_card`). -/
 noncomputable def quartetSupport (Q : Multiset Quartet) (T : PhyloTree) : ℕ :=
@@ -264,28 +264,35 @@ end Quartet
 theorem QuartetKey.quartet_taxa (k : QuartetKey) (s : Fin 3) :
     (k.quartet s).taxa = {k.a, k.b, k.c, k.d} := rfl
 
+/-- The four taxa of the quartet `k.quartet s` are `k`. -/
 theorem QuartetKey.quartet_key (k : QuartetKey) (s : Fin 3) : (k.quartet s).key = k := rfl
 
+/-- The first taxon of `k.quartet s` is that of `k`. -/
 @[simp] theorem QuartetKey.quartet_a (k : QuartetKey) (s : Fin 3) : (k.quartet s).a = k.a := rfl
 
+/-- The second taxon of `k.quartet s` is that of `k`. -/
 @[simp] theorem QuartetKey.quartet_b (k : QuartetKey) (s : Fin 3) : (k.quartet s).b = k.b := rfl
 
+/-- The third taxon of `k.quartet s` is that of `k`. -/
 @[simp] theorem QuartetKey.quartet_c (k : QuartetKey) (s : Fin 3) : (k.quartet s).c = k.c := rfl
 
+/-- The fourth taxon of `k.quartet s` is that of `k`. -/
 @[simp] theorem QuartetKey.quartet_d (k : QuartetKey) (s : Fin 3) : (k.quartet s).d = k.d := rfl
 
+/-- The topology of the quartet `k.quartet s` is `s`. -/
 theorem QuartetKey.quartet_split (k : QuartetKey) (s : Fin 3) : (k.quartet s).split = s := rfl
 
+/-- A quartet is the quartet of its topology on its four taxa. -/
 theorem Quartet.key_quartet (q : Quartet) : q.key.quartet q.split = q := by
   cases q
   rfl
 
 namespace PhyloTree
 
-/-- **Section 3.1**: a well-labelled tree `t` induces exactly one quartet on each set `k` of four
-of its taxa: some clade of `t` meets the four taxa in exactly two (`exists_clade_two`), and two
-clades that cut different quartets on them would be neither nested nor disjoint
-(`clades_laminar`). -/
+/-- A well-labelled tree `t` induces exactly one quartet on each set `k` of four of its taxa, as
+the comparison of scores in Section 3.2 uses ("for every four species"): some clade of `t` meets
+the four taxa in exactly two (`exists_clade_two`), and two clades that cut different quartets on
+them would be neither nested nor disjoint (`clades_laminar`). -/
 theorem induced_existsUnique (t : PhyloTree) (ht : t.WellLabelled) (k : QuartetKey)
     (hk : ({k.a, k.b, k.c, k.d} : Finset ℕ) ⊆ t.taxa) :
     ∃! s : Fin 3, (k.quartet s).induced t = true := by
@@ -358,6 +365,7 @@ end PhyloTree
 noncomputable def keysOn (X : Finset ℕ) : Finset QuartetKey :=
   (Quartet.onTaxa X).image Quartet.key
 
+/-- The sets of four taxa in `keysOn X` are those whose taxa lie in `X`. -/
 theorem mem_keysOn {X : Finset ℕ} {k : QuartetKey} :
     k ∈ keysOn X ↔ ({k.a, k.b, k.c, k.d} : Finset ℕ) ⊆ X := by
   constructor

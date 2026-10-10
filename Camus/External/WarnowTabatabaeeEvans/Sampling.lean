@@ -16,10 +16,12 @@ the single site model of Warnow, Tabatabaee and Evans (WTE; `External.SiteModel`
 `X 0, X 1, ...` that are independent with the law of the model: with `Q_m` the multiset
 sum of the quartets of the SNPs among the first `m` sites (`External.sampleQuartets`), the
 probability that the quartets of `Q_m` are exactly those displayed by `N` tends to 1
-(`External.support_tendsto`). WTE prove the corresponding statement for clades (Theorem 6, with
-the bound of Theorem 7); the adaptation to quartets is the paper's. The file also gives the law of
-large numbers for the frequency of a quartet (`External.frequency_tendsto`), which the ASTRAL step
-of the pipeline uses, and shows that independent sites with the law of the model exist
+(`External.support_tendsto`). WTE prove that the SNPs cover the clades of `N` with probability
+tending to 1 (Theorem 6, with the bound of Theorem 7), and, without the ancestral states, that
+they cover its bipartitions, "and hence cover Q(N_r)" (Theorem 8, whose proof "follows as for the
+rooted case"); the proof here is theirs, for quartets. The file also gives the law of large
+numbers for the frequency of a quartet (`External.frequency_tendsto`), which the ASTRAL step of
+the pipeline uses, and shows that independent sites with the law of the model exist
 (`External.SiteModel.sites`).
 
 ## Main results
@@ -66,6 +68,7 @@ noncomputable def sampleQuartets (X : ℕ → Ω → SiteHistory N σ) (m : ℕ)
     Multiset Quartet :=
   ∑ n ∈ Finset.range m, ((X n ω).quartets).val
 
+/-- A quartet is in `Q_m` if and only if one of the first `m` sites contributes it. -/
 theorem mem_sampleQuartets {X : ℕ → Ω → SiteHistory N σ} {m : ℕ} {ω : Ω} {q : Quartet} :
     q ∈ sampleQuartets X m ω ↔ ∃ n < m, q ∈ (X n ω).quartets := by
   simp [sampleQuartets, Multiset.mem_sum]
@@ -248,6 +251,7 @@ noncomputable def sites (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
     Measure (ℕ → SiteHistory N σ) :=
   Measure.infinitePi fun _ => M.law hN
 
+/-- The law of independent sites is a probability measure. -/
 instance (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
     IsProbabilityMeasure (M.sites hN) := by
   unfold sites
