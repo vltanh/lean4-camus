@@ -1,15 +1,6 @@
-# Explicit dependencies of the published proof that are not numbered citations,
-# plus one supplementary canonical-wire representation bridge. No cited main
-# dependency is omitted; the main theorem still uses Lemmas 1–2 and Eq. 4/5.
-# label	difference	reason
-mthst2	+mthst1	Definition 1 and its following satisfaction paragraph give the displayed switching repertoire and baseline quartet exclusion used in Lemma 1; the source uses these objects without a numbered citation.
-mthst2	+mthst3	Definition 2 supplies the original endpoint pair extracted below the selected edge, making the canonical T+e in the formal statement precise; this is endpoint data, not an alternative attribution theorem.
-mthst2	+mthst4	Supplementary representation bridge: the paper defines T+e by deletion and unary suppression, whereas its Lean realization is a canonical endpoint-pair graph. Proving the single-edge suppression bridge reuses Lemma 2 in ghostEndpoints_mem_unique to identify canonical wire endpoints. This is the same vertex-disjoint-cycle invariant; Observation 2 and the independent disjoint-cycle uniqueness argument remain the attribution proof.
-mthst2	+mthst6	Definition 3's actual edge-above graph represents T+e; deletion/suppression is proved equivalent to this canonical graph rather than assumed.
-mthst9	+E1	The main proof describes correctly precomputed single-edge quartet weights and sums them via Lemma 1, thereby using Eq. 1 without naming its equation number.
-mthst9	+E3	The proof searches for one edge maximizing s(y) and identifies its score with s(y), using Eq. 3's candidate maximum without a numbered citation.
-mthst9	+mthst1	The source proof optimizes satisfied quartets of switching trees and excludes the support-tree baseline; Definition 1 and its satisfaction paragraph define those objects without a proof citation.
-mthst9	+mthst3	The proof's cases use target nodes and assigned non-tree edges, the data of Procedure ASSIGN in Definition 2.
-mthst9	+mthst6	The proof outputs edges added above original endpoint pairs and a level-1 extension; Definition 3's edge-above operation is made into an actual graph construction.
-mthst9	+mthst7	Precomputed single-edge score contributions use Definition 4's delta multiplicity weights, which the source discusses immediately before the recurrence.
-mthst9	+mthst8	Eq. 4/5 and the child-subproblem proof use Definition 5's children in the actual network, including subdivided endpoints; the source uses this notation without a numbered citation.
+# Differences between the routes of the formal proofs and of the paper's proofs, each reviewed, for
+# scripts/route_check.py: LABEL<TAB>+OTHER or -OTHER<TAB>reason. Labels are the JATS identifiers of
+# the published version: mthst2 = Lemma 1, mthst4 = Lemma 2, mthst9 = Theorem 1, E1-E5 = Equations (1)-(5).
+mthst2	+mthst4	The paper obtains T + e from N by deleting the other non-tree edges and suppressing unary vertices. The formal proof identifies that network with the canonical network of e's pair (SupportSubdivision.single_edge_reduction), through the canonical form of N, whose construction uses Lemma 2 for the family of pairs of N: an edge of T carries at most one ghost donor (Realization.ghostEndpoints_mem_unique). The argument of Lemma 1 itself (existence from Observation 2, uniqueness from the disjointness of the cycles) does not use Lemma 2.
+mthst9	+E1	The proof uses the weights s_e of Equation (1) ("By Lemma 1, each s_e(a,b) does not depend on another calculations, and hence is correctly computed during the preprocessing") without citing the equation by number; the formal proof identifies them with the number of quartets satisfied by T + e (DynamicProgramming.edgeWeight_score).
+mthst9	+E3	The proof uses s(y) of Equation (3) ("it is sufficient to simply search for one edge that maximizes s(y)") without citing the equation by number.

@@ -31,9 +31,9 @@ from pathlib import Path
 
 # ---- configuration -------------------------------------------------------------------------
 # The Markdown documents to process.
-DOCS = ['README.md', 'REPORT.md', 'CREDITS.md']
+DOCS = ['README.md', 'REPORT.md', 'CREDITS.md', 'Camus/External/WarnowTabatabaeeEvans/README.md']
 # Namespaces in which the documents name declarations without their prefix, most specific last.
-NAMESPACES = ['Camus', 'Camus.External', 'CamusResults']
+NAMESPACES = ['Camus', 'Camus.External']
 # Top-level module names of the project: a code span naming such a module links to its file.
 MODULE_ROOTS = ('Camus', 'Challenge', 'Solution')
 # The module whose declarations win when a name is declared in several modules.

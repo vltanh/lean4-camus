@@ -4,8 +4,7 @@ public meta import Lean.Elab.Command
 public meta import Lean.DocString
 -- One `import all` line per module of the library, so that proofs are visible to the dependency
 -- traversal (the module system hides them from a plain `import`). Generate the lines with
---   find PaperName -name '*.lean' | sort | sed 's/\.lean$//; s#/#.#g; s/^/import all /'
-import all Camus
+--   find Camus -name '*.lean' | sort | sed 's/\.lean$//; s#/#.#g; s/^/import all /'
 import all Camus.Complexity.Operations
 import all Camus.Complexity.Oracle
 import all Camus.DP.Correctness
@@ -42,6 +41,7 @@ import all Camus.Network.Completeness.Splitting
 import all Camus.Network.Completeness.Transport
 import all Camus.Network.Completeness.Tree
 import all Camus.Network.Completeness.Wires
+import all Camus.Network.Cuts
 import all Camus.Network.Isomorphism.Invariance
 import all Camus.Network.Isomorphism.Rename
 import all Camus.Network.Realization.Basic
@@ -71,6 +71,7 @@ import all Camus.Pipelines.Counterexample
 import all Camus.Pipelines.Filtering
 import all Camus.Pipelines.Recovery
 import all Camus.Pipelines.Statistical
+import all Camus.Pipelines.Uniqueness
 import all Camus.Preliminaries.Lemma1.Cuts
 import all Camus.Preliminaries.Lemma1.Switches
 import all Camus.Preliminaries.Lemma1.Tree
@@ -81,6 +82,8 @@ import all Camus.Restriction.Correctness
 import all Camus.Restriction.Counterexample
 import all Camus.Restriction.Defs
 import all Camus.Restriction.Forest
+import all Camus.Restriction.Main
+import all Camus.Restriction.Monotonicity
 import all Camus.Restriction.Optimality
 import all Camus.Restriction.Saturation
 import all Camus.Restriction.Witness
@@ -95,7 +98,7 @@ import all Solution
 Run with `lake env lean scripts/Audit.lean` after `lake build`.
 
 For every numbered result of the paper, this prints the axioms it depends on and the results from
-prior work (`PaperName/External/`) that it uses, whether proved there or, in a conditional
+prior work (`Camus/External/`) that it uses, whether proved there or, in a conditional
 formalization, assumed as hypotheses of its statement. It then checks every declaration
 of the library and the theorems that Palomar's comparator checks. The run fails if any of them
 depends on an axiom other than Lean's standard `propext`, `Classical.choice` and `Quot.sound` (a
@@ -123,32 +126,45 @@ open Lean Elab Command
 
 namespace Audit
 
-/-- The results from prior work in `PaperName/External/`, with a short label: the theorems proved
-there and, in a conditional formalization, the propositions assumed as hypotheses. The traversal
-stops at them. -/
+/-- The results from prior work in `Camus/External/`, with a short label: the theorems proved
+there. The traversal stops at them. -/
 meta def externalResults : List (String × Name) :=
-  [("Warnow–Tabatabaee–Evans Observation 2", ``Camus.External.WarnowTabatabaeeEvansObservation2)]
+  [("Observation 2 (Warnow, Tabatabaee, Evans 2025)", ``Camus.External.observation2)]
 
-/-- The numbered results of the paper, in the order of the paper. -/
+/-- The numbered results of the paper, and its unnumbered claims, in the order of the paper. -/
 meta def paperResults : List (String × Name) :=
-  [("Definition 1", ``Camus.Quartet.induced),
-   ("Lemma 1", ``Camus.lemma1),
-   ("Definition 2", ``Camus.SupportSubdivision.pairOf),
-   ("Lemma 2", ``Camus.EdgeAbove.target_unique),
-   ("Definition 3", ``Camus.Realization.graph),
-   ("Definition 4", ``Camus.delta),
-   ("Definition 5", ``Camus.Realization.child),
-   ("Equation 1", ``Camus.DynamicProgramming.edgeWeight),
-   ("Equation 2", ``Camus.DynamicProgramming.Array),
-   ("Equation 3", ``Camus.DynamicProgramming.s),
-   ("Equation 4", ``Camus.DynamicProgramming.sdpCross),
-   ("Equation 5", ``Camus.DynamicProgramming.sdpGhost),
-   ("Theorem 1", ``Camus.theorem1)]
+  [("Lemma 1", ``Camus.lemma1),
+   ("Lemma 1, second sentence", ``Camus.lemma1_union),
+   ("Lemma 1, second sentence, edge families", ``Camus.DynamicProgramming.novel_disjoint_union),
+   ("Lemma 2", ``Camus.lemma2),
+   ("Lemma 2, edge families", ``Camus.EdgeAbove.target_unique),
+   ("Eq (1)", ``Camus.equation1),
+   ("Eq (2)", ``Camus.DynamicProgramming.Array),
+   ("Eq (3)", ``Camus.DynamicProgramming.s),
+   ("Eq (4)", ``Camus.DynamicProgramming.equation4),
+   ("Eq (5)", ``Camus.DynamicProgramming.equation5),
+   ("Theorem 1", ``Camus.theorem1),
+   ("Sec 2.3, operations", ``Camus.Complexity.scalarOperations_bound),
+   ("Sec 2.3, memory", ``Camus.Complexity.scalarSpace_bound),
+   ("Sec 2.4, operations", ``Camus.Complexity.budgetOperations_bound),
+   ("Sec 2.4, n - 1 reticulations", ``Camus.RootedNetwork.anchored_reticulation_bound),
+   ("Sec 2.4, the restricted DP", ``Camus.BudgetDP.reticulation_restriction),
+   ("Sec 2.4, monotonicity fails (E5)", ``Camus.not_exactCountMonotone),
+   ("Sec 2.4, at most k", ``Camus.atMostScore_mono),
+   ("Sec 3.2, uniqueness fails (E6)", ``Camus.not_uniqueOptimum),
+   ("Sec 3.2, CAMUS may add an edge (E6)", ``Camus.camus_may_add_edge),
+   ("Sec 3.2, corrected", ``Camus.recovery),
+   ("Sec 3.2, corrected, in probability", ``Camus.correctedStatisticalConsistency),
+   ("Sec 3.4, Algorithm 1", ``Camus.Algorithm1.filterQuartets_mono),
+   ("Sec 3.4, threshold as a ratio", ``Camus.retainSecond_iff_ratio)]
 
 /-- The theorems that Palomar's comparator checks (`theorem_names` of `comparator.json`). -/
 meta def solutionResults : List Name :=
-  [``CamusResults.equation1, ``CamusResults.atMostBudgetMonotone,
-   ``CamusResults.correctedRecovery, ``CamusResults.optimalNetwork]
+  [``Camus.Challenge.theorem1, ``Camus.Challenge.exists_array_trace,
+   ``Camus.Challenge.tree_displays_iff, ``Camus.Challenge.edgeWeight_eq,
+   ``Camus.Challenge.reticulation_restriction, ``Camus.Challenge.exists_budgetArray,
+   ``Camus.Challenge.not_exactCountMonotone, ``Camus.Challenge.not_uniqueOptimum,
+   ``Camus.Challenge.recovery]
 
 /-- Lean's standard axioms. -/
 meta def standardAxioms : List Name := [``propext, ``Classical.choice, ``Quot.sound]

@@ -14,7 +14,7 @@ rev = "v4.35.0-rc4"
 
 [[lean_lib]]
 name = "Camus"
-globs = ["Camus", "Camus.+"]
+globs = ["Camus.+"]
 
 [[lean_lib]]
 name = "Challenge"

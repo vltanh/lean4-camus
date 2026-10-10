@@ -1,15 +1,18 @@
-# Published JATS identifiers; explicit references in the theorem proof section, including plain-text Equation (2).
-# label	environment	proved	route
-mthst1	definition	0	
+# Routes of the paper's proofs, for scripts/route_check.py: label, environment, whether the paper
+# proves it, and the labels of the results that its proof cites.
+# Written by hand from the published version (Bioinformatics 42, Supplement 1, btag245, 2026), which
+# has no public TeX source. The labels are the identifiers of the statements and equations in the
+# publisher's JATS XML (Europe PMC, PMC13340232): mthst2 = Lemma 1, mthst4 = Lemma 2 (its proof is
+# mthst5), mthst9 = Theorem 1 (its proof is mthst10), E1-E5 = Equations (1)-(5).
+# The proof of Lemma 1 ("This lemma follows directly from Observation 2 in Warnow et al. (2025)")
+# cites only a result from prior work, and the proof of Lemma 2 cites nothing. The proof of
+# Theorem 1 cites Lemma 1, Lemma 2, Equation (2) and Equations (4) and (5).
+# label	environment	proved	cited statements
 mthst2	lemma	1	
-mthst3	definition	0	
 mthst4	lemma	1	
-mthst6	definition	0	
-mthst7	definition	0	
-mthst8	definition	0	
 E1	equation	0	
 E2	equation	0	
 E3	equation	0	
 E4	equation	0	
 E5	equation	0	
-mthst9	theorem	1	mthst2,mthst4,E2,E4,E5
+mthst9	theorem	1	E2,E4,E5,mthst2,mthst4
