@@ -204,6 +204,19 @@ theorem row_eq {t : PhyloTree} {w : Pair → ℕ} {M : Address → ℕ → Finse
     (hx : x ∈ M v k) (hy : y ∈ M v k) : x = y :=
   Finset.card_le_one.mp (array_row_card t w M hM hv k) x hx y hy
 
+/-- If some feasible family of `k` edges below the root has value `z` and no such family has a
+larger value, the root row `M[r][k]` is `{z}`. -/
+theorem root_row_eq_singleton {t : PhyloTree} {w : Pair → ℕ} {M : Address → ℕ → Finset ℕ}
+    (hM : Array t w M) {k z : ℕ} {E : Finset Pair} (hE : FeasibleBelow t [] E)
+    (hEk : E.card = k) (hEz : value w E = z)
+    (hbound : ∀ F, FeasibleBelow t [] F → F.card = k → value w F ≤ z) : M [] k = {z} := by
+  obtain ⟨x, hx⟩ := (row_nonempty_iff t w M hM t.root_mem_nodes k).mpr ⟨E, hE, hEk⟩
+  obtain ⟨E', hE', hE'k, hE'x, hmax⟩ := exact_optimal t w M hM t.root_mem_nodes hx
+  have hxz : x = z := le_antisymm (hE'x ▸ hbound E' hE' hE'k) (hEz ▸ hmax E hE hEk)
+  subst hxz
+  exact Finset.eq_singleton_iff_unique_mem.mpr
+    ⟨hx, fun y hy => row_eq hM t.root_mem_nodes hy hx⟩
+
 /-- Section 2.4, parts (a) and (b) of the proof of Theorem 1 for the budget array. If `M` satisfies
 the recurrence (`BudgetDP.Array`) and `E` is a backtracking trace from `v` with budget `k`, then `E`
 is feasible below `v` (its cycles are disjoint and its targets lie in `T_v`), has exactly `k` edges,
