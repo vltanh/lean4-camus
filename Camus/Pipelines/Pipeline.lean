@@ -1,6 +1,7 @@
 module
 
 public import Camus.DP.Theorem1
+public import Camus.Network.TreeBased.Root
 public import Camus.Pipelines.AstralTree
 public import Camus.Pipelines.SNPCondition
 
@@ -23,29 +24,29 @@ through `pipeline_recovery`. As the section notes, the pipeline always has an ou
 always returns a tree, the outgroup roots it, and CAMUS always returns a network
 (`pipeline_output_exists`).
 
-Let `N` be built on `t`, with the leaf of an outgroup `o` a child of the root of `t` (the paper's
-hypotheses, that `t` is a tree of `N` and that the leaf of the outgroup is a child of the root of
-`N`, give this: `RootedNetwork.BuiltOn.anchoredExtension_rootedAt`), and assume
-the paper's condition on `t` (`MostProbableQuartets`) and, as the correction of the report's E7
-requires, that `N` is identifiable under inclusion and that CAMUS breaks ties toward the fewest
-reticulations. Then, with probability tending to 1, the pipeline has an output (ASTRAL may return
-`t`, and CAMUS may return `N` on it), and every output is isomorphic to `N`: every tree of maximum
-quartet support score rooted at `o` (`AstralOutput`, `PhyloTree.RootedAt`) gives, through every
-network that CAMUS may return on it (`CamusOutput`), a network isomorphic to `N`. Without
-identifiability under inclusion the pipeline may fail, also with an outgroup and under every other
-hypothesis of the paper's argument: in the deeper-donor example of
-`Camus/Pipelines/InclusionOutgroup.lean`, with probability tending to 1, every tree of maximum
+Let `N` be built on `t`, with the leaf of an outgroup `o` a child of the root of `t`. The paper's
+hypotheses, that `t` is a tree of `N` (Definition 1) and that the leaf of the outgroup is a child of
+the root of `N`, give these (`RootedNetwork.BuiltOn.anchored_of_outgroup`,
+`RootedNetwork.BuiltOn.rootedAt_of_outgroup`). Assume the paper's condition on `t`
+(`MostProbableQuartets`) and, as the correction of the report's E7 requires, that `N` is
+identifiable under inclusion and that CAMUS breaks ties toward the fewest reticulations. Then, with
+probability tending to 1, the pipeline has an output (ASTRAL may return `t`, and CAMUS may return
+`N` on it), and every output is isomorphic to `N`: every tree of maximum quartet support score
+rooted at `o` (`AstralOutput`, `PhyloTree.RootedAt`) gives, through every network that CAMUS may
+return on it (`CamusOutput`), a network isomorphic to `N`. These hypotheses can all be met
+(`pipeline_tendsto_tree`). Without identifiability under inclusion the pipeline may fail, also with
+an outgroup and under every other hypothesis of the paper's argument: in the deeper-donor example
+of `Camus/Pipelines/InclusionOutgroup.lean`, with probability tending to 1, every tree of maximum
 score rooted at the outgroup gives a network that CAMUS may return and that is not isomorphic to
-the true network (`pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypotheses`). The
-hypotheses of `pipeline_tendsto` can all be met (`pipeline_tendsto_tree`).
+the true network (`pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypotheses`).
 
 ## Main results
 
 * `AstralOutput`, `CamusOutput`: the trees that ASTRAL may return, and the networks that CAMUS may
   return with the tie-break toward the fewest reticulations.
 * `pipeline_output_exists`: the pipeline always has an output.
-* `RootedNetwork.BuiltOn.anchoredExtension_rootedAt`: the paper's hypotheses on `N`, `t` and the
-  outgroup give those of `pipeline_tendsto`.
+* `RootedNetwork.BuiltOn.rootedAt_of_outgroup`: with `RootedNetwork.BuiltOn.anchored_of_outgroup`,
+  the paper's hypotheses on `N`, `t` and the outgroup give those of `pipeline_tendsto`.
 * `pipeline_recovery`: the pipeline for one multiset `Q` whose support is `Q(N_r)` and in which the
   quartets of `t` are the most frequent.
 * `pipeline_ae_eventually`, `pipeline_tendsto`, `pipeline_output_tendsto`: Section 3.2's pipeline
@@ -213,6 +214,49 @@ theorem pipeline_output_exists (Q : Multiset Quartet) {X : Finset ℕ} {o : ℕ}
   obtain ⟨P, hP⟩ := exists_camusOutput Q hT'.1
   obtain ⟨S, ⟨H⟩⟩ := hP.1.2
   exact ⟨_, hT', hTo, P, hP, hP.1.1, H.taxa_preserved.trans hT'.2.1⟩
+
+/-- Section 3.2's hypotheses on the true network `N` and the outgroup `o`: `t` is a tree of `N`
+(Definition 1, `RootedNetwork.BuiltOn`), and the leaf of `o` is a child of the root of `N`
+("provided we have an outgroup"). Then `t` is rooted at `o`, and `N` is built on `t` with the root
+kept (`RootedNetwork.BuiltOn.anchored_of_outgroup`): these are the hypotheses on `N` and `t` of
+`pipeline_tendsto`. Every switching keeps the edge from the root of `N` to the leaf of `o`
+(`RootedNetwork.rootEdges_mem_of_outgroup`), so that edge lies on the wire of the leaf of `t`
+labelled `o`, which starts at the root of `t`. -/
+theorem RootedNetwork.BuiltOn.rootedAt_of_outgroup {N : RootedNetwork} {t : PhyloTree}
+    (hN : N.BuiltOn t) {o : ℕ} (ho : o ∈ N.taxa) (hor : (N.root, N.leaf o) ∈ N.edges) :
+    t.RootedAt o := by
+  obtain ⟨hbin, S, ⟨H⟩⟩ := hN.anchored_of_outgroup ho hor
+  -- the edge from the root of `N` to the leaf of `o` is an edge of the subdivided tree `t`
+  have he : (N.root, N.leaf o) ∈ S :=
+    RootedNetwork.rootEdges_mem_of_outgroup hbin H.switching ho hor _ hor rfl
+  -- the leaf of `t` labelled `o`
+  have hot : o ∈ t.taxa := H.taxa_preserved ▸ ho
+  have hp := Realization.leafAddress_nodeAt hot
+  have hpn := Realization.leafAddress_mem_nodes hot
+  have hleaf : H.original (Realization.leafAddress t o) = N.leaf o :=
+    H.leaves_preserved _ hpn o hp
+  -- the edge lies on the wire of a non-root vertex `q`, at which the leaf of `o` sits
+  obtain ⟨q, -, hq0, hsite2, hsite1⟩ := H.support_edge_sites he
+  have hqp : q = Realization.leafAddress t o := by
+    rw [← hsite2]
+    change H.site (N.leaf o) = _
+    rw [← hleaf, H.site_original hpn]
+  have hroot : H.site N.root = [] := by
+    rw [← H.root_preserved, H.site_original t.root_mem_nodes]
+  -- the root of `N` sits at the parent of `q`, so `q` is a child of the root of `t`
+  have hpar : parent q = [] := by
+    rcases hsite1 with h | ⟨-, h⟩
+    · change H.site N.root = q at h
+      rw [hroot] at h
+      exact absurd h.symm hq0
+    · change H.site N.root = parent q at h
+      rw [← h, hroot]
+  obtain ⟨b, hb⟩ : ∃ b, q = [b] := by
+    match q, hq0, hpar with
+    | [], hq0, _ => exact absurd rfl hq0
+    | [b], _, _ => exact ⟨b, rfl⟩
+    | b :: c :: q', _, hpar => simp [parent] at hpar
+  exact ⟨b, by rw [← hb, hqp]; exact hp⟩
 
 /-- Section 3.2: if, for every four taxa of `t`, the quartet that `t` induces has more copies in
 `Q` than the two other quartets on them, then every tree that ASTRAL may return on the taxa of `t`
@@ -386,6 +430,39 @@ theorem ae_eventually_support (M : External.SiteModel N σ) (hN : N.RootedBinary
   refine ⟨External.displays_of_mem_sampleQuartets hN, fun hq => ?_⟩
   exact hm q (Finset.mem_filter.mpr ⟨Quartet.mem_onTaxa.mpr hq.1, hq⟩)
 
+/-- Section 3.2, the SNP pipeline in WTE's model, corrected, almost surely. Let the true network
+`N` be built on the tree `t`, with `t` rooted at the outgroup `o`; let `t` induce the most
+probable quartet on every four taxa (`MostProbableQuartets`), and let `N` be identifiable under
+inclusion (as in `recovery`). Let the sites `X 0, X 1, ...` be independent with the law of a site
+under a model `M` on `N` with at least two states, and `Q_m` the multiset of the quartets of the
+SNPs among the first `m` sites. Then almost surely, for all large numbers `m` of sites, the
+pipeline has an output (ASTRAL may return `t` on `Q_m` and the taxa of `N`, and CAMUS may return
+`N` on `t`), and for every tree `T` that ASTRAL may return, rooted at `o`, every network that
+CAMUS may return on `T` is isomorphic to `N`.
+
+Departure from the paper: as in `pipeline_tendsto`. -/
+theorem pipeline_ae_eventually [Nontrivial σ] (t : PhyloTree) (ht : t.WellLabelled) {o : ℕ}
+    (hto : t.RootedAt o) (N : RootedNetwork) (hN : N.AnchoredExtension t)
+    (identifiable : ∀ P : RootedNetwork, P.AnchoredExtension t →
+      (∀ q, N.DisplaysQuartet q → P.DisplaysQuartet q) →
+      P.reticulationCount ≤ N.reticulationCount → Nonempty (P.Iso N))
+    (M : External.SiteModel N σ) (hcond : MostProbableQuartets M t)
+    {μ : Measure Ω} [IsProbabilityMeasure μ] (X : ℕ → Ω → External.SiteHistory N σ)
+    (hind : iIndepFun X μ) (hid : ∀ n, IdentDistrib (X n) (X 0) μ μ)
+    (hlaw : μ.map (X 0) = M.law hN.1) :
+    ∀ᵐ ω ∂μ, ∀ᶠ m in atTop,
+      (AstralOutput (External.sampleQuartets X m ω) N.taxa t ∧
+        CamusOutput (External.sampleQuartets X m ω) t N) ∧
+      ∀ T : PhyloTree, AstralOutput (External.sampleQuartets X m ω) N.taxa T → T.RootedAt o →
+        ∀ P : RootedNetwork, CamusOutput (External.sampleQuartets X m ω) T P →
+          Nonempty (P.Iso N) := by
+  -- steps 1 and 3 hold together, almost surely for all large `m`
+  filter_upwards [ae_eventually_mostFrequent M hN.1 t hcond X hind hid hlaw,
+    ae_eventually_support M hN.1 X hind hid hlaw] with ω hfreq hsupp
+  filter_upwards [hfreq, hsupp] with m hm hm'
+  -- on that event, the pipeline for one multiset
+  exact pipeline_recovery t ht hto N hN identifiable _ hm hm'
+
 /-- Section 3.2, the SNP pipeline in WTE's model, corrected. Let the true network `N` be built on
 the tree `t`, with the leaf of the outgroup `o` a child of the root of `t` ("provided we have an
 outgroup"); let `t` induce the most probable quartet on every four taxa (`MostProbableQuartets`),
@@ -394,7 +471,11 @@ independent with the law of a site under a model `M` on `N` with at least two st
 the multiset of the quartets of the SNPs among the first `m` sites. Then the probability of the
 following event tends to 1: the pipeline has an output (ASTRAL may return `t` on `Q_m` and the
 taxa of `N`, and CAMUS may return `N` on `t`), and for every tree `T` that ASTRAL may return,
-rooted at `o`, every network that CAMUS may return on `T` is isomorphic to `N`.
+rooted at `o`, every network that CAMUS may return on `T` is isomorphic to `N`. The paper's
+hypotheses, that `t` is a tree of `N` (Definition 1) and that the leaf of the outgroup is a child
+of the root of `N`, give `hN` and `hto` (`RootedNetwork.BuiltOn.anchored_of_outgroup`,
+`RootedNetwork.BuiltOn.rootedAt_of_outgroup`), and the hypotheses can all be met
+(`pipeline_tendsto_tree`).
 
 Departure from the paper: the paper concludes that CAMUS returns `N` because `N` "is the unique
 network that can satisfy all the quartets in Q(Nr)", which is false (the report's E7,
@@ -416,21 +497,18 @@ theorem pipeline_tendsto [Nontrivial σ] (t : PhyloTree) (ht : t.WellLabelled) {
         CamusOutput (External.sampleQuartets X m ω) t N) ∧
       ∀ T : PhyloTree, AstralOutput (External.sampleQuartets X m ω) N.taxa T → T.RootedAt o →
         ∀ P : RootedNetwork, CamusOutput (External.sampleQuartets X m ω) T P →
-          Nonempty (P.Iso N)}) atTop (𝓝 1) := by
-  refine External.tendsto_measure_of_ae_eventually ?_
-  -- steps 1 and 3 hold together, almost surely for all large `m`
-  filter_upwards [ae_eventually_mostFrequent M hN.1 t hcond X hind hid hlaw,
-    ae_eventually_support M hN.1 X hind hid hlaw] with ω hfreq hsupp
-  filter_upwards [hfreq, hsupp] with m hm hm'
-  -- on that event, the pipeline for one multiset
-  exact pipeline_recovery t ht hto N hN identifiable _ hm hm'
+          Nonempty (P.Iso N)}) atTop (𝓝 1) :=
+  External.tendsto_measure_of_ae_eventually
+    (pipeline_ae_eventually t ht hto N hN identifiable M hcond X hind hid hlaw)
 
 /-- Section 3.2, the SNP pipeline in WTE's model, corrected, for a selection rule: let `tree m ω`
 be a tree that ASTRAL may return on `Q_m` and the taxa of `N`, rooted at the outgroup `o`, and
 `output m ω` a network that CAMUS may return on it (such a selection exists,
 `pipeline_output_exists`). Under the hypotheses of `pipeline_tendsto`, the probability that
 `output m` is isomorphic to `N` tends to 1: the pipeline is a statistically consistent estimator
-of `N`. -/
+of `N`.
+
+Departure from the paper: as in `pipeline_tendsto`. -/
 theorem pipeline_output_tendsto [Nontrivial σ] (t : PhyloTree) (ht : t.WellLabelled) {o : ℕ}
     (hto : t.RootedAt o) (N : RootedNetwork) (hN : N.AnchoredExtension t)
     (identifiable : ∀ P : RootedNetwork, P.AnchoredExtension t →
@@ -457,6 +535,13 @@ theorem outgroupTree_rootedAt : outgroupTree.RootedAt 6 := ⟨false, outgroupTre
 
 /-- The taxa of `outgroupShallowNet` are those of its tree. -/
 theorem outgroupShallowNet_taxa : outgroupShallowNet.taxa = outgroupTree.taxa := rfl
+
+/-- The tree `(O,((A,B),(C,(F,(D,E)))))`, as the network with no added edge, is built on it. -/
+theorem outgroupTree_anchored :
+    (Realization.graph outgroupTree ∅).AnchoredExtension outgroupTree := by
+  have hsep : EdgeAbove.CycleSeparated outgroupTree ∅ := by simp [EdgeAbove.CycleSeparated]
+  exact ⟨Realization.levelOne outgroupTree outgroupTree_wellLabelled ∅ hsep, _,
+    ⟨Realization.support outgroupTree outgroupTree_wellLabelled ∅ hsep⟩⟩
 
 /-- The deeper-donor example with an outgroup is not identifiable under inclusion (the hypothesis
 `identifiable` of `pipeline_tendsto`): `outgroupDeepNet` is built on the tree, displays every
@@ -498,6 +583,43 @@ theorem outgroup_pipeline (Q : Multiset Quartet)
 
 end Counterexamples
 
+open Counterexamples in
+/-- The hypotheses of `pipeline_tendsto` can all be met, so that its conclusion is not vacuous.
+Take for `t` the tree `(O,((A,B),(C,(F,(D,E)))))`, well-labelled and rooted at the outgroup
+`O = 6`, and for the true network `t` itself, with no added edge: it is built on `t`, and it is
+identifiable under inclusion (`tree_identifiable`). Under some site model with two states on it,
+`t` induces the most probable quartet on every four taxa (`Realization.exists_mostProbable`), and
+for independent sites with the law of this model (`External.SiteModel.sites`), the conclusion of
+`pipeline_tendsto` holds. -/
+theorem pipeline_tendsto_tree :
+    outgroupTree.WellLabelled ∧ outgroupTree.RootedAt 6 ∧
+      (Realization.graph outgroupTree ∅).AnchoredExtension outgroupTree ∧
+      (∀ P : RootedNetwork, P.AnchoredExtension outgroupTree →
+        (∀ q, (Realization.graph outgroupTree ∅).DisplaysQuartet q → P.DisplaysQuartet q) →
+        P.reticulationCount ≤ (Realization.graph outgroupTree ∅).reticulationCount →
+        Nonempty (P.Iso (Realization.graph outgroupTree ∅))) ∧
+      ∃ M : External.SiteModel (Realization.graph outgroupTree ∅) Bool,
+        MostProbableQuartets M outgroupTree ∧
+        Tendsto (fun m => M.sites outgroupTree_anchored.1 {ω |
+          (AstralOutput (External.sampleQuartets (fun n ω => ω n) m ω)
+              (Realization.graph outgroupTree ∅).taxa outgroupTree ∧
+            CamusOutput (External.sampleQuartets (fun n ω => ω n) m ω) outgroupTree
+              (Realization.graph outgroupTree ∅)) ∧
+          ∀ T : PhyloTree, AstralOutput (External.sampleQuartets (fun n ω => ω n) m ω)
+              (Realization.graph outgroupTree ∅).taxa T → T.RootedAt 6 →
+            ∀ P : RootedNetwork, CamusOutput (External.sampleQuartets (fun n ω => ω n) m ω) T P →
+              Nonempty (P.Iso (Realization.graph outgroupTree ∅))}) atTop (𝓝 1) := by
+  have hident := tree_identifiable outgroupTree outgroupTree_wellLabelled
+  obtain ⟨M, hM⟩ := Realization.exists_mostProbable outgroupTree outgroupTree_wellLabelled ∅
+    (by simp [EdgeAbove.CycleSeparated])
+  refine ⟨outgroupTree_wellLabelled, outgroupTree_rootedAt, outgroupTree_anchored, hident, M, hM,
+    ?_⟩
+  exact pipeline_tendsto outgroupTree outgroupTree_wellLabelled outgroupTree_rootedAt _
+    outgroupTree_anchored hident M hM
+    (fun n (ω : ℕ → External.SiteHistory (Realization.graph outgroupTree ∅) Bool) => ω n)
+    (M.sites_iIndepFun outgroupTree_anchored.1) (M.sites_identDistrib outgroupTree_anchored.1)
+    (M.sites_law outgroupTree_anchored.1)
+
 /-- Section 3.2, the report's E7 for the whole pipeline in WTE's model, with an outgroup. Take for
 the true network `Counterexamples.outgroupShallowNet`, built on the tree
 `(O,((A,B),(C,(F,(D,E)))))` rooted at the outgroup `O = 6`, any site model on it with at least two
@@ -506,7 +628,7 @@ sites with its law. Then the probability of the following event tends to 1: ASTR
 tree, and for every tree `T` that ASTRAL may return, rooted at the outgroup, CAMUS may return
 `Counterexamples.outgroupDeepNet` on `T`, which is not isomorphic to the true network. The only
 hypothesis of `pipeline_tendsto` that fails is identifiability under inclusion
-(`Counterexamples.outgroup_not_identifiable`). -/
+(`Counterexamples.outgroup_not_identifiable`, `pipeline_outgroup_meets_hypotheses`). -/
 theorem pipeline_outgroup_tendsto [Nontrivial σ]
     (M : External.SiteModel Counterexamples.outgroupShallowNet σ)
     (hcond : MostProbableQuartets M Counterexamples.outgroupTree) {μ : Measure Ω}
@@ -529,34 +651,43 @@ theorem pipeline_outgroup_tendsto [Nontrivial σ]
   filter_upwards [hfreq, hsupp] with m hm hm'
   exact Counterexamples.outgroup_pipeline _ hm hm'
 
-/-- Section 3.2, the report's E7 for the whole pipeline, under every hypothesis of the paper's
-argument but identifiability under inclusion: for some site model with two states on
-`Counterexamples.outgroupShallowNet`, the tree `(O,((A,B),(C,(F,(D,E)))))`, rooted at the outgroup
-`O = 6`, induces the most probable quartet on every four taxa, and, for independent sites with the
-law of this model (`External.SiteModel.sites`), with probability tending to 1, ASTRAL may return
-the tree, and on every tree that ASTRAL may return, rooted at the outgroup, CAMUS may return
-`Counterexamples.outgroupDeepNet`, which is not isomorphic to the true network. -/
+open Counterexamples in
+/-- Section 3.2, the report's E7 for the whole pipeline, under every hypothesis of
+`pipeline_tendsto` but identifiability under inclusion. The tree `t = (O,((A,B),(C,(F,(D,E)))))`
+is well-labelled and rooted at the outgroup `O = 6`; the true network `outgroupShallowNet` is built
+on `t`, and the leaf of `O` is a child of its root ("provided we have an outgroup"); it is not
+identifiable under inclusion (`outgroup_not_identifiable`); and under some site model with two
+states on it, `t` induces the most probable quartet on every four taxa. For independent sites with
+the law of this model (`External.SiteModel.sites`), with probability tending to 1, ASTRAL may
+return `t`, and on every tree that ASTRAL may return, rooted at the outgroup, CAMUS may return
+`outgroupDeepNet`, which is not isomorphic to the true network. -/
 theorem pipeline_outgroup_meets_hypotheses :
-    ∃ M : External.SiteModel Counterexamples.outgroupShallowNet Bool,
-      MostProbableQuartets M Counterexamples.outgroupTree ∧
-      Tendsto (fun m => M.sites Counterexamples.outgroupShallowNet_anchored.1 {ω |
-        AstralOutput (External.sampleQuartets (fun n ω => ω n) m ω)
-            Counterexamples.outgroupShallowNet.taxa Counterexamples.outgroupTree ∧
-          ∀ T : PhyloTree, AstralOutput (External.sampleQuartets (fun n ω => ω n) m ω)
-              Counterexamples.outgroupShallowNet.taxa T → T.RootedAt 6 →
-            CamusOutput (External.sampleQuartets (fun n ω => ω n) m ω) T
-                Counterexamples.outgroupDeepNet ∧
-              IsEmpty (Counterexamples.outgroupDeepNet.Iso Counterexamples.outgroupShallowNet)})
-        atTop (𝓝 1) := by
-  obtain ⟨M, hM⟩ : ∃ M : External.SiteModel Counterexamples.outgroupShallowNet Bool,
-      MostProbableQuartets M Counterexamples.outgroupTree :=
-    Realization.exists_mostProbable Counterexamples.outgroupTree
-      Counterexamples.outgroupTree_wellLabelled {Counterexamples.outgroupShallowPair}
-      (Realization.single_separated Counterexamples.outgroupShallowPair_mem)
-  exact ⟨M, hM, pipeline_outgroup_tendsto M hM
-    (fun n (ω : ℕ → External.SiteHistory Counterexamples.outgroupShallowNet Bool) => ω n)
-    (M.sites_iIndepFun Counterexamples.outgroupShallowNet_anchored.1)
-    (M.sites_identDistrib Counterexamples.outgroupShallowNet_anchored.1)
-    (M.sites_law Counterexamples.outgroupShallowNet_anchored.1)⟩
+    outgroupTree.WellLabelled ∧ outgroupTree.RootedAt 6 ∧
+      outgroupShallowNet.AnchoredExtension outgroupTree ∧
+      (outgroupShallowNet.root, outgroupShallowNet.leaf 6) ∈ outgroupShallowNet.edges ∧
+      (¬ ∀ P : RootedNetwork, P.AnchoredExtension outgroupTree →
+        (∀ q, outgroupShallowNet.DisplaysQuartet q → P.DisplaysQuartet q) →
+        P.reticulationCount ≤ outgroupShallowNet.reticulationCount →
+        Nonempty (P.Iso outgroupShallowNet)) ∧
+      ∃ M : External.SiteModel outgroupShallowNet Bool, MostProbableQuartets M outgroupTree ∧
+        Tendsto (fun m => M.sites outgroupShallowNet_anchored.1 {ω |
+          AstralOutput (External.sampleQuartets (fun n ω => ω n) m ω) outgroupShallowNet.taxa
+              outgroupTree ∧
+            ∀ T : PhyloTree, AstralOutput (External.sampleQuartets (fun n ω => ω n) m ω)
+                outgroupShallowNet.taxa T → T.RootedAt 6 →
+              CamusOutput (External.sampleQuartets (fun n ω => ω n) m ω) T outgroupDeepNet ∧
+                IsEmpty (outgroupDeepNet.Iso outgroupShallowNet)})
+          atTop (𝓝 1) := by
+  obtain ⟨M, hM⟩ : ∃ M : External.SiteModel outgroupShallowNet Bool,
+      MostProbableQuartets M outgroupTree :=
+    Realization.exists_mostProbable outgroupTree outgroupTree_wellLabelled {outgroupShallowPair}
+      (Realization.single_separated outgroupShallowPair_mem)
+  refine ⟨outgroupTree_wellLabelled, outgroupTree_rootedAt, outgroupShallowNet_anchored,
+    outgroup_leaf_child, outgroup_not_identifiable, M, hM, ?_⟩
+  exact pipeline_outgroup_tendsto M hM
+    (fun n (ω : ℕ → External.SiteHistory outgroupShallowNet Bool) => ω n)
+    (M.sites_iIndepFun outgroupShallowNet_anchored.1)
+    (M.sites_identDistrib outgroupShallowNet_anchored.1)
+    (M.sites_law outgroupShallowNet_anchored.1)
 
 end Camus
