@@ -17,10 +17,10 @@ quartet trees." This file proves that the aim is reached when every set of four 
 pattern that this design presumes (`NMSC.RegularOn`): if `N` displays one quartet tree on the four
 taxa, it is strictly the most probable and the two others are equally probable; if `N` displays two
 of them, the third is strictly the least probable. Then for every threshold `0 < t < t₀(N)`, where
-`t₀(N)` is the least ratio `(p₂ − p₃)/(p₂ + p₃)` over the sets of four taxa on which `N` displays two
-quartet trees (`NMSC.threshold`), almost surely, for all large numbers of genes, Quartet Filtering
-returns exactly the quartet trees of the gene trees that are in Q(N_r), with their multiplicities
-(`NMSC.nmsc_filterQuartets`).
+`t₀(N)` is the least ratio `(p₂ − p₃)/(p₂ + p₃)` over the sets of four taxa on which `N` displays
+two quartet trees (`NMSC.threshold`), almost surely, for all large numbers of genes, Quartet
+Filtering returns exactly the quartet trees of the gene trees that are in Q(N_r), with their
+multiplicities (`NMSC.nmsc_filterQuartets`).
 
 The pattern holds on every set of four taxa except in one configuration: a cycle with two of the
 four taxa below its hybrid node and the two others in two other components
@@ -68,7 +68,8 @@ of Quartet Filtering presumes (Section 3.3, `Brooqs.RegularPattern`):
   probable, and the two others are equally probable, with positive probability; or
 * `N` displays exactly two of them; the third, `s₃`, is strictly the least probable. -/
 def RegularOn (N : Brooqs.Net L) (k : QuartetKey) : Prop :=
-  Brooqs.RegularPattern (fun s => DisplaysQuartet N (k.quartet s)) (fun s => quartetProb N (k.quartet s))
+  Brooqs.RegularPattern (fun s => DisplaysQuartet N (k.quartet s))
+    (fun s => quartetProb N (k.quartet s))
 
 /-- Every set of four taxa of `L` has the pattern `RegularOn`. -/
 def Regular (N : Brooqs.Net L) : Prop := ∀ k ∈ keysOn L, RegularOn N k
@@ -83,8 +84,8 @@ def ratios (N : Brooqs.Net L) : Finset ℝ :=
     (quartetProb N (x.1.quartet x.2.1) - quartetProb N (x.1.quartet x.2.2)) /
       (quartetProb N (x.1.quartet x.2.1) + quartetProb N (x.1.quartet x.2.2))
 
-/-- The threshold `t₀(N)` of Section 3.4: the least of the ratios `(p₂ − p₃)/(p₂ + p₃)` of the sets of
-four taxa on which `N` displays two quartet trees, and `1` if there are none. -/
+/-- The threshold `t₀(N)` of Section 3.4: the least of the ratios `(p₂ − p₃)/(p₂ + p₃)` of the sets
+of four taxa on which `N` displays two quartet trees, and `1` if there are none. -/
 def threshold (N : Brooqs.Net L) : ℝ := (insert 1 (ratios N)).min' (insert_nonempty _ _)
 
 /-- `t < t₀(N)` iff `t < 1` and `t` is below every ratio. -/
@@ -146,8 +147,8 @@ variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasur
 /-- **Section 3.4: Quartet Filtering under the NMSC, on four taxa.** Let the gene trees be
 independent, each with the law of the NMSC on the metric network `N` with distinct leaf labels, and
 let the four taxa of `k` have the pattern `RegularOn`. For every threshold `0 < t < t₀(N)`, almost
-surely, for all large numbers `n` of genes, Algorithm 1 applied to the quartet trees of the first `n`
-gene trees keeps on these four taxa every copy of the quartet trees in Q(N_r) and no copy of the
+surely, for all large numbers `n` of genes, Algorithm 1 applied to the quartet trees of the first
+`n` gene trees keeps on these four taxa every copy of the quartet trees in Q(N_r) and no copy of the
 others. -/
 theorem nmsc_filterBlock {N : Brooqs.Net L} (hN : N.WellFormed) (G : ℕ → Ω → Finset (Finset L))
     (hind : iIndepFun G P) (hid : ∀ n, IdentDistrib (G n) (G 0) P P)

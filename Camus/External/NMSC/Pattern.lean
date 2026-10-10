@@ -150,7 +150,8 @@ private theorem pt_lin_cycle (s : Fin 4 → X) (γ ℓ : ℝ) (S₁ S₂ : Side 
     notMem_empty, false_or]
   tauto
 
-private theorem pt_lin_node (s : Fin 4 → X) (ℓ b : ℝ) (M : Net X) (S : Side X) (T : Finset (Fin 4)) :
+private theorem pt_lin_node (s : Fin 4 → X) (ℓ b : ℝ) (M : Net X) (S : Side X)
+    (T : Finset (Fin 4)) :
     T ∪ (Side.node ℓ b M S).lin s = (T ∪ S.lin s) ∪ M.lin s := by
   ext l
   simp only [Side.lin, Net.lin, Side.taxa_node, mem_filter, mem_univ, true_and, mem_union]
@@ -298,7 +299,8 @@ theorem Net.quartetCF_pos {N : Net X} (hN : N.WellFormed) {a b c e : X} (ha : a 
   have hpos := pt_net_pos hN.1 hN.2 s
   rw [hlin] at hpos
   have hq : quartetScore (pt_sing univ) = 1 / 3 := by
-    have h1 : ¬(({0, 1} : Finset (Fin 4)) ∈ pt_sing univ ∨ ({2, 3} : Finset (Fin 4)) ∈ pt_sing univ) := by
+    have h1 : ¬(({0, 1} : Finset (Fin 4)) ∈ pt_sing univ ∨
+        ({2, 3} : Finset (Fin 4)) ∈ pt_sing univ) := by
       decide
     have h2 : ¬∃ C ∈ pt_sing univ, #C = 2 := by decide
     unfold quartetScore
@@ -862,10 +864,10 @@ theorem Net.pattern_cases {N : Net X} (hN : N.WellFormed) {s : Fin 4 → X}
             omega
 
 /-- **The CF pattern of Section 3.3.** Under the NMSC on a metric network `N` with distinct leaf
-labels, four distinct taxa of `N` that are not in the anomalous configuration (`Brooqs.Net.Anomalous`)
-have the pattern that Quartet Filtering presumes (`Brooqs.Net.RegularOn`): if `N` displays one of the
-three quartets on them, it is strictly the most probable and the two others are equally probable;
-if it displays two, the third is strictly the least probable. -/
+labels, four distinct taxa of `N` that are not in the anomalous configuration
+(`Brooqs.Net.Anomalous`) have the pattern that Quartet Filtering presumes (`Brooqs.Net.RegularOn`):
+if `N` displays one of the three quartets on them, it is strictly the most probable and the two
+others are equally probable; if it displays two, the third is strictly the least probable. -/
 theorem Net.regularOn_of_not_anomalous {N : Net X} (hN : N.WellFormed) {s : Fin 4 → X}
     (hs : Function.Injective s) (hsN : ∀ l, s l ∈ N.taxa) (hna : ¬ N.Anomalous s) :
     N.RegularOn (s 0) (s 1) (s 2) (s 3) :=

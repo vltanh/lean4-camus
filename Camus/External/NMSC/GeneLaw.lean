@@ -140,7 +140,8 @@ instance (N : Net X) (hN : N.WellFormed) : IsProbabilityMeasure (N.geneLaw hN) :
   infer_instance
 
 theorem Net.geneLaw_real_singleton [MeasurableSingletonClass (Finset (Finset X))] (N : Net X)
-    (hN : N.WellFormed) (G : Finset (Finset X)) : (N.geneLaw hN).real {G} = N.geneTreeDist id G := by
+    (hN : N.WellFormed) (G : Finset (Finset X)) :
+    (N.geneLaw hN).real {G} = N.geneTreeDist id G := by
   rw [measureReal_def, Net.geneLaw, PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton G),
     PMF.ofFintype_apply, ENNReal.toReal_ofReal (Net.geneTreeDist_nonneg hN id G)]
 

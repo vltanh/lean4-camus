@@ -6,7 +6,8 @@ public import Camus.External.NMSC.Consistency
 # Quartet CFs and gene trees on all the taxa
 
 The quartet CF `Brooqs.Net.quartetCF N a b c e` samples one lineage from each of the four taxa.
-The paper's gene trees have all the taxa. By the sampling consistency of the coalescent
+The gene trees of BROOQS and of CAMUS have all the taxa. By the sampling consistency of the
+coalescent
 (`Brooqs.Net.geneTreeDist_restrict`), the gene tree on all the taxa (one lineage per taxon)
 restricted to `a, b, c, e` has the distribution of the gene tree of the four lineages, and it
 displays `ab|ce` (`Brooqs.geneTreeDisplays`) exactly when its restriction has the split
@@ -103,7 +104,8 @@ private theorem nd_injective {X : Type u} {a b c e : X} (hab : a ≠ b) (hac : a
   intro i j hij
   fin_cases i <;> fin_cases j <;> simp_all [eq_comm]
 
-/-- **Definition 2**, with gene trees on all the taxa (the sampling consistency of the coalescent):
+/-- BROOQS's Definition 2, with gene trees on all the taxa (the sampling consistency of the
+coalescent):
 for distinct taxa `a, b, c, e`, the quartet CF of four lineages sampled from them is the
 probability that the gene tree of the NMSC on all the taxa displays `ab|ce` (one lineage per
 taxon: lineage `t` is sampled from taxon `t`; elements of `X` that are not leaves of `N` are not

@@ -14,7 +14,8 @@ the root hangs there) or inside the edge between `p` and `p + 1`. The two *arms*
 
 `Brooqs.displayed_score` computes the expected score `Brooqs.quartetScore` of the forest at the
 top node: it is the quartet CF `Brooqs.pathCF` of the quartet tree that the four positions induce
-on the path (Fig. S1(a)). The proof locates the node where the third lineage joins, applies
+on the path (Fig. S1(a) of BROOQS). The proof locates the node where the third lineage joins,
+applies
 `Brooqs.NiceKernel.score` there, and computes the coalescence of the pairs before it.
 
 The arm processes: `Brooqs.armDist μ₀ nodes`, where `μ₀` is the distribution of the forest

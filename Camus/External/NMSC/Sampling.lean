@@ -6,8 +6,9 @@ public import Camus.External.NMSC.Displays
 /-!
 # Gene trees drawn from the NMSC
 
-The facts about i.i.d. gene trees drawn from the NMSC on a network that Proposition 1 under the
-NMSC (`Brooqs.proposition1_nmsc`) and the finite-sample bound of the spectral-free variant use: the
+The facts about i.i.d. gene trees drawn from the NMSC on a network that, in lean4-brooqs,
+BROOQS's Proposition 1 under the NMSC and the finite-sample bound of its spectral-free variant use:
+the
 chosen taxa lie in their components, the quartet CF of taxa of four distinct components is their
 component CF, the probability that a gene tree displays a quartet is its quartet CF, and the gene
 trees are identically distributed.

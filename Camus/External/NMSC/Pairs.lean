@@ -466,10 +466,12 @@ theorem expectedScore_union_ge {α ν : Finset (Finset (Fin 4)) → ℝ} {T : Fi
         · intro l hl
           exact hT (hF'l ▸ ADR11.subset_lineages hC hl)
 
-private theorem pr_disj01 {T : Finset (Fin 4)} (hT : T ⊆ {2, 3}) : Disjoint ({0, 1} : Finset (Fin 4)) T :=
+private theorem pr_disj01 {T : Finset (Fin 4)} (hT : T ⊆ {2, 3}) :
+    Disjoint ({0, 1} : Finset (Fin 4)) T :=
   disjoint_of_subset_right hT (by decide)
 
-private theorem pr_card3 {U : Finset (Fin 4)} (hU : U.Nonempty) (hd : Disjoint ({0, 1} : Finset (Fin 4)) U) :
+private theorem pr_card3 {U : Finset (Fin 4)} (hU : U.Nonempty)
+    (hd : Disjoint ({0, 1} : Finset (Fin 4)) U) :
     3 ≤ #(({0, 1} : Finset (Fin 4)) ∪ U) := by
   rw [card_union_of_disjoint hd]
   have := hU.card_pos
@@ -528,7 +530,8 @@ theorem arm_bound {β P ν : Finset (Finset (Fin 4)) → ℝ} {Tβ T : Finset (F
     (hTβ : Tβ ⊆ {2, 3}) (hP : IsForestDist P {0, 1}) (he : 0 ≤ e) (hT : T ⊆ {2, 3})
     (hTd : Disjoint T Tβ) (hL : Steps ν T L) :
     1 / 3 + 2 / 3 * pairProb P ≤
-      expectedScore (forestUnion ((forestUnion β P ᵥ* kingmanTransition e) ᵥ* stepsKernel L) ν) := by
+      expectedScore
+        (forestUnion ((forestUnion β P ᵥ* kingmanTransition e) ᵥ* stepsKernel L) ν) := by
   by_cases hTβ0 : Tβ = ∅
   · subst hTβ0
     rw [hβ.eq_single_empty, forestUnion_comm (Pi.single ∅ 1) P, forestUnion_single_empty]

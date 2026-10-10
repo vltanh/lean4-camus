@@ -4,13 +4,12 @@ public import Camus.External.NMSC.Context
 public import Camus.External.NMSC.Arms
 
 /-!
-# The quartet CFs of the components of a cycle (Definition 2 with Fig. S1)
+# The quartet CFs of the components of a cycle (BROOQS's Definition 2 with Fig. S1)
 
 Under the NMSC on a metric level-1 network `N`, the quartet CF of four taxa from distinct
 components of a cycle `Ω` is the CF `cycleCF M` of the induced metric quarnet, where the metric
 cycle `M` has the inheritance probability and the edge lengths of `Ω` (`Brooqs.nmsc_quartetCF`).
-This is the result that the paper takes from Baños (2019) and states in Fig. S1; it was the
-hypothesis of the conditional formalization.
+This is the result that BROOQS takes from Baños (2019) and states in its Fig. S1.
 
 The proof:
 * `Brooqs.quartetCF_eq_sum_top` reduces the CF to the expected score of the forest at the top node
@@ -25,9 +24,10 @@ The proof:
 
 The bookkeeping between the positions of the components (`Ω.components`), the nodes of the two
 sides and the edges of the cycle (`Ω.edges`) is in the lemmas `Brooqs.Net.Cycle.component_zero`,
-`Brooqs.Net.Cycle.component_side₁`, `Brooqs.Net.Cycle.component_root`, `Brooqs.Net.Cycle.component_side₂`,
-`Brooqs.Net.Cycle.size_of_top_eq`, `Brooqs.Net.Cycle.size_of_top_ne`, `Brooqs.Net.Cycle.edgeLen_side₁` and the private lemmas
-around them; the components are pairwise disjoint (`Brooqs.Net.Cycle.component_disjoint`) because the
+`Brooqs.Net.Cycle.component_side₁`, `Brooqs.Net.Cycle.component_root`,
+`Brooqs.Net.Cycle.component_side₂`, `Brooqs.Net.Cycle.size_of_top_eq`,
+`Brooqs.Net.Cycle.size_of_top_ne`, `Brooqs.Net.Cycle.edgeLen_side₁` and the private lemmas around
+them; the components are pairwise disjoint (`Brooqs.Net.Cycle.component_disjoint`) because the
 leaves of a well-formed network have distinct labels.
 -/
 
@@ -128,7 +128,8 @@ theorem Side.isMetric_of_mem_subnets :
 end
 
 /-- The leaves below a side are those of the networks hanging from its nodes. -/
-theorem Side.leaves_eq_flatten : ∀ S : Side X, S.leaves = (S.nodes.map fun n => n.2.2.leaves).flatten
+theorem Side.leaves_eq_flatten :
+    ∀ S : Side X, S.leaves = (S.nodes.map fun n => n.2.2.leaves).flatten
   | .hyb _ => rfl
   | .node ℓ b N S => by simp [Side.leaves, Side.nodes, Side.leaves_eq_flatten S]
 
@@ -734,7 +735,8 @@ private theorem nc_pathCF_congr {w w' : ℕ → ℝ} {d a b c e : ℕ} (hab : a 
   simp only [pathCF, pathLen]
   rw [sum_congr rfl fun m hm => hw m (by rw [mem_Ico] at hm; omega) (by rw [mem_Ico] at hm; omega)]
 
-/-- **Definition 2 with Fig. S1** (the induced metric quarnets of Baños 2019): under the NMSC on a
+/-- BROOQS's Definition 2 with its Fig. S1 (the induced metric quarnets of Baños 2019): under the
+NMSC on a
 metric level-1 network `N`, the component CFs of a cycle `Ω`, for any choice `x` of one taxon per
 component, are the CFs of the induced metric quarnets, those of the metric cycle `M` with the
 inheritance probability and edge lengths of `Ω`. -/

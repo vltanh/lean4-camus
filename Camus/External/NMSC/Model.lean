@@ -35,8 +35,6 @@ open Finset MeasureTheory ProbabilityTheory Filter Topology Matrix
 
 namespace Brooqs
 
--- BEGIN PRIMITIVE DEFINITIONS
-
 /-! ### Rooted metric level-1 networks -/
 
 section Networks
@@ -44,7 +42,8 @@ section Networks
 universe u
 
 mutual
-/-- A rooted binary metric level-1 phylogenetic network on the taxa `X` (Section 2.1.1), described
+/-- A rooted binary metric level-1 phylogenetic network on the taxa `X` (Section 2.1.1 of BROOQS),
+described
 from its root. Edge lengths are in coalescent units.
 
 In a binary rooted network in which no two cycles share an edge, the root of the network, or of
@@ -238,13 +237,15 @@ variable [DecidableEq X]
 /-- The quartet concordance factor `CF(ab|ce)` of the taxa `a, b, c, e` under the NMSC on `N`: one
 gene lineage is sampled from each taxon (the lineages `0, 1, 2, 3` of `Fin 4`), and `CF(ab|ce)` is
 the probability that the unrooted gene tree displays the quartet `ab|ce`, that is, has the split
-`{0, 1} | {2, 3}`. (The paper's gene trees have all the taxa; by the sampling consistency of the
+`{0, 1} | {2, 3}`. (The gene trees of BROOQS and of CAMUS have all the taxa; by the sampling
+consistency of the
 coalescent, the gene tree that they induce on `a, b, c, e` has the distribution of the gene tree
 of these four lineages, which this definition uses: see the theorem `quartetCF_eq_displays`.) -/
 noncomputable def Net.quartetCF (N : Net X) (a b c e : X) : ℝ :=
   ∑ G, if ({0, 1} : Finset (Fin 4)) ∈ unroot G then N.geneTreeDist ![a, b, c, e] G else 0
 
-/-- The component CFs `CF(C_a C_b | C_c C_e)` (**Definition 2**) for a choice of one taxon `x i` in
+/-- The component CFs `CF(C_a C_b | C_c C_e)` (Definition 2 of BROOQS) for a choice of one taxon
+`x i` in
 each component `C_i` of a cycle (components labelled by `Fin d`): the quartet CFs of the chosen
 taxa. -/
 noncomputable def Net.componentCF {d : ℕ} (N : Net X) (x : Fin d → X) (a b c e : Fin d) : ℝ :=
@@ -296,7 +297,7 @@ def components : List (Finset X) :=
 
 /-- The size `d` of the cycle: its number of components, the number of nodes (and of edges) of the
 cycle in the semi-directed network, where the root is suppressed if it is the top node of the
-cycle. (The paper defines the size of a cycle in `N⁺`, where it is `d + 1` when the root is the top
+cycle. (BROOQS defines the size of a cycle in `N⁺`, where it is `d + 1` when the root is the top
 node; its theorems on a `d`-cycle `Ω` count the components, as here.) -/
 def size : ℕ := Ω.components.length
 
@@ -323,7 +324,7 @@ end Networks
 
 /-! ### The metric cycle and the quartet concordance factors of its components -/
 
-/-- A metric `d`-cycle `Ω` of a level-1 phylogenetic network (Fig. S16). Its components
+/-- A metric `d`-cycle `Ω` of a level-1 phylogenetic network (Fig. S16 of BROOQS). Its components
 `C₀, …, C_{d-1}` are numbered by their positions in the true cyclic ordering: `C₀` is the hybrid
 component, and `C₁` and `C_{d-1}` are its neighbours. `γ` is the inheritance probability of the
 hybrid edge on the side of `C₁` (the other hybrid edge has `1 - γ`). For `1 ≤ m ≤ d - 2`, `w m`
@@ -346,8 +347,8 @@ def pathLen (w : ℕ → ℝ) (a b : ℕ) : ℝ := ∑ m ∈ Finset.Ico a b, w m
 positions `a, b, c, e`: the tree separates the two smallest positions from the two largest, and
 its internal edge is the part of the path between the two middle positions, of length `t`. Under
 the multispecies coalescent the gene tree displays `ab|ce` with probability `1 - (2/3) e^{-t}` if
-`ab|ce` is the split of the tree, and `(1/3) e^{-t}` otherwise (Fig. S1(a)). The two middle
-positions are `max (min a b) (min c e)` and `min (max a b) (max c e)`, in some order. -/
+`ab|ce` is the split of the tree, and `(1/3) e^{-t}` otherwise (Fig. S1(a) of BROOQS). The two
+middle positions are `max (min a b) (min c e)` and `min (max a b) (max c e)`, in some order. -/
 def pathCF (w : ℕ → ℝ) (a b c e : ℕ) : ℝ :=
   let t := pathLen w (min (max (min a b) (min c e)) (min (max a b) (max c e)))
     (max (max (min a b) (min c e)) (min (max a b) (max c e)))
@@ -358,7 +359,8 @@ on the side of `C_{d-1}`, the component `C₀` hangs next to `C_{d-1}`: position
 def toRightEnd (d a : ℕ) : ℕ := if a = 0 then d else a
 
 /-- The quartet CF `CF(C_a C_b | C_c C_e)` of the components at the distinct positions
-`a, b, c, e` of the metric cycle `Ω`, under the NMSC (Fig. S1 and the induced metric quarnets):
+`a, b, c, e` of the metric cycle `Ω`, under the NMSC (Fig. S1 of BROOQS and the induced metric
+quarnets):
 * if `0 ∉ {a, b, c, e}`, the induced quarnet is a tree, obtained by opening the cycle at the
   hybrid node: the components hang from the path `C₁ — C₂ — ⋯ — C_{d-1}`;
 * otherwise it is a network quarnet; the lineage of `C₀` takes the hybrid edge on the side of
@@ -371,11 +373,11 @@ def cycleCF {d : ℕ} (Ω : MetricCycle d) (a b c e : ℕ) : ℝ :=
       (1 - Ω.γ) * pathCF Ω.w (toRightEnd d a) (toRightEnd d b) (toRightEnd d c) (toRightEnd d e)
   else pathCF Ω.w a b c e
 
-/-- The CFs of the components of a metric cycle, as the paper uses them (Definition 2 with
+/-- The CFs of the components of a metric cycle, as BROOQS uses them (its Definition 2 with
 Fig. S1). The components carry arbitrary labels `0, …, d-1`; the component at position `i` of the
 true cyclic ordering `π*` has label `ord i` (`ord` is `π*`). `CF a b c e` stands for the component
 CF `CF(C_a C_b | C_c C_e)`, and the property is that, for distinct components, it is the CF of the
-induced metric quarnet, `Brooqs.cycleCF`, as in the paper's Fig. S1 (given there without citation:
+induced metric quarnet, `Brooqs.cycleCF`, as in Fig. S1 of BROOQS (given there without citation:
 the induced quarnets, and the dependence of quartet CFs on them only, are Baños 2019; the
 quartet-tree CFs are those of the multispecies coalescent, e.g. Allman, Degnan and Rhodes 2011).
 The theorem `nmsc_quartetCF` proves it for the component CFs of every cycle of a metric level-1

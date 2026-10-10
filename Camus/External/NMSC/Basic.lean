@@ -8,11 +8,11 @@ public import ADR11.Model.History
 /-!
 # The network coalescent: forests and kernels
 
-The definitions of Kingman's coalescent in `Brooqs.Defs` are copies of those of `lean4-adr11`
-(Allman, Degnan and Rhodes 2011, formalized), restated there because the Challenge may import
-only Mathlib. This file bridges the two copies (they are definitionally equal) and collects the
-facts about forests and about Kingman's coalescent that the network coalescent needs, mostly
-from `lean4-adr11`.
+The definitions of Kingman's coalescent in `Camus/External/NMSC/Model.lean` are copies of those
+of `lean4-adr11` (Allman, Degnan and Rhodes 2011, formalized), restated in lean4-brooqs because its
+Challenge may import only Mathlib. This file bridges the two copies (they are definitionally
+equal) and collects the facts about forests and about Kingman's coalescent that the network
+coalescent needs, mostly from `lean4-adr11`.
 
 * Good forests (`Brooqs.IsGood`): forests in which every cluster with at least two lineages is
   the union of two disjoint clusters; Kingman's coalescent, unions of forests on disjoint

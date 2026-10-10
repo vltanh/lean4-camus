@@ -8,16 +8,17 @@ public import Camus.External.NMSC.GeneLaw
 
 The quartet CF `Brooqs.Net.quartetCF N a b c e` samples the lineages `0, 1, 2, 3` from the taxa
 `a, b, c, e` and gives the probability of the split `{0, 1} | {2, 3}`. To compare the three quartets
-on the same four taxa, this file fixes the sampling `s` and varies the split: `Brooqs.Net.splitCF N s
-A` is the probability of the split `A | Aᶜ` (`Brooqs.Net.quartetCF_eq_splitCF_of`). Relabelling the
+on the same four taxa, this file fixes the sampling `s` and varies the split:
+`Brooqs.Net.splitCF N s A` is the probability of the split `A | Aᶜ`
+(`Brooqs.Net.quartetCF_eq_splitCF_of`). Relabelling the
 lineages relabels the splits (`Brooqs.Net.splitCF_comp`), and the three splits have probabilities
 adding up to `1` (`Brooqs.Net.splitCF_sum`, `Brooqs.Net.quartetCF_add`).
 
 Two lineages sampled from the taxa of a subnetwork `C` (below a cut edge), the two others from
 outside it, are exchangeable: at the root of `C` they have coalesced or not, and the rest of the
-network treats them alike (`Brooqs.Net.splitCF_swap`). So if `C` contains `x` and `y` but neither `z`
-nor `w`, then `CF(xz|yw) = CF(xw|yz)` (`Brooqs.Net.quartetCF_pair`), the equality that Section 3.3
-of CAMUS expects of the two quartets that the network does not display.
+network treats them alike (`Brooqs.Net.splitCF_swap`). So if `C` contains `x` and `y` but neither
+`z` nor `w`, then `CF(xz|yw) = CF(xw|yz)` (`Brooqs.Net.quartetCF_pair`), the equality that
+Section 3.3 of CAMUS expects of the two quartets that the network does not display.
 
 ## Main results
 
@@ -342,8 +343,8 @@ theorem Net.quartetCF_add {N : Net X} (hN : N.leaves.Nodup) {x y z w : X} (hx : 
 /-- **A pair below a cut edge (exchangeability).** If a subnetwork `C` of `N` contains the taxa `x`
 and `y` but not the taxa `z` and `w` of `N`, the quartets `xz|yw` and `xw|yz` have equal CFs. -/
 theorem Net.quartetCF_pair {N : Net X} (hN : N.leaves.Nodup) {C : Net X} (hC : C ∈ N.subnets)
-    {x y z w : X} (hx : x ∈ C.taxa) (hy : y ∈ C.taxa) (hz : z ∉ C.taxa) (hw : w ∉ C.taxa) (hzN : z ∈ N.taxa)
-    (hwN : w ∈ N.taxa) :
+    {x y z w : X} (hx : x ∈ C.taxa) (hy : y ∈ C.taxa) (hz : z ∉ C.taxa) (hw : w ∉ C.taxa)
+    (hzN : z ∈ N.taxa) (hwN : w ∈ N.taxa) :
     N.quartetCF x z y w = N.quartetCF x w y z := by
   have hCN := Net.taxa_subset_of_mem_subnets hC
   set s : Fin 4 → X := ![x, z, y, w]

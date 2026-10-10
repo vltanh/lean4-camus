@@ -9,10 +9,10 @@ Section 3.3 of CAMUS motivates Quartet Filtering (Algorithm 1) by the distributi
 under the NMSC: "The motivation for this approach is that we do not want to include quartet trees
 that are not in Q(Nr). On the other hand, we do not want to eliminate these quartet trees." This
 file computes the quartet CFs of the network `N₃₂` (`Brooqs.net32`): a 3-cycle whose hybrid
-component holds two taxa `x` and `y`, with a third taxon `z` hanging from one side of the cycle and a
-fourth taxon `w` outside it, a 3₂-cycle in the terms of Ané, Fogg, Allman, Baños and Rhodes (2024),
-whom Section 3.3 cites. `N₃₂` displays only `xy|zw` of the three quartets on these taxa, but for
-some edge lengths the CF of `xy|zw` is strictly smaller than the CFs of `xz|yw` and `xw|yz`
+component holds two taxa `x` and `y`, with a third taxon `z` hanging from one side of the cycle and
+a fourth taxon `w` outside it, a 3₂-cycle in the terms of Ané, Fogg, Allman, Baños and Rhodes
+(2024), whom Section 3.3 cites. `N₃₂` displays only `xy|zw` of the three quartets on these taxa,
+but for some edge lengths the CF of `xy|zw` is strictly smaller than the CFs of `xz|yw` and `xw|yz`
 (`Brooqs.net32_anomaly`): a quartet in Q(N_r) is less probable than the quartets on the same taxa
 that are not.
 
