@@ -217,7 +217,7 @@ theorem Net.SideSwap.exists_subnets : ∀ {N N' : Net X}, N.SideSwap N' →
       · obtain ⟨M', hM', hMM'⟩ := h.exists_subnets hM
         exact ⟨M', List.mem_cons_of_mem _ (List.mem_append_right _ hM'), hMM'⟩
 
-/-- Each network hanging from a side, or below it, is related to one of the related side. -/
+/-- Each subnetwork hanging from a side is related to a subnetwork hanging from the related side. -/
 theorem Side.SideSwap.exists_subnets : ∀ {S S' : Side X}, S.SideSwap S' →
     ∀ {M : Net X}, M ∈ S.subnets → ∃ M' ∈ S'.subnets, M.SideSwap M'
   | _, _, .hyb _, _, hM => by simp [Side.subnets] at hM
@@ -373,7 +373,8 @@ theorem Net.SideSwap.displays_iff {N N' : Net X} (h : N.SideSwap N') (a b c e : 
 
 /-! ### Cycles and the anomalous configuration -/
 
-/-- The lineages sampled from the taxa of a network depend only on its taxa. -/
+/-- Two related networks hold the same lineages among the four sampled ones: they have the same
+taxa. -/
 theorem Net.SideSwap.lin_eq {M M' : Net X} (h : M.SideSwap M') (s : Fin 4 → X) :
     M.lin s = M'.lin s := by
   simp only [Net.lin, h.taxa_eq]

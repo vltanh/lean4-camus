@@ -16,34 +16,52 @@ each of the possible ways", and Section 3.2 argues that CAMUS then returns `N`: 
 can be used as the basis for N (i.e. N can be obtained by adding reticulate edges to t)", and "When
 Q is a multi-set version of Q(Nr), then CAMUS will add the correct reticulations and return N".
 `NMSC.nmsc_recovery_graph` proves this for one tree of `N`, its base tree. This file proves it for
-every tree of the graph `Realization.graph (baseTree N) (pairs N)` of `N` in the sense of
+every tree `T` of the graph `Realization.graph (baseTree N) (pairs N)` of `N` in the sense of
 Definition 1 (`RootedNetwork.BuiltOn`), when the root of the graph has an outgroup leaf as a child,
 as in the pipeline of Section 3.3 ("the pipeline takes as input a set G of estimated gene trees and
 an outgroup species"): the outgroup makes the graph built with the root kept on each of its trees
 (`RootedNetwork.BuiltOn.anchored_of_outgroup`), the class of networks over which CAMUS optimizes.
-Without it, a tree of `N` need not keep the root (the report's E8). A network of the NMSC whose root
-has a leaf `z` as a child gives such a graph (`NMSC.graph_outgroup`).
+Without an outgroup, a tree of a network need not keep its root (the report's E8). A network of the
+NMSC whose root has a leaf `z` as a child gives such a graph (`NMSC.graph_outgroup`). The trees of
+the graph induce exactly the quartet trees of Q(N_r) together
+(`NMSC.displaysQuartet_iff_exists_builtOn`).
 
-The same holds for the base tree of `N` with the sides of some cycles exchanged
-(`Brooqs.Net.SideSwap`), which describes the same network: the gene trees, Q(N_r) and the
-threshold are unchanged (`Camus/Pipelines/NMSC/Swap.lean`), and CAMUS, given the base tree of the
-exchanged network, returns its graph (`NMSC.nmsc_recovery_sideSwap`). These base trees are the
-displayed trees of `N` that delete, at each cycle, the hybrid edge of a side with a node
-(`NMSC.nodeDisplayed`, `NMSC.exists_sideSwap_of_mem_nodeDisplayed`).
+The displayed trees of `N` in the model (`Brooqs.Net.displayed`) are reached through the exchange
+of the two sides of cycles (`Brooqs.Net.SideSwap`), which describes the same network: the gene
+trees, Q(N_r) and the threshold are unchanged (`Camus/Pipelines/NMSC/Swap.lean`), and CAMUS, given
+the base tree of the exchanged network `N'`, returns the graph of `N'`
+(`NMSC.nmsc_recovery_sideSwap`). The base trees of the exchanges are exactly the displayed trees of
+`N` that delete, at each cycle, the hybrid edge of a side with a node (`NMSC.nodeDisplayed`,
+`NMSC.mem_nodeDisplayed_iff`). The other displayed trees are the base trees of no exchange: they
+delete, at some cycle, the hybrid edge of a side without a node, the edge from the top node of the
+cycle to its hybrid node, and hang the hybrid component below the last node of the other side. (At
+a cycle whose other side has a single node, the two choices give the same tree.)
 
 ## Main results
 
-* `NMSC.nmsc_recovery_builtOn`: Sections 3.2 to 3.4 under the NMSC, through every tree of the
-  graph of `N`, with an outgroup.
-* `NMSC.graph_outgroup`, `NMSC.graph_outgroup_right`, `NMSC.nmsc_recovery_outgroup`: a leaf child
-  of the root of `N` is an outgroup of its graph.
+* `NMSC.nmsc_recovery_builtOn`, `NMSC.nmsc_recovery_outgroup`: Sections 3.2 to 3.4 under the NMSC,
+  through every tree of the graph of `N`, with an outgroup.
+* `NMSC.graph_outgroup`, `NMSC.graph_outgroup_right`: a leaf child of the root of `N` is an
+  outgroup of its graph.
 * `NMSC.displaysQuartet_iff_exists_builtOn`: Q(N_r) is the union of the sets Q(T) over the trees
   `T` of the graph of `N`.
+* `NMSC.nodeDisplayed`, `NMSC.nodeDisplayed_subset`, `NMSC.mem_nodeDisplayed_iff`,
+  `NMSC.exists_baseTree_of_mem_nodeDisplayed`: the displayed trees that delete the hybrid edge of a
+  side with a node at each cycle are the base trees of the exchanges.
 * `NMSC.displaysTree_baseTree_of_sideSwap`, `NMSC.nmsc_recovery_sideSwap`: recovery through the
   base tree of `N` with the sides of some cycles exchanged.
-* `NMSC.nodeDisplayed`, `NMSC.nodeDisplayed_subset`, `NMSC.exists_sideSwap_of_mem_nodeDisplayed`:
-  the displayed trees that delete the hybrid edge of a side with a node at each cycle are the base
-  trees of the exchanges.
+
+## Proof (the paper's)
+
+Section 3.2's argument, as in `NMSC.nmsc_recovery`, through a tree `T` of the graph `Nr` of `N`:
+1. `T` can be used as the basis for `N`: with the outgroup, `Nr` is built on `T` with the root kept
+   (`RootedNetwork.BuiltOn.anchored_of_outgroup`);
+2. the output `Q` of Quartet Filtering is "a multi-set version of Q(Nr)"
+   (`NMSC.nmsc_filterQuartets_support`), and `Nr` displays Q(N_r)
+   (`NMSC.graph_displaysQuartet_iff`);
+3. "CAMUS will add the correct reticulations and return N": the corrected recovery theorem
+   (`recovery`), with the identifiability of `Nr` and the tie-break by the number of reticulations
+   (the report's E7).
 -/
 
 @[expose] public noncomputable section
@@ -182,7 +200,7 @@ labels on the taxa `L`, without the anomalous configuration, and let `0 < t < t�
 `Nr = Realization.graph (baseTree N) (pairs N)` be the graph of `N`, which displays the quartet
 trees of `N` (`NMSC.graph_displaysQuartet_iff`), and let its root have an outgroup leaf `z` as a
 child. Let `T` be any tree of `Nr` in the sense of Definition 1 (`T ∈ 𝒯`: "N can be constructed by
-taking one of the trees t∈T and adding reticulations (edges) to t"), for instance the tree `T*`
+taking one of the trees t∈𝒯 and adding reticulations (edges) to t"), for instance the tree `T*`
 that ASTRAL returns when it is "one of the underlying trees" (Section 3.3); then `Nr` is built on
 `T` with the root kept (`RootedNetwork.BuiltOn.anchored_of_outgroup`). Assume, as `recovery` does,
 that `Nr` is identifiable under inclusion among the networks built on `T`. Almost surely, for all
@@ -390,6 +408,85 @@ theorem exists_sideSwap_of_mem_sideNodeDisplayed : ∀ {S : Brooqs.Side L} {T : 
       obtain ⟨M', hM, rfl⟩ := exists_sideSwap_of_mem_nodeDisplayed hK₂
       exact ⟨_, .node hM hS, by simp only [sideBaseClusters, hS.taxa_eq, hM.taxa_eq]⟩
 end
+
+/-- A metric side without a node is a single hybrid edge, so the other side of its cycle has a
+node. -/
+private theorem tr_hasNode_of_not {S₁ S₂ : Brooqs.Side L} (h : S₁.nodes ≠ [] ∨ S₂.nodes ≠ [])
+    (h2 : ¬ hasNode S₂ = true) : hasNode S₁ = true := by
+  cases S₂ with
+  | node => exact absurd rfl h2
+  | hyb =>
+      cases S₁ with
+      | node => rfl
+      | hyb => simp [Brooqs.Side.nodes] at h
+
+mutual
+/-- **The base trees of the exchanges are trees of `NMSC.nodeDisplayed N`.** For a metric network
+`N` and an exchange `N'` of the sides of some of its cycles, the displayed tree
+`NMSC.baseClusters N'` of the base tree of `N'` deletes, at each cycle, the hybrid edge of a side
+with a node. -/
+theorem baseClusters_mem_nodeDisplayed : ∀ {N N' : Brooqs.Net L}, N.SideSwap N' → N.IsMetric →
+    baseClusters N' ∈ nodeDisplayed N
+  | _, _, .leaf x, _ => by simp [baseClusters, nodeDisplayed]
+  | _, _, .tree h₁ h₂, hm => by
+      simp only [baseClusters, nodeDisplayed, List.mem_flatMap, List.mem_map]
+      exact ⟨_, baseClusters_mem_nodeDisplayed h₁ hm.2.2.1, _,
+        baseClusters_mem_nodeDisplayed h₂ hm.2.2.2, by rw [h₁.taxa_eq, h₂.taxa_eq]⟩
+  | _, _, .cycle (S₁ := S₁) (S₂ := S₂) h₁ h₂ hH, hm => by
+      obtain ⟨-, -, -, hS₁, hS₂, hHm, hne⟩ := hm
+      have hK := baseClusters_mem_nodeDisplayed hH hHm
+      simp only [baseClusters, nodeDisplayed, List.mem_flatMap, List.mem_append,
+        hasNode_of_sideSwap h₂, ← hH.taxa_eq, ← h₁.taxa_eq, ← h₂.taxa_eq]
+      by_cases h2 : hasNode S₂ = true
+      -- the hybrid component hangs from `S₁`
+      · simp only [h2, ↓reduceIte, List.mem_flatMap, List.mem_map]
+        exact ⟨_, hK, Or.inl ⟨_, sideBaseClusters_mem_sideNodeDisplayed h₁ hS₁, _,
+          sideBaseClusters_mem_sideNodeDisplayed h₂ hS₂, rfl⟩⟩
+      -- `S₂` is a single hybrid edge, and the hybrid component hangs from it
+      · have h1 := tr_hasNode_of_not hne h2
+        simp only [h2, h1, ↓reduceIte, Bool.false_eq_true, List.mem_flatMap, List.mem_map,
+          List.not_mem_nil, false_or]
+        exact ⟨_, hK, _, sideBaseClusters_mem_sideNodeDisplayed h₁ hS₁, _,
+          sideBaseClusters_mem_sideNodeDisplayed h₂ hS₂, rfl⟩
+  | _, _, .swap (S₁ := S₁) (S₂ := S₂) h₁ h₂ hH, hm => by
+      obtain ⟨-, -, -, hS₁, hS₂, hHm, hne⟩ := hm
+      have hK := baseClusters_mem_nodeDisplayed hH hHm
+      simp only [baseClusters, nodeDisplayed, List.mem_flatMap, List.mem_append,
+        hasNode_of_sideSwap h₁, ← hH.taxa_eq, ← h₁.taxa_eq, ← h₂.taxa_eq,
+        union_comm S₂.taxa S₁.taxa]
+      by_cases h1 : hasNode S₁ = true
+      -- the hybrid component hangs from `S₂`, the first side of the exchanged cycle
+      · simp only [h1, ↓reduceIte, List.mem_flatMap, List.mem_map]
+        exact ⟨_, hK, Or.inr ⟨_, sideBaseClusters_mem_sideNodeDisplayed h₁ hS₁, _,
+          sideBaseClusters_mem_sideNodeDisplayed h₂ hS₂, by
+            rw [union_right_comm (baseClusters _)]⟩⟩
+      -- `S₁` is a single hybrid edge, and the hybrid component hangs from it
+      · have h2 := tr_hasNode_of_not hne.symm h1
+        simp only [h1, h2, ↓reduceIte, Bool.false_eq_true, List.mem_flatMap, List.mem_map,
+          List.not_mem_nil, or_false]
+        exact ⟨_, hK, _, sideBaseClusters_mem_sideNodeDisplayed h₁ hS₁, _,
+          sideBaseClusters_mem_sideNodeDisplayed h₂ hS₂, by
+            rw [union_right_comm (baseClusters _)]⟩
+
+/-- The clusters along a side of the base tree of an exchange are those of a tree of
+`NMSC.nodeDisplayed`. -/
+theorem sideBaseClusters_mem_sideNodeDisplayed : ∀ {S S' : Brooqs.Side L} {T : Finset L},
+    S.SideSwap S' → S.IsMetric → sideBaseClusters S' T ∈ sideNodeDisplayed S T
+  | _, _, _, .hyb _, _ => by simp [sideBaseClusters, sideNodeDisplayed]
+  | _, _, _, .node hM hS, hm => by
+      simp only [sideBaseClusters, sideNodeDisplayed, List.mem_flatMap, List.mem_map]
+      exact ⟨_, sideBaseClusters_mem_sideNodeDisplayed hS hm.2.2.2, _,
+        baseClusters_mem_nodeDisplayed hM hm.2.2.1, by rw [hS.taxa_eq, hM.taxa_eq]⟩
+end
+
+/-- **The base trees of the exchanges.** For a metric network `N`, the displayed trees of `N` that
+delete, at each cycle, the hybrid edge of a side with a node (`NMSC.nodeDisplayed N`) are exactly
+the displayed trees `NMSC.baseClusters N'` of the base trees of the exchanges `N'` of the sides of
+cycles of `N`. -/
+theorem mem_nodeDisplayed_iff {N : Brooqs.Net L} (hN : N.IsMetric) (K : Finset (Finset L)) :
+    K ∈ nodeDisplayed N ↔ ∃ N', N.SideSwap N' ∧ baseClusters N' = K :=
+  ⟨exists_sideSwap_of_mem_nodeDisplayed, fun ⟨_, h, hK⟩ =>
+    hK ▸ baseClusters_mem_nodeDisplayed h hN⟩
 
 /-- The base tree of `N` with the sides of some cycles exchanged is a displayed tree of `N`
 (`NMSC.DisplaysTree`). -/
