@@ -22,8 +22,8 @@ network built on a tree `T` (well-labelled, in Lemma 1), given with a support su
 directly below the two ends of the non-tree edge `d` (Definition 2). The network `T + d` of the
 paper is the canonical network `Realization.graph t {H.pairOf d}`, obtained from `T` by adding an
 edge above `(u, w)` (Definition 3). A quartet is satisfied by a network if the network displays it
-and `T` does not induce it. Lemma 1 is conditional on Observation 2 of Warnow, Tabatabaee and Evans
-(2025) (`External.WarnowTabatabaeeEvansObservation2`); Lemma 2 is not.
+and `T` does not induce it. The proof of Lemma 1 uses Observation 2 of Warnow, Tabatabaee and Evans
+(2025), proved in `Camus/External/WarnowTabatabaeeEvans/Observation2.lean` (`External.observation2`).
 
 ## Main results
 
@@ -129,14 +129,13 @@ binary level-1 network built on `T`, given by a support subdivision `H` of `T` i
 are `S`. If `N` displays a quartet `q` that `T` does not induce (`q` is satisfied by `N`), then
 there is a unique non-tree edge `d ∈ N.edges \ S` such that `T + d` displays `q`. Here `T + d` is
 the canonical network `Realization.graph t {H.pairOf d}` of the pair of `d` (Definition 3).
-Conditional on Observation 2.
 
 Departure from the paper: the paper derives the whole lemma from Observation 2. The formal proof
 uses Observation 2 for existence (`RootedNetwork.novel_edge_exists`) and proves uniqueness from the
 vertex-disjointness of the cycles of `N` (`RootedNetwork.novel_edge_unique`). Observation 2 gives,
 for one network, a cycle whose cut separates `q`; it does not say that this cycle is unique, so
 uniqueness needs its own argument. -/
-theorem lemma1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
+theorem lemma1
     (t : PhyloTree) (ht : t.WellLabelled) (N : RootedNetwork)
     (hN : N.RootedBinaryLevelOne) (S : Finset (ℕ × ℕ))
     (H : SupportSubdivision t N S) (q : Quartet)
@@ -144,7 +143,7 @@ theorem lemma1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
     ∃! e, e ∈ N.edges \ S ∧
       (Realization.graph t {H.pairOf e}).DisplaysQuartet q := by
   -- Existence, from Observation 2.
-  obtain ⟨e,he,hqe⟩ := RootedNetwork.novel_edge_exists observation2 ht hN H q hq hnot
+  obtain ⟨e,he,hqe⟩ := RootedNetwork.novel_edge_exists ht hN H q hq hnot
   refine ⟨e,⟨he,hqe⟩,?_⟩
   -- Uniqueness, from the vertex-disjointness of the cycles of `N`.
   intro f hf
@@ -187,9 +186,8 @@ theorem mem_novel_iff (t : PhyloTree) (ht : t.WellLabelled)
 `E` be a cycle-separated family of pairs and `N = Realization.graph t E`. The set of quartets of `Q`
 satisfied by `N` is the union of the sets of quartets of `Q` satisfied by the single-edge networks
 `T + e = Realization.graph t {e}`, `e ∈ E`, and these sets are pairwise disjoint. The proof applies
-`lemma1` to `N`. Conditional on Observation 2. -/
+`lemma1` to `N`. -/
 theorem novel_disjoint_union
-    (observation2 : External.WarnowTabatabaeeEvansObservation2)
     (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (E : Finset Pair) (hE : EdgeAbove.CycleSeparated t E) :
     novel t Q (Realization.graph t E) =
@@ -219,7 +217,7 @@ theorem novel_disjoint_union
     -- A quartet satisfied by `N` is satisfied by `T + e` for some `e ∈ E` (existence in Lemma 1).
     · intro hq
       obtain ⟨hQ,hdisplay,hnot⟩ := (mem_novel_iff t ht Q N q).mp hq
-      obtain ⟨d,hd,_⟩ := lemma1 observation2 t ht N hN S H q hdisplay hnot
+      obtain ⟨d,hd,_⟩ := lemma1 t ht N hN S H q hdisplay hnot
       exact Finset.mem_biUnion.mpr ⟨H.pairOf d,hpair d hd.1,
         (mem_novel_iff t ht Q _ q).mpr ⟨hQ,hd.2,hnot⟩⟩
     -- A quartet satisfied by `T + e` is satisfied by `N`.
@@ -235,7 +233,7 @@ theorem novel_disjoint_union
     obtain ⟨_,heDisplay,hnot⟩ := (mem_novel_iff t ht Q _ q).mp hqe
     obtain ⟨_,hfDisplay,_⟩ := (mem_novel_iff t ht Q _ q).mp hqf
     have hdisplay := Realization.single_displays_full t ht E hE he q heDisplay
-    obtain ⟨d,_,hunique⟩ := lemma1 observation2 t ht N hN S H q hdisplay hnot
+    obtain ⟨d,_,hunique⟩ := lemma1 t ht N hN S H q hdisplay hnot
     obtain ⟨de,hde,hpe⟩ := hindex e he
     obtain ⟨df,hdf,hpf⟩ := hindex f hf
     have hdeq : de = d := hunique de ⟨hde,by rw [hpe]; exact heDisplay⟩
@@ -261,4 +259,62 @@ theorem baseline_subset (t : PhyloTree) (ht : t.WellLabelled)
   exact Finset.mem_filter.mpr ⟨hQ, RootedNetwork.displays_of_edges_subset hS q hraw⟩
 
 end DynamicProgramming
+namespace SupportSubdivision
+
+/-- Let `N` be a rooted binary level-1 network built on a well-labelled tree `T`, with support
+subdivision `H`, and `d` a non-tree edge of `N`. A quartet displayed by `T + d` (the canonical
+network `Realization.graph t {H.pairOf d}`) is displayed by `N`: deleting the other non-tree edges
+of `N` gives a subdivision of `T + d`, whose switchings are switchings of `N`. -/
+theorem single_displays {t : PhyloTree} (ht : t.WellLabelled) {N : RootedNetwork}
+    (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S)
+    {d : ℕ × ℕ} (hd : d ∈ N.edges \ S) (q : Quartet)
+    (hq : (Realization.graph t {H.pairOf d}).DisplaysQuartet q) : N.DisplaysQuartet q := by
+  classical
+  obtain ⟨D⟩ := H.single_edge_reduction hN hd
+  have hsing : EdgeAbove.CycleSeparated t {H.pairOf d} := by
+    refine ⟨Finset.singleton_subset_iff.mpr ((H.extracted_separated hN).1 ?_), by simp⟩
+    exact Finset.mem_image.mpr ⟨d, hd, rfl⟩
+  have hraw := (D.displays_iff (Realization.levelOne t ht {H.pairOf d} hsing) q).mpr hq
+  exact RootedNetwork.displays_of_edges_subset
+    (Finset.insert_subset (Finset.mem_sdiff.mp hd).1 H.switching.1) q hraw
+
+end SupportSubdivision
+
+open DynamicProgramming in
+/-- **Lemma 1** (`mthst2`), second sentence. Let `T` be a well-labelled tree and `N` a rooted
+binary level-1 network built on `T`, with support subdivision `H` whose edges are `S`. For every
+multiset `Q`, the quartets of `Q` satisfied by `N` are the disjoint union, over the non-tree edges
+`d ∈ N.edges \ S`, of the quartets of `Q` satisfied by `T + d`
+(`Realization.graph t {H.pairOf d}`). -/
+theorem lemma1_union (t : PhyloTree) (ht : t.WellLabelled) (N : RootedNetwork)
+    (hN : N.RootedBinaryLevelOne) (S : Finset (ℕ × ℕ)) (H : SupportSubdivision t N S)
+    (Q : Multiset Quartet) :
+    novel t Q N = (N.edges \ S).biUnion (fun d => novel t Q (Realization.graph t {H.pairOf d})) ∧
+      ((N.edges \ S : Finset (ℕ × ℕ)) : Set (ℕ × ℕ)).Pairwise (fun d d' =>
+        Disjoint (novel t Q (Realization.graph t {H.pairOf d}))
+          (novel t Q (Realization.graph t {H.pairOf d'}))) := by
+  classical
+  constructor
+  · ext q
+    constructor
+    · -- a satisfied quartet is satisfied by `T + d` for the edge `d` of the first sentence
+      intro hq
+      obtain ⟨hQ, hdisplay, hnot⟩ := (mem_novel_iff t ht Q N q).mp hq
+      obtain ⟨d, hd, _⟩ := lemma1 t ht N hN S H q hdisplay hnot
+      exact Finset.mem_biUnion.mpr ⟨d, hd.1, (mem_novel_iff t ht Q _ q).mpr ⟨hQ, hd.2, hnot⟩⟩
+    · -- a quartet satisfied by some `T + d` is displayed, hence satisfied, by `N`
+      intro hq
+      obtain ⟨d, hd, hqd⟩ := Finset.mem_biUnion.mp hq
+      obtain ⟨hQ, hdisplay, hnot⟩ := (mem_novel_iff t ht Q _ q).mp hqd
+      exact (mem_novel_iff t ht Q N q).mpr ⟨hQ, H.single_displays ht hN hd q hdisplay, hnot⟩
+  · -- the union is disjoint by the uniqueness in the first sentence
+    intro d hd d' hd' hne
+    apply Finset.disjoint_left.mpr
+    intro q hq hq'
+    obtain ⟨_, hdisplay, hnot⟩ := (mem_novel_iff t ht Q _ q).mp hq
+    obtain ⟨_, hdisplay', _⟩ := (mem_novel_iff t ht Q _ q).mp hq'
+    obtain ⟨_, _, hunique⟩ := lemma1 t ht N hN S H q
+      (H.single_displays ht hN hd q hdisplay) hnot
+    exact hne ((hunique d ⟨hd, hdisplay⟩).trans (hunique d' ⟨hd', hdisplay'⟩).symm)
+
 end Camus

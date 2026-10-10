@@ -10,7 +10,7 @@ public import Mathlib.Tactic.FinCases
 
 Section 2.4 of the paper opens with "By design, the score (the number of quartets in Q that are
 satisfied) will never decrease as the number of reticulations increases". For exact numbers of
-reticulations, which Section 2.4 computes, this is false (the report's E3). Let
+reticulations, which Section 2.4 computes, this is false (the report's E5). Let
 `T = (A,(B,(D,C)))` (labels `A = 0`, `B = 1`, `C = 2`, `D = 3`) and `Q = {AC|BD}`.
 
 * Some network built on `T` with exactly two reticulations displays `AC|BD`
@@ -19,8 +19,7 @@ reticulations, which Section 2.4 computes, this is false (the report's E3). Let
   donor). Switching to the second edge gives the tree `(A,(C,(B,D)))`, whose quartet is `AC|BD`.
 * Networks built on `T` with exactly three reticulations exist: three triangles
   (`saturatedPairs`).
-* Assuming Observation 2 of Warnow–Tabatabaee–Evans, every network built on `T` with exactly three
-  reticulations displays no quartet of `Q` (`graph_exact_three_score_zero`).
+* Every network built on `T` with exactly three reticulations displays no quartet of `Q` (`graph_exact_three_score_zero`).
 
 So the best score is `1` with two reticulations and `0` with three. For at most `k` reticulations
 the claim holds (`Camus.atMostScore_mono`). The same example in the block grammar is
@@ -46,13 +45,13 @@ namespace Camus.Counterexamples
 
 open DynamicProgramming Realization
 
-/-- E3: the pair `(A, (B,(D,C)))` of `T = (A,(B,(D,C)))`. Its target is the root, and the edge added
+/-- E5: the pair `(A, (B,(D,C)))` of `T = (A,(B,(D,C)))`. Its target is the root, and the edge added
 above it forms a triangle. -/
 def budgetOuter : DynamicProgramming.Pair := ([false],[true])
-/-- E3: the pair `((B,(D,C)), C)` of `T`. Its target is its donor end `(B,(D,C))` (a ghost donor),
+/-- E5: the pair `((B,(D,C)), C)` of `T`. Its target is its donor end `(B,(D,C))` (a ghost donor),
 and the cycle of the edge added above it passes through `(B,(D,C))` and `(D,C)`. -/
 def budgetInner : DynamicProgramming.Pair := ([true],[true,true,true])
-/-- E3: the two added edges of the network with two reticulations. -/
+/-- E5: the two added edges of the network with two reticulations. -/
 def budgetPairs : Finset DynamicProgramming.Pair := {budgetOuter,budgetInner}
 /-- The tree `(A,(C,(B,D)))`, displayed by the network with two reticulations; its quartet is
 `AC|BD`. -/
@@ -358,7 +357,7 @@ theorem budgetSwitch_subset : budgetSwitch ⊆ (graph smallConstraint budgetPair
   · exact Finset.mem_union_right _ (Finset.mem_image.mpr ⟨budgetInner,by simp [budgetPairs],rfl⟩)
   · exact Finset.mem_union_left _ (Finset.mem_erase.mp hf).2
 
-/-- E3 (Section 2.4), two reticulations: the canonical network of `budgetPairs` is built on
+/-- E5 (Section 2.4), two reticulations: the canonical network of `budgetPairs` is built on
 `T = (A,(B,(D,C)))`, has exactly two reticulations, and displays the quartet `AC|BD` of
 `Q = {AC|BD}` (score `1`). Observation 2 is not used. -/
 theorem graph_exact_two_score_one :
@@ -387,7 +386,7 @@ theorem graph_exact_two_score_one :
       exact Finset.mem_filter.mpr ⟨by simp [oneQuartet],hdisplay⟩)
     simpa [oneQuartet] using hs
 
-/-- E3: three triangles on `T = (A,(B,(D,C)))`, one at each internal vertex: the edges added above
+/-- E5: three triangles on `T = (A,(B,(D,C)))`, one at each internal vertex: the edges added above
 `(A, (B,(D,C)))`, `(B, (D,C))` and `(D, C)`. -/
 def saturatedPairs : Finset DynamicProgramming.Pair :=
   {budgetOuter,([true,false],[true,true]),([true,true,false],[true,true,true])}
@@ -403,21 +402,19 @@ theorem saturatedPairs_separated : EdgeAbove.CycleSeparated smallConstraint satu
     rcases he with rfl | rfl | rfl <;> rcases hf with rfl | rfl | rfl
     all_goals first | exact (hef rfl).elim | decide
 
-/-- E3 (Section 2.4): the claim that the score "will never decrease as the number of reticulations
+/-- E5 (Section 2.4): the claim that the score "will never decrease as the number of reticulations
 increases" is false for exact numbers of reticulations. Let `T = (A,(B,(D,C)))` and
 `Q = {AC|BD}`. Some network built on `T` with exactly two reticulations displays the quartet of `Q`
-(score `1`); some network built on `T` has exactly three reticulations; and, assuming Observation 2
-of Warnow–Tabatabaee–Evans, every network built on `T` with exactly three reticulations displays no
-quartet of `Q` (score `0`). -/
-theorem graph_exact_budget_nonmonotone
-    (observation2 : External.WarnowTabatabaeeEvansObservation2) :
+(score `1`); some network built on `T` has exactly three reticulations; and every network built on
+`T` with exactly three reticulations displays no quartet of `Q` (score `0`). -/
+theorem graph_exact_budget_nonmonotone :
     (∃ N : RootedNetwork, N.AnchoredExtension smallConstraint ∧ N.reticulationCount = 2 ∧
       score oneQuartet (DynamicProgramming.repertoire oneQuartet N) = 1) ∧
     (∃ N : RootedNetwork, N.AnchoredExtension smallConstraint ∧ N.reticulationCount = 3) ∧
     (∀ N : RootedNetwork, N.AnchoredExtension smallConstraint → N.reticulationCount = 3 →
       score oneQuartet (DynamicProgramming.repertoire oneQuartet N) = 0) := by
   refine ⟨⟨graph smallConstraint budgetPairs,graph_exact_two_score_one⟩,?_,
-    fun N hN hr => graph_exact_three_score_zero observation2 N hN hr⟩
+    fun N hN hr => graph_exact_three_score_zero N hN hr⟩
   have ht : smallConstraint.WellLabelled := by decide
   have hE := saturatedPairs_separated
   refine ⟨graph smallConstraint saturatedPairs,

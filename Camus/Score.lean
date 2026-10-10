@@ -46,7 +46,7 @@ def delta (Q : Multiset α) (D : Finset α) (q : α) : ℕ :=
 Section 2.3 allows: s_e(u, w) = ∑ δ_T(q, (u, w)), summed over the distinct quartets `q` of `Q`,
 is the number of quartets of `Q`, counted with multiplicity, in the set `D` of quartets satisfied
 by the edge added above `(u, w)`. Summing δ over all `m` copies of a quartet of multiplicity `m`
-would count it m² times (the report's E1). -/
+would count it m² times (the report's E3). -/
 theorem equation1 (Q : Multiset α) (D : Finset α) :
     score Q D = ∑ q ∈ Q.toFinset, delta Q D q := by
   have hm : score Q D = (Q.map (fun q => if q ∈ D then (1 : ℕ) else 0)).sum := by
@@ -168,7 +168,7 @@ def atMostScore {N : Type*} [DecidableEq N] (C : Finset N)
 /-- Section 2.4: the best score with at most `k` reticulations never decreases as `k`
 increases, since the family of candidate networks grows with `k`. Section 2.4 states that the
 score never decreases as the number of reticulations increases; for exactly `k` reticulations,
-the networks it computes, this is false (the report's E3). -/
+the networks it computes, this is false (the report's E5). -/
 theorem atMostScore_mono {N : Type*} [DecidableEq N] (C : Finset N)
     (displayed : N → Finset α) (reticulations : N → ℕ) (Q : Multiset α)
     {j k : ℕ} (hjk : j ≤ k) :

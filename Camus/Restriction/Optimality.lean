@@ -10,8 +10,7 @@ public import Camus.Network.Reticulations
 Section 2.4 of the paper asks for networks `N_1, …, N_m` such that all are level-1, all contain
 `T`, `N_k` has exactly `k` non-tree edges, and each maximizes the number of quartets of `Q` subject
 to these constraints. This file proves this for the formalization's recurrence (`BudgetDP.Array`)
-with the weights `s_e` of Equation (1), assuming Observation 2 of Warnow–Tabatabaee–Evans, which
-enters through Lemma 1: the root row `M[r][k]` holds the number of quartets satisfied by a network
+with the weights `s_e` of Equation (1), using Lemma 1 for the additivity of the score: the root row `M[r][k]` holds the number of quartets satisfied by a network
 built on `T` with exactly `k` reticulations, and no network built on `T` with exactly `k`
 reticulations satisfies more. The paper's stopping rule (add columns until the score stops
 improving) is not formalized.
@@ -72,13 +71,12 @@ with `M[r]` replaced by the value of row `b r` (`DynamicProgramming.hanging_scor
   exact (row_sup_eq t w M hM (Finset.mem_filter.mp hr).1 (hs r hr)).symm
 
 /-- Section 2.4: the networks `N_k`. Let `M` satisfy the recurrence `BudgetDP.Array` with the
-weights `s_e` of Equation (1), and assume Observation 2 of Warnow–Tabatabaee–Evans. For every value
-`z` in the root row `M[r][k]` there is a family `E` of added edges whose canonical network
+weights `s_e` of Equation (1). For every value `z` in the root row `M[r][k]` there is a family `E` of added edges whose canonical network
 `Realization.graph t E` is built on `T`, has exactly `k` reticulations and satisfies `z` quartets of
 `Q` (with multiplicity); every network built on `T` with exactly `k` reticulations satisfies at
 most `z` quartets of `Q`, and displays at most as many as `Realization.graph t E`. The recurrence is
 the formalization's own (the paper gives none), following the paper's description of `M[v, k]`. -/
- theorem exact_graph_optimal (observation2 : External.WarnowTabatabaeeEvansObservation2)
+ theorem exact_graph_optimal
     (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ → Finset ℕ) (hM : Array t (edgeWeight t Q) M)
     {k z : ℕ} (hz : z ∈ M [] k) :
@@ -95,7 +93,7 @@ the formalization's own (the paper gives none), following the paper's descriptio
   obtain ⟨E,hE,hEk,hEz,hupper⟩ := exact_optimal t (edgeWeight t Q) M hM t.root_mem_nodes hz
   have hNE := Realization.levelOne t ht E hE.1
   -- by Lemma 1, the canonical network of `E` satisfies `value E = z` quartets
-  have hscoreE := (novel_score_value observation2 t ht Q E hE.1).trans hEz
+  have hscoreE := (novel_score_value t ht Q E hE.1).trans hEz
   -- a network built on `T` is isomorphic to the canonical network of its added edges, which has
   -- as many reticulations and satisfies as many quartets
   have hnovel N (hN : N.AnchoredExtension t) (hNk : N.reticulationCount=k) :
@@ -111,7 +109,7 @@ the formalization's own (the paper gives none), following the paper's descriptio
     have hcard : H.extracted.card=k := by
       rw [← Realization.reticulationCount_eq_card t H.extracted hF,
         ← i.reticulationCount_eq hN.1 hNF,hNk]
-    rw [hnovelEq,novel_score_value observation2 t ht Q H.extracted hF]
+    rw [hnovelEq,novel_score_value t ht Q H.extracted hF]
     exact hupper H.extracted ⟨hF,fun _ _=>List.nil_prefix⟩ hcard
   refine ⟨E,⟨hNE,⟨Realization.supportEdges t E,⟨Realization.support t ht E hE.1⟩⟩⟩,
     (Realization.reticulationCount_eq_card t E hE.1).trans hEk,hscoreE,hnovel,?_⟩

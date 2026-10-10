@@ -10,8 +10,8 @@ This file proves Theorem 1 (Section 2.2). Let `T` be a well-labelled tree and `Q
 quartets. For any array `M` satisfying the recurrence (Equations (2)–(5), with the weights `s_e` of
 Equation (1)) and any backtracking trace `E` from the root, the network `Realization.graph t E` is
 built on `T`, satisfies `M[root]` quartets of `Q`, and satisfies at least as many quartets of `Q` as
-any network built on `T`. The theorem is conditional on Observation 2 of Warnow, Tabatabaee and
-Evans (2025), through Lemma 1.
+any network built on `T`. Through Lemma 1, the proof uses Observation 2 of Warnow, Tabatabaee and
+Evans (2025), proved in `Camus/External/WarnowTabatabaeeEvans/Observation2.lean`.
 
 ## Main results
 
@@ -72,14 +72,13 @@ theorem edgeWeight_score (t : PhyloTree) (Q : Multiset Quartet) (e : Pair) :
 
 /-- Lemma 1 as a count: for a cycle-separated family `E`, the number of quartets of `Q` (counted
 with multiplicity) satisfied by `Realization.graph t E` is the sum of the weights `s_e`
-(Equation (1)) over `e ∈ E`. Conditional on Observation 2. -/
+(Equation (1)) over `e ∈ E`. -/
 theorem novel_score_value
-    (observation2 : External.WarnowTabatabaeeEvansObservation2)
     (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (E : Finset Pair) (hE : EdgeAbove.CycleSeparated t E) :
     score Q (novel t Q (Realization.graph t E)) = value (edgeWeight t Q) E := by
   -- Lemma 1: the satisfied quartets are the disjoint union of those satisfied by the edges.
-  obtain ⟨hunion, hdisjoint⟩ := novel_disjoint_union observation2 t ht Q E hE
+  obtain ⟨hunion, hdisjoint⟩ := novel_disjoint_union t ht Q E hE
   rw [hunion, score_disjoint_union Q E _ hdisjoint]
   apply Finset.sum_congr rfl
   intro e he
@@ -106,9 +105,8 @@ Equation (1)), and let `E` be a backtracking trace of `M` from the root. Then th
 * displays at least as many quartets of `Q` as any network built on `T`. For a network built on
   `T`, the number of quartets of `Q` displayed is the number satisfied plus the number induced by
   `T`.
-
-Conditional on Observation 2 of Warnow, Tabatabaee and Evans (2025). -/
-theorem theorem1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
+ -/
+theorem theorem1
     (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ) (hM : DynamicProgramming.Array t (DynamicProgramming.edgeWeight t Q) M)
     (E : Finset DynamicProgramming.Pair)
@@ -129,7 +127,7 @@ theorem theorem1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
   -- (a) The network of the feasible family `E` is a rooted binary level-1 network.
   have hNE := Realization.levelOne t ht E hE.1
   -- (b) By Lemma 1, it satisfies as many quartets as the total weight of `E`, which is `M[root]`.
-  have hscoreE := (DynamicProgramming.novel_score_value observation2 t ht Q E hE.1).trans hvalue
+  have hscoreE := (DynamicProgramming.novel_score_value t ht Q E hE.1).trans hvalue
   -- (d) A network `N` built on `T` satisfies at most `M[root]` quartets.
   have hnovel : ∀ N : RootedNetwork, N.AnchoredExtension t →
       score Q (DynamicProgramming.novel t Q N) ≤
@@ -147,7 +145,7 @@ theorem theorem1 (observation2 : External.WarnowTabatabaeeEvansObservation2)
       unfold DynamicProgramming.novel
       rw [hrep]
     -- By Lemma 1 their number is the total weight of the family, at most `M[root]` by (c).
-    rw [hnovelEq, DynamicProgramming.novel_score_value observation2 t ht Q H.extracted hF, hscoreE]
+    rw [hnovelEq, DynamicProgramming.novel_score_value t ht Q H.extracted hF, hscoreE]
     exact hupper H.extracted ⟨hF, fun _ _ => List.nil_prefix⟩
   -- (a) The output is built on `T`, with the canonical support subdivision.
   refine ⟨⟨hNE, ⟨Realization.supportEdges t E, ⟨Realization.support t ht E hE.1⟩⟩⟩,

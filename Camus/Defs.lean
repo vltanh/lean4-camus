@@ -203,7 +203,7 @@ def candidates (t : PhyloTree) : Finset (Address × Address) :=
 /-- **Definition 2** (`mthst3`). The target `v = lca_T(u, w)` of the pair `(u, w)`. Procedure
 ASSIGN assigns a non-tree edge `(u', w')` of a network built on `T`, and each quartet it
 satisfies, to the triplet `(u, w, v)`, where `u` and `w` are the vertices of `T` directly below
-`u'` and `w'` (`SupportSubdivision.pairOf`). -/
+`u'` and `w'`. -/
 def target (e : Address × Address) : Address := lca e.1 e.2
 
 /-- The vertices of `T` on the cycle γ(u, w) created by adding an edge above `e = (u, w)`
@@ -215,15 +215,6 @@ def footprint (t : PhyloTree) (e : Address × Address) : Finset Address :=
   t.nodes.filter fun x => target e <+: x ∧
     ((x <+: e.1 ∧ x ≠ e.1) ∨ (x <+: e.2 ∧ x ≠ e.2))
 
-/-- The family `E` of pairs is cycle-separated: its pairs are admissible, and the cycles
-γ(u, w) of distinct pairs of `E` have no vertex of `T` in common. As distinct pairs get distinct
-new vertices, the cycles of `Realization.graph t E` are then vertex-disjoint: the network
-obtained by adding an edge above each pair of `E` is level-1. -/
-def CycleSeparated (t : PhyloTree) (E : Finset (Address × Address)) : Prop :=
-  E ⊆ candidates t ∧
-    (E : Set (Address × Address)).Pairwise
-      (fun e f => Disjoint (footprint t e) (footprint t f))
-
 end EdgeAbove
 end Camus
 
@@ -231,14 +222,6 @@ namespace Camus
 
 /-- The parent of a vertex: its address without the last step. The root is its own parent. -/
 def parent (p : Address) : Address := p.take (p.length - 1)
-
-/-- `S` is a connected region of `T` with top vertex `p`: a set of vertices of `T` that contains
-`p`, whose members are `p` and descendants of `p`, and that contains every vertex on the path
-from `p` to each of its members. The vertices γ(u, w) ∩ V(T) of a cycle form such a region, with
-top lca(u, w). -/
-def TreeRegion (t : PhyloTree) (p : Address) (S : Finset Address) : Prop :=
-  p ∈ S ∧ S ⊆ t.nodes ∧ ∀ x ∈ S,
-    p <+: x ∧ ∀ y, p <+: y → y <+: x → y ∈ S
 
 /-- The vertices of `T` not in `S` whose parent is in `S`. For a region `S`, these are the roots
 of the subtrees of `T` hanging off `S`. -/
@@ -335,22 +318,6 @@ def DisplaysQuartet (N : RootedNetwork) (q : Quartet) : Prop :=
     ∃ e ∈ ({N with edges := S}).underlying.edgeSet,
       N.Separates (({N with edges := S}).underlying.deleteEdges {e}) q
 
-/-- The first alternative of Observation 2 of Warnow, Tabatabaee and Evans: deleting one cut
-edge of the underlying undirected graph of `N` separates the two sides of `q`. -/
-def CutEdgeSeparates (N : RootedNetwork) (q : Quartet) : Prop :=
-  ∃ e ∈ N.underlying.edgeSet, N.underlying.IsBridge e ∧
-    N.Separates (N.underlying.deleteEdges {e}) q
-
-/-- The second alternative of Observation 2 of Warnow, Tabatabaee and Evans: for some cycle `C`
-of the underlying undirected graph of `N`, with a vertex `r` of indegree 2 on `C` (the
-reticulation at the bottom of `C`), deleting two distinct edges of `C`, at least one of them
-incident to `r`, separates the two sides of `q`. -/
-def CycleSeparates (N : RootedNetwork) (q : Quartet) : Prop :=
-  ∃ v, ∃ c : N.underlying.Walk v v, c.IsCycle ∧
-    ∃ r ∈ c.support, N.indegree r = 2 ∧
-      ∃ e ∈ c.edges, ∃ f ∈ c.edges, e ≠ f ∧ (r ∈ e ∨ r ∈ f) ∧
-        N.Separates (N.underlying.deleteEdges {e,f}) q
-
 end RootedNetwork
 
 end Camus
@@ -424,67 +391,6 @@ structure RootedNetwork.Iso (N P : RootedNetwork) where
   leaves_preserved : ∀ a (ha : a ∈ N.taxa),
     vertices ⟨N.leaf a, leaves_left a ha⟩ = ⟨P.leaf a, leaves_right a ha⟩
 
-/-- The network `N` is a subdivision of the network `P`: `P` is obtained from `N` by suppressing
-the interior vertices of the directed paths `wire (x, y)` that replace the edges `(x, y)` of `P`.
-This makes precise the network T + e of Section 2.1, obtained from a network by deleting all
-non-tree edges but `e` and suppressing the vertices of indegree and outdegree 1. The laws:
-* `original` sends the vertices of `P` injectively to vertices of `N`, the root of `P` to the
-  root of `N` and the leaf of each taxon to the leaf of that taxon, and `N` and `P` have the same
-  taxa;
-* each edge `(x, y)` of `P` joins two vertices of `P`, and its wire runs from `original x` to
-  `original y` without repeating a vertex; the interior vertices of the wire are not images of
-  vertices of `P`;
-* the interiors of distinct wires are disjoint;
-* the vertices of `N` are the images of the vertices of `P` and the interior vertices of the
-  wires, and the edges of `N` are the edges of the wires. -/
-structure GraphSubdivision (P N : RootedNetwork) where
-  original : ℕ → ℕ
-  wire : (ℕ × ℕ) → List ℕ
-  original_injective : Set.InjOn original P.vertices
-  root_left : P.root ∈ P.vertices
-  root_preserved : original P.root = N.root
-  taxa_preserved : N.taxa = P.taxa
-  leaves_left : ∀ a ∈ P.taxa, P.leaf a ∈ P.vertices
-  leaves_preserved : ∀ a ∈ P.taxa, original (P.leaf a) = N.leaf a
-  edge_endpoints : ∀ e ∈ P.edges, e.1 ∈ P.vertices ∧ e.2 ∈ P.vertices
-  wire_laws : ∀ e ∈ P.edges,
-    2 ≤ (wire e).length ∧ (wire e).Nodup ∧
-    (wire e).head? = some (original e.1) ∧
-    (wire e).getLast? = some (original e.2) ∧
-    Disjoint (wireInterior (wire e)) (P.vertices.image original)
-  interiors_disjoint : (P.edges : Set (ℕ × ℕ)).Pairwise
-    (fun e f => Disjoint (wireInterior (wire e)) (wireInterior (wire f)))
-  vertices_covered : N.vertices = P.vertices.image original ∪
-    P.edges.biUnion (fun e => wireInterior (wire e))
-  edges_covered : N.edges = P.edges.biUnion (fun e => wireEdges (wire e))
-
-namespace SupportSubdivision
-
-/-- For a vertex `v` of `N` inside the wire of the edge of `T` above `p`, the address `p` of the
-vertex of `T` directly below `v` (the wire is unique, since the interiors of distinct wires are
-disjoint). For any other vertex the value is the root `[]`. -/
-noncomputable def anchor {t : PhyloTree} {N : RootedNetwork}
-    {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S) (v : ℕ) : Address :=
-  if h : ∃ p ∈ t.nodes, p ≠ [] ∧ v ∈ wireInterior (H.wire p) then
-    Classical.choose h else []
-
-/-- For an edge `e = (u', w')` of `N`, the pair `(u, w)` of vertices of `T` directly below `u'`
-and `w'`, as in Procedure ASSIGN (Definition 2). For a non-tree edge of a rooted binary level-1
-network built on `T`, both ends lie inside wires, and `e` is the edge added above `(u, w)`. -/
-noncomputable def pairOf {t : PhyloTree} {N : RootedNetwork}
-    {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S) (e : ℕ × ℕ) :
-    Address × Address := (H.anchor e.1, H.anchor e.2)
-
-/-- The pairs `(u, w)` of the non-tree edges of `N` (the edges outside `S`). For a rooted binary
-level-1 network `N`, this family is cycle-separated, and `N` is isomorphic to the network
-obtained from `T` by adding an edge above each of these pairs (`Realization.graph`). -/
-noncomputable def extracted {t : PhyloTree} {N : RootedNetwork}
-    {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S) :
-    Finset (Address × Address) := by
-  classical
-  exact (N.edges \ S).image H.pairOf
-
-end SupportSubdivision
 end Camus
 
 namespace Camus
@@ -623,7 +529,7 @@ takes all pairs of vertices of `T` with lca_T(u, w) = v (and u, w ≠ r when `v`
 and describes them as the pairs for which "the triplet (u, w, v) would be assigned to a non-tree
 edge we would add to T". Admissibility (`EdgeAbove.Admissible`) keeps the pairs that give a
 network: it removes the pairs with `w = v`, for which `w` is an ancestor of `u` or `u` itself
-(the report's E2). The pairs `(v, w)` with `w` below `v` (ghost lineages) are kept. -/
+(the report's E4). The pairs `(v, w)` with `w` below `v` (ghost lineages) are kept. -/
 def pairsAt (t : PhyloTree) (v : Address) : Finset Pair :=
   (EdgeAbove.candidates t).filter (fun e => EdgeAbove.target e = v)
 
@@ -696,16 +602,6 @@ inductive Trace (t : PhyloTree) (weight : Pair → ℕ) (M : Address → ℕ) :
       (chosen : weight e + sdp t M e = M v) :
       Trace t weight M v (insert e ((hanging t e).biUnion F))
 
-/-- `E` is a feasible family below `v`: `E` is cycle-separated, and the target of each of its
-pairs lies in the subtree `T_v` of `T` rooted at `v`. The paper's M[v] is the best value over
-these families: the largest number of quartets of `Q` satisfied by a level-1 network obtained by
-adding edges with targets in `T_v`. -/
-def FeasibleBelow (t : PhyloTree) (v : Address) (E : Finset Pair) : Prop :=
-  EdgeAbove.CycleSeparated t E ∧ ∀ e ∈ E, v <+: EdgeAbove.target e
-
-/-- The total weight of the family `E`: the sum of `weight e` over the pairs `e` of `E`. -/
-def value (weight : Pair → ℕ) (E : Finset Pair) : ℕ := ∑ e ∈ E, weight e
-
 /-- The quartets of `Q` displayed by `N`: the finite set of the distinct quartets `q` of `Q` with
 `q ∈ Q(N_r)` (`RootedNetwork.DisplaysQuartet`). -/
 noncomputable def repertoire (Q : Multiset Quartet) (N : RootedNetwork) : Finset Quartet := by
@@ -723,11 +619,223 @@ quartets of `Q`, counted with multiplicity, satisfied by the edge added above `(
 by T + e = `Realization.graph t {e}`. Here δ_T(q, (u, w)) (Definition 4) is the number of times
 `q` appears in `Q` if `q` is satisfied by that edge, and 0 otherwise. The sum runs over the
 distinct quartets of `Q`, reading `Q` as a weighted set as Section 2.3 allows: summing over all
-`m` copies of a quartet of multiplicity `m` would count it m² times (the report's E1). -/
+`m` copies of a quartet of multiplicity `m` would count it m² times (the report's E3). -/
 noncomputable def edgeWeight (t : PhyloTree) (Q : Multiset Quartet) (e : Pair) : ℕ :=
   ∑ q ∈ Q.toFinset, if q ∈ novel t Q (Realization.graph t {e}) then Q.count q else 0
 
 end DynamicProgramming
 end Camus
 
+namespace Camus
+
+namespace RootedNetwork
+
+/-- The number of reticulations of `N`: its vertices of indegree 2. -/
+noncomputable def reticulationCount (N : RootedNetwork) : ℕ := by
+  classical
+  exact (N.vertices.filter (fun v => N.indegree v = 2)).card
+
+end RootedNetwork
+
+end Camus
+
+namespace Camus.BudgetDP
+
+open DynamicProgramming
+
+/-- The row kept from a finite set `S` of candidate values: empty if `S` is empty, and otherwise the
+singleton of the maximum of `S`. -/
+def best (S : Finset ℕ) : Finset ℕ := S.filter (fun z => z = S.sup id)
+
+/-- The ways to split the budget `k` between two rows `A` and `B`: the sums `a + b` with `a ∈ A i`,
+`b ∈ B j` and `i + j = k`. Followed by `best`, this is the max-plus convolution of the rows. -/
+def convolution (A B : ℕ → Finset ℕ) (k : ℕ) : Finset ℕ :=
+  (Finset.range (k+1)).biUnion fun i =>
+    (A i ×ˢ B (k-i)).image (fun xy => xy.1 + xy.2)
+
+/-- The knapsack over the subtrees `rs` hanging off a cycle: their rows are combined one at a time
+by `convolution`, keeping only the maximum after each step, so every intermediate row is empty or a
+singleton. -/
+def forest (M : Address → ℕ → Finset ℕ) : List Address → ℕ → Finset ℕ
+  | [], k => if k=0 then {0} else ∅
+  | r::rs, k => best (convolution (M r) (forest M rs) k)
+
+/-- Section 2.4, the formalization's recurrence: the candidate values of row `k` at the vertex `v`,
+for edge weights `w` (in applications, `s_e` of Equation (1)). At a leaf, `0` for `k = 0` and none
+otherwise. At an internal vertex, the values of `convolution` of the children's rows (no added edge
+has target `v`, the first case of Equation (2)), together with, for `k ≥ 1`, the values `w e + z`
+where `e ∈ Pairs(v)` and `z` is in row `k − 1` of the knapsack over the subtrees hanging off the
+cycle of `e` (Equations (3)–(5)). -/
+noncomputable def cases (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
+    (v : Address) (k : ℕ) : Finset ℕ :=
+  match t.nodeAt v with
+  | some (.leaf _) => if k=0 then {0} else ∅
+  | some (.fork _ _) => convolution (M (v++[false])) (M (v++[true])) k ∪
+      if k=0 then ∅ else (pairsAt t v).biUnion fun e =>
+        (forest M (hanging t e).toList (k-1)).image (fun z => w e + z)
+  | none => ∅
+
+/-- Section 2.4: `M` satisfies the recurrence. At every vertex `v` of `T` and every budget `k`, the
+row `M v k` is `best (cases t w M v k)`. Such an `M` exists (`exists_array`). -/
+def Array (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ) : Prop :=
+  ∀ v ∈ t.nodes, ∀ k, M v k = best (cases t w M v k)
+
+end Camus.BudgetDP
+
+namespace Camus
+
+open DynamicProgramming
+
+/-- Section 2.4's claim that the best score never decreases as the number of reticulations
+increases, read for exact numbers of reticulations, as the section computes them: for every
+well-labelled tree `T`, multiset `Q` and `j ≤ k` such that some network built on `T` has exactly
+`k` reticulations, every network built on `T` with exactly `j` reticulations displays at most as
+many quartets of `Q` (with multiplicity) as some network built on `T` with exactly `k`
+reticulations. For a fixed `T` the number of quartets of `Q` displayed and the number satisfied
+differ by the number of quartets of `Q` that `T` induces, so the claim reads the same for
+either. -/
+def ExactCountMonotone : Prop :=
+  ∀ t : PhyloTree, t.WellLabelled → ∀ (Q : Multiset Quartet) (j k : ℕ), j ≤ k →
+    (∃ P : RootedNetwork, P.AnchoredExtension t ∧ P.reticulationCount = k) →
+      ∀ N : RootedNetwork, N.AnchoredExtension t → N.reticulationCount = j →
+        ∃ P : RootedNetwork, P.AnchoredExtension t ∧ P.reticulationCount = k ∧
+          score Q (repertoire Q N) ≤ score Q (repertoire Q P)
+
+/-- Section 3.2's claim: if the network `N` is built on the well-labelled tree `t` and the
+quartets of the multiset `Q` are exactly those that `N` displays (`Q` is a multiset version of
+`Q(N_r)`), then every network built on `t` that displays at least as many quartets of `Q` (with
+multiplicity) as every network built on `t` is isomorphic to `N`. -/
+def UniqueOptimum : Prop :=
+  ∀ t : PhyloTree, t.WellLabelled → ∀ N : RootedNetwork, N.AnchoredExtension t →
+    ∀ Q : Multiset Quartet, (∀ q, q ∈ Q ↔ N.DisplaysQuartet q) →
+      ∀ P : RootedNetwork, P.AnchoredExtension t →
+        (∀ R : RootedNetwork, R.AnchoredExtension t →
+          score Q (repertoire Q R) ≤ score Q (repertoire Q P)) →
+        Nonempty (P.Iso N)
+
+end Camus
+
 -- END SHARED DEFINITIONS
+
+-- The definitions below are used by the proofs, not by the statements of `Challenge.lean`.
+
+namespace Camus
+
+namespace EdgeAbove
+
+/-- The family `E` of pairs is cycle-separated: its pairs are admissible, and the cycles
+γ(u, w) of distinct pairs of `E` have no vertex of `T` in common. As distinct pairs get distinct
+new vertices, the cycles of `Realization.graph t E` are then vertex-disjoint: the network
+obtained by adding an edge above each pair of `E` is level-1. -/
+def CycleSeparated (t : PhyloTree) (E : Finset (Address × Address)) : Prop :=
+  E ⊆ candidates t ∧
+    (E : Set (Address × Address)).Pairwise
+      (fun e f => Disjoint (footprint t e) (footprint t f))
+
+end EdgeAbove
+
+/-- `S` is a connected region of `T` with top vertex `p`: a set of vertices of `T` that contains
+`p`, whose members are `p` and descendants of `p`, and that contains every vertex on the path
+from `p` to each of its members. The vertices γ(u, w) ∩ V(T) of a cycle form such a region, with
+top lca(u, w). -/
+def TreeRegion (t : PhyloTree) (p : Address) (S : Finset Address) : Prop :=
+  p ∈ S ∧ S ⊆ t.nodes ∧ ∀ x ∈ S,
+    p <+: x ∧ ∀ y, p <+: y → y <+: x → y ∈ S
+
+namespace RootedNetwork
+
+/-- The first alternative of Observation 2 of Warnow, Tabatabaee and Evans: deleting one cut
+edge of the underlying undirected graph of `N` separates the two sides of `q`. -/
+def CutEdgeSeparates (N : RootedNetwork) (q : Quartet) : Prop :=
+  ∃ e ∈ N.underlying.edgeSet, N.underlying.IsBridge e ∧
+    N.Separates (N.underlying.deleteEdges {e}) q
+
+/-- The second alternative of Observation 2 of Warnow, Tabatabaee and Evans: for some cycle `C`
+of the underlying undirected graph of `N`, with a vertex `r` of indegree 2 on `C` (the
+reticulation at the bottom of `C`), deleting two distinct edges of `C`, at least one of them
+incident to `r`, separates the two sides of `q`. -/
+def CycleSeparates (N : RootedNetwork) (q : Quartet) : Prop :=
+  ∃ v, ∃ c : N.underlying.Walk v v, c.IsCycle ∧
+    ∃ r ∈ c.support, N.indegree r = 2 ∧
+      ∃ e ∈ c.edges, ∃ f ∈ c.edges, e ≠ f ∧ (r ∈ e ∨ r ∈ f) ∧
+        N.Separates (N.underlying.deleteEdges {e,f}) q
+
+end RootedNetwork
+
+/-- The network `N` is a subdivision of the network `P`: `P` is obtained from `N` by suppressing
+the interior vertices of the directed paths `wire (x, y)` that replace the edges `(x, y)` of `P`.
+This makes precise the network T + e of Section 2.1, obtained from a network by deleting all
+non-tree edges but `e` and suppressing the vertices of indegree and outdegree 1. The laws:
+* `original` sends the vertices of `P` injectively to vertices of `N`, the root of `P` to the
+  root of `N` and the leaf of each taxon to the leaf of that taxon, and `N` and `P` have the same
+  taxa;
+* each edge `(x, y)` of `P` joins two vertices of `P`, and its wire runs from `original x` to
+  `original y` without repeating a vertex; the interior vertices of the wire are not images of
+  vertices of `P`;
+* the interiors of distinct wires are disjoint;
+* the vertices of `N` are the images of the vertices of `P` and the interior vertices of the
+  wires, and the edges of `N` are the edges of the wires. -/
+structure GraphSubdivision (P N : RootedNetwork) where
+  original : ℕ → ℕ
+  wire : (ℕ × ℕ) → List ℕ
+  original_injective : Set.InjOn original P.vertices
+  root_left : P.root ∈ P.vertices
+  root_preserved : original P.root = N.root
+  taxa_preserved : N.taxa = P.taxa
+  leaves_left : ∀ a ∈ P.taxa, P.leaf a ∈ P.vertices
+  leaves_preserved : ∀ a ∈ P.taxa, original (P.leaf a) = N.leaf a
+  edge_endpoints : ∀ e ∈ P.edges, e.1 ∈ P.vertices ∧ e.2 ∈ P.vertices
+  wire_laws : ∀ e ∈ P.edges,
+    2 ≤ (wire e).length ∧ (wire e).Nodup ∧
+    (wire e).head? = some (original e.1) ∧
+    (wire e).getLast? = some (original e.2) ∧
+    Disjoint (wireInterior (wire e)) (P.vertices.image original)
+  interiors_disjoint : (P.edges : Set (ℕ × ℕ)).Pairwise
+    (fun e f => Disjoint (wireInterior (wire e)) (wireInterior (wire f)))
+  vertices_covered : N.vertices = P.vertices.image original ∪
+    P.edges.biUnion (fun e => wireInterior (wire e))
+  edges_covered : N.edges = P.edges.biUnion (fun e => wireEdges (wire e))
+
+namespace SupportSubdivision
+
+/-- For a vertex `v` of `N` inside the wire of the edge of `T` above `p`, the address `p` of the
+vertex of `T` directly below `v` (the wire is unique, since the interiors of distinct wires are
+disjoint). For any other vertex the value is the root `[]`. -/
+noncomputable def anchor {t : PhyloTree} {N : RootedNetwork}
+    {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S) (v : ℕ) : Address :=
+  if h : ∃ p ∈ t.nodes, p ≠ [] ∧ v ∈ wireInterior (H.wire p) then
+    Classical.choose h else []
+
+/-- For an edge `e = (u', w')` of `N`, the pair `(u, w)` of vertices of `T` directly below `u'`
+and `w'`, as in Procedure ASSIGN (Definition 2). For a non-tree edge of a rooted binary level-1
+network built on `T`, both ends lie inside wires, and `e` is the edge added above `(u, w)`. -/
+noncomputable def pairOf {t : PhyloTree} {N : RootedNetwork}
+    {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S) (e : ℕ × ℕ) :
+    Address × Address := (H.anchor e.1, H.anchor e.2)
+
+/-- The pairs `(u, w)` of the non-tree edges of `N` (the edges outside `S`). For a rooted binary
+level-1 network `N`, this family is cycle-separated, and `N` is isomorphic to the network
+obtained from `T` by adding an edge above each of these pairs (`Realization.graph`). -/
+noncomputable def extracted {t : PhyloTree} {N : RootedNetwork}
+    {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S) :
+    Finset (Address × Address) := by
+  classical
+  exact (N.edges \ S).image H.pairOf
+
+end SupportSubdivision
+
+namespace DynamicProgramming
+
+/-- `E` is a feasible family below `v`: `E` is cycle-separated, and the target of each of its
+pairs lies in the subtree `T_v` of `T` rooted at `v`. The paper's M[v] is the best value over
+these families: the largest number of quartets of `Q` satisfied by a level-1 network obtained by
+adding edges with targets in `T_v`. -/
+def FeasibleBelow (t : PhyloTree) (v : Address) (E : Finset Pair) : Prop :=
+  EdgeAbove.CycleSeparated t E ∧ ∀ e ∈ E, v <+: EdgeAbove.target e
+
+/-- The total weight of the family `E`: the sum of `weight e` over the pairs `e` of `E`. -/
+def value (weight : Pair → ℕ) (E : Finset Pair) : ℕ := ∑ e ∈ E, weight e
+
+end DynamicProgramming
+
+end Camus

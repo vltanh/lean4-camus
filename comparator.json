@@ -2,10 +2,16 @@
   "challenge_module": "Challenge",
   "solution_module": "Solution",
   "theorem_names": [
-    "CamusResults.optimalNetwork",
-    "CamusResults.equation1",
-    "CamusResults.atMostBudgetMonotone",
-    "CamusResults.correctedRecovery"
+    "Camus.Challenge.theorem1",
+    "Camus.Challenge.exists_array_trace",
+    "Camus.Challenge.tree_displays_iff",
+    "Camus.Challenge.edgeWeight_eq",
+    "Camus.Challenge.reticulation_restriction",
+    "Camus.Challenge.exists_budgetArray",
+    "Camus.Challenge.not_exactCountMonotone",
+    "Camus.Challenge.not_uniqueOptimum",
+    "Camus.Challenge.recovery",
+    "Camus.Challenge.tree_identifiable"
   ],
   "definition_names": [],
   "permitted_axioms": [

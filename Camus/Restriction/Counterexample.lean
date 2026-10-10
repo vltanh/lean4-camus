@@ -10,10 +10,9 @@ public import Camus.Preliminaries.Lemma1.Unique
 # Section 2.4: no network with three reticulations displays `AC|BD`
 
 The bound at three reticulations in the counterexample to the monotonicity claim of Section 2.4
-(the report's E3). Let `T = (A,(B,(D,C)))` (`Counterexamples.smallConstraint`, with `A = 0`,
-`B = 1`, `C = 2`, `D = 3`) and `Q = {AC|BD}` (`Counterexamples.oneQuartet`). Assuming Observation 2
-of Warnow–Tabatabaee–Evans, every network built on `T` with exactly three reticulations, the
-maximum `n − 1`, displays no quartet of `Q`. The networks with two reticulations are in
+(the report's E5). Let `T = (A,(B,(D,C)))` (`Counterexamples.smallConstraint`, with `A = 0`,
+`B = 1`, `C = 2`, `D = 3`) and `Q = {AC|BD}` (`Counterexamples.oneQuartet`). Every network built on
+`T` with exactly three reticulations, the maximum `n − 1`, displays no quartet of `Q`. The networks with two reticulations are in
 `Camus/Restriction/Witness.lean`.
 
 ## Main results
@@ -141,11 +140,9 @@ theorem small_single_display_footprint {e : Pair}
   · exact (Realization.code_mem_cycleVertices_iff (show [true,true] ∈ t.nodes by decide)).mp
       (hsub (List.mem_toFinset.mpr hcyc2))
 
-/-- Assuming Observation 2 of Warnow–Tabatabaee–Evans: for a cycle-separated family `E` of three
-added edges on `T = (A,(B,(D,C)))`, the canonical network `Realization.graph t E` does not display
+/-- For a cycle-separated family `E` of three added edges on `T = (A,(B,(D,C)))`, the canonical network `Realization.graph t E` does not display
 `AC|BD`. -/
 theorem small_exact_three_not_display
-    (observation2 : External.WarnowTabatabaeeEvansObservation2)
     {E : Finset Pair} (hE : EdgeAbove.CycleSeparated smallConstraint E) (hc : E.card = 3) :
     ¬(Realization.graph smallConstraint E).DisplaysQuartet (q0123 1) := by
   classical
@@ -155,7 +152,7 @@ theorem small_exact_three_not_display
     (mem_novel_iff smallConstraint small_wellLabelled oneQuartet _ _).mpr
       ⟨by simp [oneQuartet],hq,by decide⟩
   -- by Lemma 1, a single edge `e ∈ E` satisfies it
-  rw [(novel_disjoint_union observation2 smallConstraint small_wellLabelled oneQuartet E hE).1] at hn
+  rw [(novel_disjoint_union smallConstraint small_wellLabelled oneQuartet E hE).1] at hn
   obtain ⟨e,he,hqe⟩ := Finset.mem_biUnion.mp hn
   have hsingle := (mem_novel_iff smallConstraint small_wellLabelled oneQuartet _ _).mp hqe
   -- with `3 = n − 1` edges, the cycle of `e` meets `T` only in its target
@@ -168,11 +165,9 @@ theorem small_exact_three_not_display
     (Finset.mem_singleton.mp h1).trans (Finset.mem_singleton.mp h2).symm
   exact (by decide : ([true] : Address) ≠ [true,true]) hbad
 
-/-- E3 (Section 2.4), the bound at three reticulations. Assuming Observation 2 of
-Warnow–Tabatabaee–Evans, every network built on `T = (A,(B,(D,C)))` with exactly three
-reticulations displays no quartet of `Q = {AC|BD}`: its score is `0`. -/
+/-- E5 (Section 2.4), the bound at three reticulations. Every network built on
+`T = (A,(B,(D,C)))` with exactly three reticulations displays no quartet of `Q = {AC|BD}`: its score is `0`. -/
 theorem graph_exact_three_score_zero
-    (observation2 : External.WarnowTabatabaeeEvansObservation2)
     (N : RootedNetwork) (hN : N.AnchoredExtension smallConstraint)
     (hr : N.reticulationCount = 3) : score oneQuartet (DynamicProgramming.repertoire oneQuartet N) = 0 := by
   classical
@@ -186,7 +181,7 @@ theorem graph_exact_three_score_zero
       ←i.reticulationCount_eq hN.1 hcanon]
     exact hr
   have hn : ¬N.DisplaysQuartet (q0123 1) := fun hq =>
-    small_exact_three_not_display observation2 hE hc ((i.displays_iff hN.1 hcanon _).mp hq)
+    small_exact_three_not_display hE hc ((i.displays_iff hN.1 hcanon _).mp hq)
   simp [oneQuartet,score,DynamicProgramming.repertoire,hn]
 
 end Camus.Counterexamples

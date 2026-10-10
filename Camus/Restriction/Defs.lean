@@ -41,10 +41,6 @@ namespace Camus.BudgetDP
 
 open DynamicProgramming
 
-/-- The row kept from a finite set `S` of candidate values: empty if `S` is empty, and otherwise the
-singleton of the maximum of `S`. -/
-def best (S : Finset ℕ) : Finset ℕ := S.filter (fun z => z = S.sup id)
-
 /-- `z ∈ best S` iff `z` is the maximum of `S`. -/
  theorem mem_best {S : Finset ℕ} {z : ℕ} : z ∈ best S ↔ z ∈ S ∧ ∀ x ∈ S, x ≤ z := by
   constructor
@@ -69,12 +65,6 @@ def best (S : Finset ℕ) : Finset ℕ := S.filter (fun z => z = S.sup id)
   intro x hx y hy
   exact (Finset.mem_filter.mp hx).2.trans (Finset.mem_filter.mp hy).2.symm
 
-/-- The ways to split the budget `k` between two rows `A` and `B`: the sums `a + b` with `a ∈ A i`,
-`b ∈ B j` and `i + j = k`. Followed by `best`, this is the max-plus convolution of the rows. -/
-def convolution (A B : ℕ → Finset ℕ) (k : ℕ) : Finset ℕ :=
-  (Finset.range (k+1)).biUnion fun i =>
-    (A i ×ˢ B (k-i)).image (fun xy => xy.1 + xy.2)
-
 /-- `z ∈ convolution A B k` iff `z = a + b` with `a ∈ A i`, `b ∈ B j` and `i + j = k`. -/
  theorem mem_convolution {A B : ℕ → Finset ℕ} {k z : ℕ} :
     z ∈ convolution A B k ↔
@@ -98,32 +88,5 @@ knapsack `forest`, which keeps only the maxima and has the same maximum (`forest
 def allocations (M : Address → ℕ → Finset ℕ) : List Address → ℕ → Finset ℕ
   | [], k => if k=0 then {0} else ∅
   | r::rs, k => convolution (M r) (allocations M rs) k
-
-/-- The knapsack over the subtrees `rs` hanging off a cycle: their rows are combined one at a time
-by `convolution`, keeping only the maximum after each step, so every intermediate row is empty or a
-singleton. -/
-def forest (M : Address → ℕ → Finset ℕ) : List Address → ℕ → Finset ℕ
-  | [], k => if k=0 then {0} else ∅
-  | r::rs, k => best (convolution (M r) (forest M rs) k)
-
-/-- Section 2.4, the formalization's recurrence: the candidate values of row `k` at the vertex `v`,
-for edge weights `w` (in applications, `s_e` of Equation (1)). At a leaf, `0` for `k = 0` and none
-otherwise. At an internal vertex, the values of `convolution` of the children's rows (no added edge
-has target `v`, the first case of Equation (2)), together with, for `k ≥ 1`, the values `w e + z`
-where `e ∈ Pairs(v)` and `z` is in row `k − 1` of the knapsack over the subtrees hanging off the
-cycle of `e` (Equations (3)–(5)). -/
-noncomputable def cases (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
-    (v : Address) (k : ℕ) : Finset ℕ :=
-  match t.nodeAt v with
-  | some (.leaf _) => if k=0 then {0} else ∅
-  | some (.fork _ _) => convolution (M (v++[false])) (M (v++[true])) k ∪
-      if k=0 then ∅ else (pairsAt t v).biUnion fun e =>
-        (forest M (hanging t e).toList (k-1)).image (fun z => w e + z)
-  | none => ∅
-
-/-- Section 2.4: `M` satisfies the recurrence. At every vertex `v` of `T` and every budget `k`, the
-row `M v k` is `best (cases t w M v k)`. Such an `M` exists (`exists_array`). -/
-def Array (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ) : Prop :=
-  ∀ v ∈ t.nodes, ∀ k, M v k = best (cases t w M v k)
 
 end Camus.BudgetDP

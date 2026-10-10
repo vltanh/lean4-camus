@@ -10,7 +10,7 @@ the added edges are distinct internal vertices of `T` (`EdgeAbove.separated_card
 bound is attained, every internal vertex is a target, and the cycle of every added edge contains
 exactly one vertex of `T`, its target: the cycle is a triangle, formed by the target and the two
 subdivision vertices. This is used for the counterexample to the monotonicity claim of Section 2.4
-(the report's E3, `Camus/Restriction/Counterexample.lean`), where a single added edge whose network
+(the report's E5, `Camus/Restriction/Counterexample.lean`), where a single added edge whose network
 displays the quartet in question needs a cycle through two vertices of `T`.
 
 ## Main results

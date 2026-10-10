@@ -126,11 +126,6 @@ end EdgeAbove
 
 namespace RootedNetwork
 
-/-- The number of reticulations of `N`: its vertices of indegree 2. -/
-noncomputable def reticulationCount (N : RootedNetwork) : ℕ := by
-  classical
-  exact (N.vertices.filter (fun v => N.indegree v = 2)).card
-
 /-- Isomorphic rooted binary level-1 networks have the same number of reticulations: the
 isomorphism, extended to a permutation of `ℕ`, preserves indegrees
 (`RootedNetwork.renameEdges_count`). -/

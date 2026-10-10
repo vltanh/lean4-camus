@@ -12,7 +12,7 @@ In the block grammar, a valid network with `n` leaves and `n − 1` reticulation
 single hanging subnetwork. The two switchings of a triangle give the same tree up to swapping two
 children. Hence all displayed trees of such a network have the same clusters, and the network
 displays exactly the quartets of any one of its displayed trees. This is the block-grammar form of
-the argument behind the counterexample E3 of the report (`Counterexamples.exact_three_score_zero`).
+the argument behind the counterexample E5 of the report (`Counterexamples.exact_three_score_zero`).
 
 ## Main results
 
