@@ -2,6 +2,7 @@ module
 
 public import Camus.Pipelines.NMSC.Quartets
 public import Camus.Pipelines.Astral
+public import Camus.External.NMSC.Pattern
 
 /-!
 # Section 3.4: Quartet Filtering under the NMSC, when the quartet CFs have the regular pattern
@@ -21,15 +22,24 @@ quartet trees (`NMSC.threshold`), almost surely, for all large numbers of genes,
 returns exactly the quartet trees of the gene trees that are in Q(N_r), with their multiplicities
 (`NMSC.nmsc_filterQuartets`).
 
-The pattern does not hold for every level-1 network: `Camus/Pipelines/NMSC/Anomaly.lean` shows a
-network on which the only quartet tree in Q(N_r) is strictly the least probable, and Quartet
-Filtering then fails for every threshold.
+The pattern holds on every set of four taxa except in one configuration: a cycle with two of the
+four taxa below its hybrid node and the two others in two other components
+(`Brooqs.Net.Anomalous`, `Brooqs.Net.regularOn_of_not_anomalous`). So Quartet Filtering is
+consistent for Q(N_r) on networks without this configuration (`NMSC.NoAnomaly`,
+`NMSC.nmsc_filterQuartets_of_noAnomaly`), for instance networks whose hybrid nodes each have a
+single leaf below them (`NMSC.noAnomaly_of_below`). It is not in general:
+`Camus/Pipelines/NMSC/Anomaly.lean` shows a network on which the only quartet tree in Q(N_r) on four
+taxa is strictly the least probable, and Quartet Filtering then fails for every threshold.
 
 ## Main results
 
-* `NMSC.RegularOn`, `NMSC.Regular`: the CF pattern on a set of four taxa, and on all of them.
+* `NMSC.RegularOn`, `NMSC.Regular`, `NMSC.regularOn_iff`: the CF pattern on a set of four taxa, and
+  on all of them.
 * `NMSC.threshold`, `NMSC.lt_threshold_iff`, `NMSC.threshold_pos`: the threshold `t₀(N)`.
-* `NMSC.nmsc_filterBlock`, `NMSC.nmsc_filterQuartets`: Quartet Filtering under the NMSC.
+* `NMSC.nmsc_filterBlock`, `NMSC.nmsc_filterQuartets`: Quartet Filtering under the NMSC, for
+  networks with the pattern.
+* `NMSC.NoAnomaly`, `NMSC.noAnomaly_of_below`, `NMSC.regular_of_noAnomaly`,
+  `NMSC.nmsc_filterQuartets_of_noAnomaly`: networks without the anomalous configuration.
 
 ## Proof
 
@@ -53,18 +63,12 @@ open Finset Filter Topology MeasureTheory ProbabilityTheory Coalescent Algorithm
 variable {L : Finset ℕ}
 
 /-- The quartet CFs of the four taxa of `k` under the NMSC on `N` have the pattern that the design
-of Quartet Filtering presumes (Section 3.3):
+of Quartet Filtering presumes (Section 3.3, `Brooqs.RegularPattern`):
 * `N` displays exactly one of the three quartet trees on them, `s₁`; it is strictly the most
   probable, and the two others are equally probable, with positive probability; or
 * `N` displays exactly two of them; the third, `s₃`, is strictly the least probable. -/
 def RegularOn (N : Brooqs.Net L) (k : QuartetKey) : Prop :=
-  (∃ s₁, DisplaysQuartet N (k.quartet s₁) ∧ (∀ s, s ≠ s₁ → ¬ DisplaysQuartet N (k.quartet s)) ∧
-      (∀ s, s ≠ s₁ → quartetProb N (k.quartet s) < quartetProb N (k.quartet s₁)) ∧
-      (∀ s s', s ≠ s₁ → s' ≠ s₁ →
-        quartetProb N (k.quartet s) = quartetProb N (k.quartet s')) ∧
-      ∀ s, 0 < quartetProb N (k.quartet s)) ∨
-  (∃ s₃, ¬ DisplaysQuartet N (k.quartet s₃) ∧ (∀ s, s ≠ s₃ → DisplaysQuartet N (k.quartet s)) ∧
-      ∀ s, s ≠ s₃ → quartetProb N (k.quartet s₃) < quartetProb N (k.quartet s))
+  Brooqs.RegularPattern (fun s => DisplaysQuartet N (k.quartet s)) (fun s => quartetProb N (k.quartet s))
 
 /-- Every set of four taxa of `L` has the pattern `RegularOn`. -/
 def Regular (N : Brooqs.Net L) : Prop := ∀ k ∈ keysOn L, RegularOn N k
@@ -225,6 +229,82 @@ theorem nmsc_filterQuartets {N : Brooqs.Net L} (hN : N.WellFormed)
     split_ifs <;> simp [h0]
 
 end Genes
+
+/-! ### Networks without the anomalous configuration -/
+
+/-- No four taxa of `N` are in the anomalous configuration of `Brooqs.Net.Anomalous`: no cycle has
+two of them below its hybrid node and the two others in two other components. -/
+def NoAnomaly (N : Brooqs.Net L) : Prop :=
+  ∀ s : Fin 4 → L, Function.Injective s → ¬ N.Anomalous s
+
+/-- A network whose hybrid nodes each have a single leaf below them has no anomalous set of four
+taxa. -/
+theorem noAnomaly_of_below {N : Brooqs.Net L} (h : ∀ Ω : N.Cycle, Ω.below.leaves.length ≤ 1) :
+    NoAnomaly N := by
+  rintro s hs ⟨Ω, h2, -, -⟩
+  have hle : #(Ω.below.lin s) ≤ 1 := by
+    refine (card_le_card_of_injOn (t := Ω.below.taxa) s (fun l hl => ?_) hs.injOn).trans ?_
+    · simp only [Brooqs.Net.lin, coe_filter, Set.mem_ofPred_eq, mem_univ, true_and] at hl
+      exact hl
+    · exact (List.toFinset_card_le _).trans (h Ω)
+  omega
+
+/-- The pattern of `Brooqs.Net.RegularOn` for the four taxa of `k` is the pattern `RegularOn` of the
+quartet trees of CAMUS on them. -/
+theorem regularOn_iff (N : Brooqs.Net L) (hN : N.leaves.Nodup) (k : QuartetKey)
+    (hk : keyTaxa k ⊆ L) :
+    RegularOn N k ↔ N.RegularOn (keyTaxon k hk 0) (keyTaxon k hk 1) (keyTaxon k hk 2)
+      (keyTaxon k hk 3) := by
+  obtain ⟨d0, d1, d2⟩ := displaysQuartet_iff N k hk
+  obtain ⟨p0, p1, p2⟩ := quartetProb_eq_quartetCF N hN k hk
+  have hd : (fun s => DisplaysQuartet N (k.quartet s)) =
+      N.disp3 (keyTaxon k hk 0) (keyTaxon k hk 1) (keyTaxon k hk 2) (keyTaxon k hk 3) := by
+    funext s
+    fin_cases s
+    · exact propext d0
+    · exact propext d1
+    · exact propext d2
+  have hc : (fun s => quartetProb N (k.quartet s)) =
+      N.cf3 (keyTaxon k hk 0) (keyTaxon k hk 1) (keyTaxon k hk 2) (keyTaxon k hk 3) := by
+    funext s
+    fin_cases s
+    · exact p0
+    · exact p1
+    · exact p2
+  rw [RegularOn, Brooqs.Net.RegularOn, hd, hc]
+
+/-- A metric network with distinct leaf labels on the taxa `L`, without the anomalous configuration,
+has the pattern `RegularOn` on every set of four taxa. -/
+theorem regular_of_noAnomaly {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) (hna : NoAnomaly N) : Regular N := by
+  intro k hk
+  have hk' : keyTaxa k ⊆ L := mem_keysOn.1 hk
+  rw [regularOn_iff N hN.2 k hk']
+  exact Brooqs.Net.regularOn_of_not_anomalous hN (keyTaxon k hk').injective (fun l => htaxa _)
+    (hna _ (keyTaxon k hk').injective)
+
+section Unconditional
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+  [MeasurableSpace (Finset (Finset L))] [MeasurableSingletonClass (Finset (Finset L))]
+
+/-- **Section 3.4: Quartet Filtering under the NMSC.** Let the gene trees be independent, each with
+the law of the NMSC on a metric level-1 network `N` with distinct leaf labels on the taxa `L`, and
+let no four taxa of `N` be in the anomalous configuration (`NoAnomaly`). For every threshold
+`0 < t < t₀(N)`, almost surely, for all large numbers `n` of genes, Algorithm 1 applied to the
+multiset `Q` of the quartet trees of the first `n` gene trees returns exactly the quartet trees of
+`Q` in Q(N_r), with their multiplicities. -/
+theorem nmsc_filterQuartets_of_noAnomaly {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) (hna : NoAnomaly N) (G : ℕ → Ω → Finset (Finset L))
+    (hind : iIndepFun G P) (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) {t : ℝ} (ht : 0 < t)
+    (ht₀ : t < threshold N) :
+    ∀ᵐ ω ∂P, ∀ᶠ n in atTop,
+      filterQuartets t (geneQuartets (fun i => G i ω) n) =
+        (geneQuartets (fun i => G i ω) n).filter (DisplaysQuartet N) :=
+  nmsc_filterQuartets hN G hind hid hlaw (regular_of_noAnomaly hN htaxa hna) ht ht₀
+
+end Unconditional
 
 end NMSC
 
