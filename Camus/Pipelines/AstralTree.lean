@@ -39,8 +39,9 @@ least two taxa can be rooted at the outgroup without changing its quartets (`Phy
 
 ## Proof
 
-The bridge `Coalescent.HasTopology` reads a tree `t` as a species tree `σ` of lean4-adr11, whose
-unrooted topology `unroot σ.clusters` is the set of the splits of `t`
+The paper uses these facts without proof; the proof here is Steel's reconstruction, from
+lean4-adr11. The bridge `Coalescent.HasTopology` reads a tree `t` as a species tree `σ` of
+lean4-adr11, whose unrooted topology `unroot σ.clusters` is the set of the splits of `t`
 (`PhyloTree.mem_splits_iff`). A bipartition `A | Aᶜ` with two taxa on each side is a split of `σ`
 if and only if every quartet tree `aa'|bb'` with `a, a' ∈ A` and `b, b' ∉ A` is induced by `σ`
 (`ADR11.mem_unroot_iff_quartets`), and `σ` induces `aa'|bb'` if and only if `t` does
@@ -753,6 +754,8 @@ theorem rootedAt_reroot {o : ℕ} {t : PhyloTree} (ho : o ∈ t.taxa) (h2 : 2 �
     · exact rootedAt_graftAt o a b hoa
     · rw [taxa_fork, Finset.mem_union] at ho
       exact rootedAt_graftAt o b a (ho.resolve_left hoa)
+
+/-! ### Trees on a set of taxa -/
 
 /-- The caterpillar `(a₀, (a₁, (…, aₖ)))` on the labels `a₀, a₁, …, aₖ`. -/
 def caterpillar : ℕ → List ℕ → PhyloTree

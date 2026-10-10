@@ -371,14 +371,14 @@ theorem ae_eventually_support (M : External.SiteModel N σ) (hN : N.RootedBinary
   exact hm q (Finset.mem_filter.mpr ⟨Quartet.mem_onTaxa.mpr hq.1, hq⟩)
 
 /-- Section 3.2, the SNP pipeline in WTE's model, corrected. Let the true network `N` be built on
-the tree `t`, with the leaf of the outgroup `o` a child of the root of `t`; let `t` induce the
-most probable quartet on every four taxa (`MostProbableQuartets`), and let `N` be identifiable
-under inclusion (as in `recovery`). Let the sites `X 0, X 1, ...` be independent with the law of a
-site under a model `M` on `N` with at least two states, and `Q_m` the multiset of the quartets of
-the SNPs among the first `m` sites. Then the probability of the following event tends to 1: the
-pipeline has an output (ASTRAL may return `t` on `Q_m` and the taxa of `N`, and CAMUS may return
-`N` on `t`), and for every tree `T` that ASTRAL may return, rooted at `o`, every network that
-CAMUS may return on `T` is isomorphic to `N`.
+the tree `t`, with the leaf of the outgroup `o` a child of the root of `t` ("provided we have an
+outgroup"); let `t` induce the most probable quartet on every four taxa (`MostProbableQuartets`),
+and let `N` be identifiable under inclusion (as in `recovery`). Let the sites `X 0, X 1, ...` be
+independent with the law of a site under a model `M` on `N` with at least two states, and `Q_m`
+the multiset of the quartets of the SNPs among the first `m` sites. Then the probability of the
+following event tends to 1: the pipeline has an output (ASTRAL may return `t` on `Q_m` and the
+taxa of `N`, and CAMUS may return `N` on `t`), and for every tree `T` that ASTRAL may return,
+rooted at `o`, every network that CAMUS may return on `T` is isomorphic to `N`.
 
 Departure from the paper: the paper concludes that CAMUS returns `N` because `N` "is the unique
 network that can satisfy all the quartets in Q(Nr)", which is false (the report's E7,
