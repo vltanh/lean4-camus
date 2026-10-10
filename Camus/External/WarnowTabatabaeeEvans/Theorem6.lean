@@ -107,8 +107,11 @@ theorem topEdge_mem : topEdge ∈ treeNet.edges := by
 
 /-- Parameters of WTE's model on `treeNet` with two states, meeting the constraints of their
 Section 4.2: uniform at the root, the state always changes on `topEdge`, and the uniform row on
-the other edges. There is no reticulation. -/
+the other edges. There is no reticulation, so no reticulation edge. -/
 noncomputable def alwaysChange : SiteParameters treeNet Bool where
+  reticulationEdges := ∅
+  reticulationEdges_into e he := absurd he (Finset.notMem_empty e)
+  reticulationEdges_cover v hv h2 := absurd h2 (indegree_ne_two hv)
   transmission _ := 1
   transmission_pos e he h2 := absurd h2 (by rw [indegree_head he]; decide)
   transmission_sum v hv h2 := absurd h2 (indegree_ne_two hv)
@@ -126,7 +129,7 @@ noncomputable def alwaysChange : SiteParameters treeNet Bool where
     · simp [h, hs]
     · simp only [h, ite_false]
       norm_num
-  no_change e he h2 := absurd h2 (by rw [indegree_head he]; decide)
+  no_change e he := absurd he (Finset.notMem_empty e)
 
 /-- The quartet `AB|CD`. -/
 def quartetABCD : Quartet := ⟨0, 1, 2, 3, by decide, by decide, by decide, 0⟩
