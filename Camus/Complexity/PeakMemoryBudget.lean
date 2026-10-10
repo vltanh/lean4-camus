@@ -838,11 +838,11 @@ theorem camusBudgetNetworks_memory {t : PhyloTree} (ht : t.WellLabelled) (Q : Mu
 /-- **Section 2.4 with backtracking**, for the program with its memory. For a well-labelled tree
 `T` with `n` leaves, a multiset `Q` with `|Q|` distinct quartets, all on taxa of `T`, the budget
 columns `0, …, m` for some `m ≥ 1`, and a solution `A` of the recurrence with the weights of
-Equation (1), the program of `camusBudgetNetworksS` returns, for every `k ≤ m` whose row at the root is nonempty, a
-backtracking trace from the root with budget `k` (`camusBudgetNetworks_trace`), whose network is
-the network `N_k` (`camusBudgetNetworks_networks`); it performs at most `2100 n² (|Q| + m³ n)`
-operations (`camusBudgetNetworks_time`); and its input and the cells that it holds at any step
-number at most `85 n⁴ + 6 m n + 4 m` (`camusBudgetNetworks_memory`). -/
+Equation (1), the program of `camusBudgetNetworksS` returns, for every `k ≤ m` whose row at the
+root is nonempty, a backtracking trace from the root with budget `k` (`camusBudgetNetworks_trace`),
+whose network is the network `N_k` (`camusBudgetNetworks_networks`); it performs at most
+`2100 n² (|Q| + m³ n)` operations (`camusBudgetNetworks_time`); and its input and the cells that it
+holds at any step number at most `85 n⁴ + 6 m n + 4 m` (`camusBudgetNetworks_memory`). -/
 theorem camusBudgetNetworksS_section24 {t : PhyloTree} (ht : t.WellLabelled)
     (Q : Multiset Quartet) (hQ : ∀ q ∈ Q.toFinset, q.taxa ⊆ t.taxa) {m : ℕ} (hm : 1 ≤ m)
     {A : Address → ℕ → Finset ℕ} (hA : BudgetDP.Array t (edgeWeight t Q) A) :

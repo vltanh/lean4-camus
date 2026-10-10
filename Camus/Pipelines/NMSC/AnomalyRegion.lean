@@ -11,7 +11,7 @@ Section 3.3 motivates Quartet Filtering (Algorithm 1): "The motivation for this 
 do not want to include quartet trees that are not in Q(Nr). On the other hand, we do not want to
 eliminate these quartet trees." `Camus/Pipelines/NMSC/Anomaly.lean` shows one network on which
 Algorithm 1 does both, for every threshold. This file finds all the parameters of that network for
-which it does. The network is `N₃₂` (`Brooqs.net32`) on the taxa `0, 1, 2, 3`, with any metric
+which it does. The network is `N₃₂` (`Brooqs.net32`) on the taxa `0, 1, 2, 3`, with any
 parameters (`NMSC.net32On`): `0` and `1` below the hybrid node of a 3-cycle, with an edge of length
 `ℓ` above them, `2` on the side `S₁` of the cycle (an edge of length `L` from the top node, then the
 hybrid edge of length `h₁` and inheritance probability `γ`), the side `S₂` a hybrid edge of length

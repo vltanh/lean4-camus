@@ -121,10 +121,11 @@ labels on the taxa `L`, without the anomalous configuration, and let `0 < t < t�
 rooted binary level-1 network of CAMUS built on the tree `T` that displays exactly the quartet
 trees that `N` displays (`hbridge`; the graph of `N` is such a network,
 `NMSC.nmsc_recovery_graph`), and assume, as `recovery` does, that `Nr` is identifiable under
-inclusion among the networks built on `T`. Almost surely, for all large numbers `n` of genes, every network built on `T` that has the best score for
-the output `Q` of Quartet Filtering on the quartet trees of the first `n` gene trees, with the
-fewest reticulations among the networks with the best score, is isomorphic to `Nr`. The paper's
-uniqueness claim, without the tie-break and the identifiability, is false (the report's E7). -/
+inclusion among the networks built on `T`. Almost surely, for all large numbers `n` of genes,
+every network built on `T` that has the best score for the output `Q` of Quartet Filtering on the
+quartet trees of the first `n` gene trees, with the fewest reticulations among the networks with the
+best score, is isomorphic to `Nr`. The paper's uniqueness claim, without the tie-break and the
+identifiability, is false (the report's E7). -/
 theorem nmsc_recovery {N : Brooqs.Net L} (hN : N.WellFormed) (htaxa : ∀ x : L, x ∈ N.taxa)
     (hna : NoAnomaly N) (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
     (hid : ∀ n, IdentDistrib (G n) (G 0) P P)

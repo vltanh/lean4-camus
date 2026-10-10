@@ -21,11 +21,14 @@ Status of the formalization:
   each step holds is declared in the program and checked by reading), the four properties of the
   networks of Section 2.4 for the networks returned by backtracking, with the running time and
   memory of the program that computes them, Algorithm 1's test, Section 3.2's argument as one
-  statement about the SNP pipeline inside the site model of Warnow et al. (2025), and Quartet
-  Filtering under the multispecies coalescent and the network multispecies coalescent, each by the
-  paper's argument where the paper gives one. Four claims of the paper are refuted (E5–E8), and the
-  closest correct statements are proved; one assumption of its design of Quartet Filtering can fail
-  under the network coalescent (E9).
+  statement about the SNP pipeline inside the site model of Warnow et al. (2025) and, under the
+  network multispecies coalescent, through every tree of a network whose root has an outgroup leaf
+  (under identifiability and the tie-break), and Quartet Filtering under the multispecies coalescent
+  and the network multispecies coalescent, each by the paper's argument where the paper gives one.
+  Four claims of the paper are refuted (E5–E8), and the closest correct statements are proved; one
+  assumption of its design of Quartet Filtering can fail under the network coalescent, in a region
+  of parameters that the formalization determines, up to its boundary, for the anomalous 3-cycle
+  (E9).
 - **Cited results:** the paper's proofs use Observation 2 of Warnow, Tabatabaee and Evans (2025),
   which its source states without proof, and Section 3.2 their site model and the convergence of
   the observed quartets. Both are proved here ([`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L187), [`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99),
@@ -69,9 +72,11 @@ Status of the formalization:
 - **A failing assumption.** Sections 3.3 and 3.4 design Quartet Filtering to keep the quartets of
   `Q(N_r)` and only them, which needs the displayed quartets to be the most frequent. Under the
   network multispecies coalescent they are, except possibly in the anomalous configuration of Ané,
-  Fogg, Allman, Baños and Rhodes (2024), whom the paper cites in Section 3.3: there, for some edge
-  lengths, the filter drops the quartet of `Q(N_r)` and keeps one outside it, for every threshold
-  (E9).
+  Fogg, Allman, Baños and Rhodes (2024), whom the paper cites in Section 3.3: there, on the 3-cycle
+  above two taxa, in an explicit region of the edge lengths and the inheritance probability (and,
+  away from its boundary, only there), which needs the edge below the reticulation to be shorter
+  than log(5/4), the filter drops the quartet of `Q(N_r)` and keeps one outside it, for every
+  threshold (E9).
 - **Gaps.** The proof of Lemma 1 derives uniqueness from Observation 2, which gives only existence;
   uniqueness follows from the vertex-disjointness of the cycles (E1). Section 2.2 calls `M[r]` the
   score of the best network, which counts the quartets of `Q` displayed, while `M[r]` counts those
@@ -372,12 +377,38 @@ of length 3 below the reticulation instead, `xy|zw` is the most probable, at abo
 numbers of gene trees, Quartet Filtering drops `xy|zw`, the only quartet of `Q(N_r)` on these taxa,
 and keeps one that is not in `Q(N_r)` ([`Camus.NMSC.anomaly_filterQuartets`](Camus/Pipelines/NMSC/Anomaly.lean#L238)); and no tree of maximum
 quartet support is a displayed tree of `N` ([`Camus.NMSC.anomaly_astral`](Camus/Pipelines/NMSC/Anomaly.lean#L296)), an explicit instance of
-the section's remark on ASTRAL. The paper cites Ané et al. (2024) in Section 3.3, on ASTRAL and on
-the lack of a statistically consistent method, not for its filter. Outside the anomaly, CAMUS on the
-filtered quartets is in the situation of Section 3.2: the recovery of E7 holds under identifiability
-under inclusion and the tie-break ([`Camus.NMSC.nmsc_recovery_graph`](Camus/Pipelines/NMSC/Recovery.lean#L197)); without the tie-break the true
-network need not be the unique optimum, even when it is a tree
-([`Camus.NMSC.nmsc_uniqueness_counterexample`](Camus/Pipelines/NMSC/Uniqueness.lean#L84)).
+the section's remark on ASTRAL. The region is exact. For all parameters, `xy|zw` is strictly the
+least probable iff `γ²(1 − e^{−h₁}) + (1 − γ)²(1 − e^{−h₂}) + (e^ℓ − 1) < γ(1 − γ)(1 − e^{−L})`
+([`Brooqs.net32_anomalous_iff`](Camus/External/NMSC/AnomalyRegion.lean#L140)), strictly the most probable iff the reverse strict inequality holds
+([`Brooqs.net32_regular_iff`](Camus/External/NMSC/AnomalyRegion.lean#L172)), and the three quartets have probability 1/3 at equality
+([`Brooqs.net32_boundary_iff_third`](Camus/External/NMSC/AnomalyRegion.lean#L200)): given that the lineages of `x` and `y` reach the reticulation
+apart, the right side is the probability that the lineage of `x` takes `S₁`, that of `y` takes `S₂`,
+and the first coalesces with the lineage of `z` along `L`; the left side adds the probabilities that
+both take the same side and coalesce on its hybrid edge, and the odds `e^ℓ − 1` against their
+reaching the reticulation apart. For 0 < γ < 1 and every L > 0 the anomaly holds when ℓ, h₁ and h₂
+are short enough ([`Brooqs.net32_anomalous_of_short`](Camus/External/NMSC/AnomalyRegion.lean#L222)), and some γ, h₁, h₂ and L give it iff ℓ <
+log(5/4) ≈ 0.223 ([`Brooqs.net32_exists_anomalous_iff_log`](Camus/External/NMSC/AnomalyRegion.lean#L351)). Inside the region, Quartet Filtering is
+defeated for every threshold and no tree of maximum quartet support is displayed
+([`Camus.NMSC.net32On_filterQuartets`](Camus/Pipelines/NMSC/AnomalyRegion.lean#L358), [`Camus.NMSC.net32On_astral`](Camus/Pipelines/NMSC/AnomalyRegion.lean#L376)); where the reverse strict
+inequality holds, the four taxa have the pattern that the filter presumes
+([`Camus.NMSC.net32On_regularOn_iff`](Camus/Pipelines/NMSC/AnomalyRegion.lean#L444)), and for every threshold 0 < t < 1 the filter eventually
+returns exactly the quartets of `Q(N_r)` ([`Camus.NMSC.net32On_filterQuartets_regular`](Camus/Pipelines/NMSC/AnomalyRegion.lean#L521)). Ané et al.
+give the probability of the displayed quartet in closed form for all parameters (Example 1, in a
+model with a correlation ρ of the parental origins of two lineages at a hybrid node, which is 0
+here) and prove that anomalous parameters exist (Example 1, Theorem 8); they note that Allman, Baños
+and Rhodes (2019) studied the anomaly zone of the 3₂-cycle for ρ = 0 (NANUQ, eq. (1) and Fig. 5).
+The formalization writes out and proves the region for ρ = 0 and all parameters; on its boundary,
+where the three quartets have probability 1/3, the behavior of the filter is not formalized. The
+other rootings of the same quarnet, with `z` and `w` on the two sides of the cycle or on one side,
+have the probabilities of `N₃₂` with lengths added ([`Brooqs.net32Sides_quartetCF`](Camus/External/NMSC/AnomalyShapes.lean#L635),
+[`Brooqs.net32OneSide_quartetCF`](Camus/External/NMSC/AnomalyShapes.lean#L983)), and exchanging the two sides of a cycle changes no probability
+([`Brooqs.Net.SideSwap.quartetCF_eq`](Camus/External/NMSC/Swap.lean#L331)). The paper cites Ané et al. (2024) in Section 3.3, on ASTRAL
+and on the lack of a statistically consistent method, not for its filter. Without the anomalous
+configuration (`NoAnomaly`), CAMUS on the filtered quartets is in the situation of Section 3.2: the
+recovery of E7 holds under identifiability under inclusion and the tie-break, through the base tree
+of `N` ([`Camus.NMSC.nmsc_recovery_graph`](Camus/Pipelines/NMSC/Recovery.lean#L198)) and, when the root of `N` has an outgroup leaf, through
+every tree of `N` ([`Camus.NMSC.nmsc_recovery_builtOn`](Camus/Pipelines/NMSC/Trees.lean#L212)); without the tie-break the true network need
+not be the unique optimum, even when it is a tree ([`Camus.NMSC.nmsc_uniqueness_counterexample`](Camus/Pipelines/NMSC/Uniqueness.lean#L84)).
 
 **E10. Typos.**
 
@@ -592,10 +623,20 @@ reason.
   horizontal gene transfer. Under the network multispecies coalescent ([`Camus/External/NMSC/`](Camus/External/NMSC):
   networks described from the root, [`Brooqs.Net`](Camus/External/NMSC/Model.lean#L61), with Kingman's coalescent along their edges),
   Quartet Filtering with a small positive threshold is proved to return the quartets of `Q(N_r)`
-  outside the anomalous configuration, and to fail on a network in it (E9). Its conclusions are
+  outside the anomalous configuration, and to fail on a network in it, in an explicit region of its
+  parameters (E9). The model does not depend on the order of the two sides of a cycle: exchanging
+  them, with γ and 1 − γ, changes neither the distribution of the gene trees nor the displayed trees
+  nor the anomalous configuration ([`Brooqs.Net.SideSwap.geneTreeDist_eq`](Camus/External/NMSC/Swap.lean#L307),
+  [`Brooqs.Net.SideSwap.mem_displayed_iff`](Camus/External/NMSC/Swap.lean#L383), [`Brooqs.Net.SideSwap.anomalous_iff`](Camus/External/NMSC/Swap.lean#L436)). Its conclusions are
   stated for CAMUS's networks through a displayed tree of `N` that keeps its root,
   [`Camus.NMSC.baseTree`](Camus/Pipelines/NMSC/BaseTree.lean#L70), and the canonical network `Realization.graph (baseTree N) (pairs N)`, which
-  displays exactly the quartets that `N` displays ([`Camus.NMSC.graph_displaysQuartet_iff`](Camus/Pipelines/NMSC/Bridge.lean#L896)).
+  displays exactly the quartets that `N` displays ([`Camus.NMSC.graph_displaysQuartet_iff`](Camus/Pipelines/NMSC/Bridge.lean#L896)). When the
+  root of `N` has an outgroup leaf, recovery holds, under identifiability under inclusion and the
+  tie-break, through every tree of this graph in the sense of Definition 1
+  ([`Camus.NMSC.nmsc_recovery_builtOn`](Camus/Pipelines/NMSC/Trees.lean#L212)); these trees together display exactly `Q(N_r)`
+  ([`Camus.NMSC.displaysQuartet_iff_exists_builtOn`](Camus/Pipelines/NMSC/Trees.lean#L183)), and the displayed trees of `N` that delete, at
+  each cycle, the hybrid edge of a side with a node are the base trees of the exchanges of `N`
+  ([`Camus.NMSC.mem_nodeDisplayed_iff`](Camus/Pipelines/NMSC/Trees.lean#L487)).
 
 **Corrections.** Four claims of the paper are false (E5–E8). The formalization proves the closest
 correct statements, chosen with the author of the formalization:
@@ -666,7 +707,7 @@ on Lean's three standard axioms.
 | Section 3.2, the ASTRAL step | [`astral_maximizer_tendsto`](Camus/Pipelines/Astral.lean#L546), [`PhyloTree.rootedIso_of_induced_eq`](Camus/Pipelines/AstralTree.lean#L562) | – |
 | Section 3.2, the pipeline | [`pipeline_output_exists`](Camus/Pipelines/Pipeline.lean#L208), [`pipeline_tendsto`](Camus/Pipelines/Pipeline.lean#L486), [`pipeline_outgroup_tendsto`](Camus/Pipelines/Pipeline.lean#L632) | [`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99) |
 | Section 3.2, the basis (E8) | [`Counterexamples.camus_output_not_rootAboveNet`](Camus/Network/RootAbove/Example.lean#L414) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L187) |
-| Sections 3.3 and 3.4, under the network coalescent (E9) | [`Brooqs.Net.weakPattern`](Camus/External/NMSC/Pattern.lean#L881), [`Camus.NMSC.nmsc_filterQuartets_support`](Camus/Pipelines/NMSC/Recovery.lean#L100), [`Camus.NMSC.anomaly_filterQuartets`](Camus/Pipelines/NMSC/Anomaly.lean#L238), [`Camus.NMSC.anomaly_astral`](Camus/Pipelines/NMSC/Anomaly.lean#L296), [`Camus.NMSC.nmsc_recovery_graph`](Camus/Pipelines/NMSC/Recovery.lean#L197) | [`Brooqs.quartetCF_eq_of_components`](Camus/External/NMSC/Cycle.lean#L825) (Baños 2019), [`Brooqs.net32_anomaly`](Camus/External/NMSC/ThreeCycle.lean#L583), [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L187) |
+| Sections 3.3 and 3.4, under the network coalescent (E9) | [`Brooqs.Net.weakPattern`](Camus/External/NMSC/Pattern.lean#L881), [`Camus.NMSC.nmsc_filterQuartets_support`](Camus/Pipelines/NMSC/Recovery.lean#L100), [`Camus.NMSC.anomaly_filterQuartets`](Camus/Pipelines/NMSC/Anomaly.lean#L238), [`Camus.NMSC.anomaly_astral`](Camus/Pipelines/NMSC/Anomaly.lean#L296), [`Camus.NMSC.nmsc_recovery_graph`](Camus/Pipelines/NMSC/Recovery.lean#L198), [`Camus.NMSC.nmsc_recovery_builtOn`](Camus/Pipelines/NMSC/Trees.lean#L212), [`Brooqs.net32_anomalous_iff`](Camus/External/NMSC/AnomalyRegion.lean#L140), [`Camus.NMSC.net32On_filterQuartets`](Camus/Pipelines/NMSC/AnomalyRegion.lean#L358), [`Camus.NMSC.net32On_filterQuartets_regular`](Camus/Pipelines/NMSC/AnomalyRegion.lean#L521), [`Brooqs.Net.SideSwap.geneTreeDist_eq`](Camus/External/NMSC/Swap.lean#L307) | [`Brooqs.quartetCF_eq_of_components`](Camus/External/NMSC/Cycle.lean#L825) (Baños 2019), [`Brooqs.net32_anomaly`](Camus/External/NMSC/ThreeCycle.lean#L583), [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L187) |
 | Sections 3.3 and 3.4 | [`retainSecond_iff_ratio`](Camus/Pipelines/Filtering.lean#L34), [`Algorithm1.filterQuartets_mono`](Camus/Pipelines/Algorithm1.lean#L191), [`Coalescent.msc_pattern`](Camus/Pipelines/Coalescent/Quartets.lean#L496), [`Coalescent.msc_filterQuartets`](Camus/Pipelines/Coalescent.lean#L250), [`Coalescent.msc_filterQuartets_genes`](Camus/Pipelines/Coalescent/Sampling.lean#L198), [`Coalescent.filterBlock_keeps_second`](Camus/Pipelines/Coalescent.lean#L334) | – (the quartet probabilities of lean4-adr11) |
 
 The route check ([`scripts/route_check.py`](scripts/route_check.py), run in CI) compares the results that each formal proof uses
@@ -678,10 +719,15 @@ without citing Equations (1) and (3).
 
 ## 9. Not formalized
 
-- Under the network coalescent: the recovery of Section 3.2 through displayed trees of `N` other than
-  [`Camus.NMSC.baseTree`](Camus/Pipelines/NMSC/BaseTree.lean#L70), the symmetry of the model under the exchange of the two sides of a cycle, and
-  the parameters for which the anomalous configuration does defeat Quartet Filtering (one network on
-  which it does and one on which it does not are proved, E9).
+- Under the network coalescent: that every displayed tree of `N` in the model's sense
+  ([`Brooqs.Net.displayed`](Camus/External/NMSC/Displayed.lean#L58)) is a tree of the graph of `N`, which would state the recovery through
+  every tree in the model's own terms; it reduces to the clades below the vertices of the switchings
+  of a graph with several added edges ([`Camus.NMSC.exists_builtOn_of_switching_clades`](Camus/Pipelines/NMSC/Switchings.lean#L321), with the
+  exchange of the edge kept into one reticulation, [`RootedNetwork.cladeBelow_exchange`](Camus/Pipelines/NMSC/Switchings.lean#L238)). The region
+  of the anomaly for an arbitrary network, through the induced quarnet of its four taxa, which needs
+  an effective length for the network below the reticulation; Quartet Filtering on the boundary of
+  the region, where the three quartets have probability 1/3; and the model of Ané et al. with
+  correlated parental origins (ρ > 0).
 - The experiments (Sections 4 and 5), the software, and the supplement, which contains no
   mathematics.
 
@@ -800,10 +846,12 @@ coalescent of the maintainer's formalization of BROOQS; it consulted none of the
   A rule with a guarantee, or a characterization of the inputs whose best scores are concave in the
   number of reticulations, is open. The tie-break toward the fewest reticulations is computable with
   the same program: keep the least `k` whose row attains the unrestricted optimum `M[r]`.
-- **The network coalescent.** E9 shows one anomalous network on which Quartet Filtering keeps the
-  wrong quartets. Which parameters make the anomalous configuration defeat the filter, and whether a
-  filter that tests the pattern of all three frequencies, not only the gap between the two smallest,
-  avoids it, are open.
+- **The network coalescent.** On the 3-cycle above two taxa, Quartet Filtering is defeated in the
+  region of [`Brooqs.net32_anomalous_iff`](Camus/External/NMSC/AnomalyRegion.lean#L140) and, for 0 < t < 1, keeps exactly `Q(N_r)` under the
+  reverse strict inequality (E9); on the boundary, where the three quartets have probability 1/3, it
+  is open. The region for an arbitrary network, through its induced quarnets, and whether a filter
+  that tests the pattern of all three frequencies, not only the gap between the two smallest, avoids
+  the anomaly, are open.
 
 ### Simpler proofs
 

@@ -26,10 +26,10 @@ NMSC whose root has a leaf `z` as a child gives such a graph (`NMSC.graph_outgro
 the graph induce exactly the quartet trees of Q(N_r) together
 (`NMSC.displaysQuartet_iff_exists_builtOn`).
 
-The displayed trees of `N` in the model (`Brooqs.Net.displayed`) are reached through the exchange
-of the two sides of cycles (`Brooqs.Net.SideSwap`), which describes the same network: the gene
-trees, Q(N_r) and the threshold are unchanged (`Camus/Pipelines/NMSC/Swap.lean`), and CAMUS, given
-the base tree of the exchanged network `N'`, returns the graph of `N'`
+Some of the displayed trees of `N` in the model (`Brooqs.Net.displayed`) are reached through the
+exchange of the two sides of cycles (`Brooqs.Net.SideSwap`), which describes the same network: the
+gene trees, Q(N_r) and the threshold are unchanged (`Camus/Pipelines/NMSC/Swap.lean`), and CAMUS,
+given the base tree of the exchanged network `N'`, returns the graph of `N'`
 (`NMSC.nmsc_recovery_sideSwap`). The base trees of the exchanges are exactly the displayed trees of
 `N` that delete, at each cycle, the hybrid edge of a side with a node (`NMSC.nodeDisplayed`,
 `NMSC.mem_nodeDisplayed_iff`). The other displayed trees are the base trees of no exchange: they

@@ -41,6 +41,12 @@ its corollary) and [`Brooqs.quartetCF_eq_of_components`](Cycle.lean#L825) in `Cy
   ([`Brooqs.net32_long`](ThreeCycle.lean#L612)).
 - `GeneLaw.lean`: the gene tree distribution is a probability distribution, and independent gene
   trees with that law ([`Brooqs.Net.genes`](GeneLaw.lean#L150)).
+- `Swap.lean`: the exchange of the two sides of a cycle, with `γ` and `1 − γ`
+  ([`Brooqs.Net.SideSwap`](Swap.lean#L64)), which changes neither the distribution of the gene trees
+  ([`Brooqs.Net.SideSwap.geneTreeDist_eq`](Swap.lean#L307)) nor the displayed trees nor the anomalous configuration.
+- `AnomalyRegion.lean`: the exact region of the parameters of `N₃₂` in which the quartet it displays
+  is the least probable ([`Brooqs.net32_anomalous_iff`](AnomalyRegion.lean#L140)); `AnomalyShapes.lean`: the two other
+  rootings of the same quarnet, whose CFs are those of `N₃₂` with lengths added.
 - `Splits.lean`, `FourComponents.lean`, `Pairs.lean`, `Pattern.lean`: the CF pattern that Quartet
   Filtering presumes holds for every set of four taxa except in the anomalous configuration
   ([`Brooqs.Net.regularOn_of_not_anomalous`](Pattern.lean#L872)), and its weaker part holds always

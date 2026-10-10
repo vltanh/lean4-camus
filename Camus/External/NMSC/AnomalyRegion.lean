@@ -41,13 +41,16 @@ their parents independently; at `ρ = 1` all the lineages at a hybrid node take 
 With `ρ = 0` and their `t`, `s₀`, `s₁`, `s₂`, `γ₁`, `γ₂` read as `ℓ`, `L`, `h₁`, `h₂`, `γ`, `1 - γ`,
 their formula is the CF of `xy|zw` of `Brooqs.net32_quartetCF`, and for `s₁ = s₂ = 0` their
 simplified formula is `Brooqs.net32_quartetCF_excess`. They observe that the CF is least for
-`s₁ = s₂ = 0` and tends to `1/3 - (2/3)(1 - ρ)γ₁γ₂ < 1/3` as `t → 0` and `s₀ → ∞`, so that a
+`s₁ = s₂ = 0` and, with `t = 0` and `s₀ → ∞`, tends to `1/3 - (2/3)(1 - ρ)γ₁γ₂ ≤ 1/3`, so that a
 3₂-cycle is anomalous for some parameters, for every `ρ < 1` and `γ₁ ∈ (0, 1)`; their Theorem 8
 extends this existence statement to every 4-taxon network of type 1 or 2 that contains a 3₂-cycle.
-This file determines, for `ρ = 0` and the network `N₃₂` itself, the exact set of anomalous
-parameters (`Brooqs.net32_anomalous_iff`). Their remark that the CFs of a 3₂-cycle are those of a
-quartet tree whose internal edge may have negative length reads here: the internal edge has length
-`τ` with `e^{-τ} = u (1 + D)`, and `N₃₂` is anomalous iff `τ < 0`.
+Since their Example 1 gives the CF in closed form for all parameters, the exact region follows from
+it, though they do not write it out; they credit Allman et al. (2019) with a study of the anomaly
+zone of the 3₂-cycle for `ρ = 0`. This file writes out and proves, for `ρ = 0` and the network
+`N₃₂` itself, the exact set of anomalous parameters (`Brooqs.net32_anomalous_iff`). Their remark
+that the CFs of a 3₂-cycle are those of a quartet tree whose internal edge may have negative length
+reads here: the internal edge has length `τ` with `e^{-τ} = u (1 + D)`, and `N₃₂` is anomalous iff
+`τ < 0`.
 
 ## Main results
 
@@ -132,7 +135,8 @@ three quartets on `x, y, z, w` that `N₃₂` displays (`Brooqs.net32_displays`)
 CF than `xz|yw`, which has the same CF as `xw|yz`, iff
 `γ²(1 - e^{-h₁}) + (1 - γ)²(1 - e^{-h₂}) + (e^ℓ - 1) < γ(1 - γ)(1 - e^{-L})`.
 This is the anomaly of Ané et al. (2024) on the 3₂-cycle `N₃₂` under their NMSC(0): their Example 1
-shows that some parameters satisfy the inequality; here it is the exact condition. -/
+gives the CF in closed form and shows that some parameters satisfy the inequality; here the
+condition is written out and proved for all parameters. -/
 theorem net32_anomalous_iff {x y z w : X} (hxy : x ≠ y) (hxz : x ≠ z) (hxw : x ≠ w)
     (hyz : y ≠ z) (hyw : y ≠ w) (hzw : z ≠ w) (γ ℓ h₁ h₂ L : ℝ) :
     (net32 γ ℓ h₁ h₂ L x y z w).quartetCF x y z w <
@@ -212,7 +216,7 @@ theorem net32_boundary_iff_third {x y z w : X} (hxy : x ≠ y) (hxz : x ≠ z) (
 
 /-- **Short edges at the hybrid node make `N₃₂` anomalous.** Let `0 < γ < 1` and `L > 0`, and let
 `ε = log(1 + γ(1 - γ)(1 - e^{-L})/3)`, a positive number. If `ℓ`, `h₁` and `h₂` are at most `ε`,
-then `CF(xy|zw) < CF(xz|yw) = CF(xw|yz)`. So the anomaly needs no long edge in the cycle, unlike the
+then `CF(xy|zw) < CF(xz|yw)`. So the anomaly needs no long edge in the cycle, unlike the
 limit of Ané et al. (2024, Example 1): any `L > 0` will do, with short enough edges at the hybrid
 node. -/
 theorem net32_anomalous_of_short {x y z w : X} (hxy : x ≠ y) (hxz : x ≠ z) (hxw : x ≠ w)

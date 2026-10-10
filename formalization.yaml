@@ -25,7 +25,8 @@ project:
     argument; and a tree of a network need not be a basis for it (Section 3.2). Under the network
     coalescent, on a network in an anomalous configuration known from the literature, with suitable
     edge lengths, Quartet Filtering keeps a quartet that the network does not display and drops the
-    one it does (Sections 3.3 and 3.4). A corrected recovery theorem holds under identifiability under inclusion and a tie-break toward
+    one it does (Sections 3.3 and 3.4); for the 3-cycle above two taxa the region of parameters in
+    which this happens is determined, up to its boundary. A corrected recovery theorem holds under identifiability under inclusion and a tie-break toward
     the fewest reticulations.
   authors: ["The-Anh Vu-Le"]
   license: "Apache-2.0"
@@ -91,18 +92,21 @@ status:
     O(n^2 (|Q| + m^3 n)) of the program that computes them, Observation 2 of Warnow, Tabatabaee and
     Evans and the convergence of the quartets of SNPs under their site model, Section 3.2's argument
     as one statement about the SNP pipeline (ASTRAL's tree equals the true tree up to the order of
-    children, by Steel's theorem that quartets determine a tree), and Algorithm 1's test and its
-    motivation under the multispecies coalescent and the network multispecies coalescent. Refutes
+    children, by Steel's theorem that quartets determine a tree), Algorithm 1's test and its
+    motivation under the multispecies coalescent and the network multispecies coalescent, and under
+    the latter the recovery through every tree of the network with an outgroup (under
+    identifiability and the tie-break) and the symmetry of
+    the model under the exchange of the two sides of a cycle. Refutes
     Section 2.4's monotonicity claim for exact numbers of reticulations and its stopping rule, and
     Section 3.2's uniqueness claim (also with the fewest-reticulation tie-break, and in the site
     model under every hypothesis of its argument) and its claim that any tree of a network is a
     basis for it, and proves corrected versions; shows that Quartet Filtering keeps a quartet the
     network does not display under the network coalescent, on a network in the anomalous
-    configuration of Ané et al. (2024) with suitable edge lengths. Equation (1) is read over distinct quartets and Pairs(v) restricted to pairs that
-    give a network. Not formalized: recovery under the network coalescent through displayed trees
-    other than the base tree, the symmetry of that model under exchanging the two sides of a cycle,
-    the parameters for which the anomalous configuration defeats Quartet Filtering, and the
-    experiments.
+    configuration of Ané et al. (2024) with suitable edge lengths, and determines the region of
+    parameters in which this happens on the 3-cycle above two taxa, up to its boundary. Equation (1) is read over distinct quartets and Pairs(v) restricted to pairs that
+    give a network. Not formalized: that every displayed tree of a network of the network
+    coalescent, in the model's sense, is a tree of its graph in CAMUS's representation; the region
+    of the anomaly for arbitrary networks; and the experiments.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -163,8 +167,21 @@ automation:
         spend_usd: "not tracked"
         hardware: "local machine (Lean builds); model API"
       prompting_notes: "The maintainer chose the items that remained (\"1-3 seem ok. the first 2 points of 4 seems ok.\"), asked to copy the network coalescent of the formalization of BROOQS into the project, declined a shared library for now, and asked why the round took so long (\"Why are we taking so long? Are we trying to prove new results?\"), after which the network-coalescent work was wrapped up; before the push, the maintainer asked for a review (\"review then push\")."
+    - method: "agent"
+      models: ["claude-opus-5-5"]
+      framework: "Claude Code 2.1.296"
+      tool_setup: >-
+        Fifth round (10 October 2026): formalize-math-paper skill 2.2.0
+        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 3 sub-agents (at most
+        2 at once): two in separate git worktrees on recovery through every tree with the exchange
+        of the sides of a cycle, and on the region of the anomaly, and one read-only reviewer.
+      cost:
+        wall_time: "@@WALL5@@"
+        spend_usd: "not tracked"
+        hardware: "local machine (Lean builds); model API"
+      prompting_notes: "With the network-coalescent items of the report's Section 9 selected, the maintainer asked: \"Why don't you formalize this\"."
   spend_usd: "not tracked"
-  notes: "Four rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
+  notes: "Five rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
 fidelity:
   divergences: >-
     Equation (1) is read over the distinct quartets of Q, with their multiplicities as weights,

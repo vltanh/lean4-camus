@@ -33,8 +33,8 @@ gives each of them with positive parameters. Rooting the semidirected 3₂-cycle
 of a taxon gives `N₃₂`, on its tree edge gives `net32Sides` (`s₀ = a + b`), and on a hybrid edge
 gives `net32OneSide` (the hybrid edge from the node of `z` has length `s₂ = a + h₂`, and `s₀ = b`),
 each up to the exchange of the two sides of the cycle (with `γ` and `1 - γ`) and of the names `z`
-and `w`. The symmetry of the model under the exchange of the two sides is not formalized, so the
-side-exchanged networks are not covered here.
+and `w`. The side-exchanged networks have the same quartet CFs (`Brooqs.Net.SideSwap.quartetCF_eq`
+with `Brooqs.Net.SideSwap.swap_top`, in `Camus/External/NMSC/Swap.lean`).
 
 ## Main results
 

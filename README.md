@@ -7,45 +7,47 @@ phylogenetic network estimation*, Bioinformatics 42, Supplement 1 (2026), btag24
 <https://doi.org/10.1093/bioinformatics/btag245>. CAMUS takes a rooted binary tree `T` and a
 multiset `Q` of quartet trees, and adds edges to `T` to obtain a rooted level-1 phylogenetic network
 that displays as many quartets of `Q` as possible. The paper's Theorem 1 says that its dynamic
-program over `T` finds such a network. The formalization proves Lemmas 1 and 2 and Theorem 1, by the
-paper's arguments except at two steps, Theorem 1 against every network built on `T` in the sense of
-Definition 1, whose root may lie above the root of `T`; the running time and peak memory of
-Sections 2.3 and 2.4, for CAMUS written as a program in a cost semantics; the claim of Section 2.4,
-for the networks returned by backtracking through a recurrence of its own; and the steps of the
-paper's statistical arguments (Sections 3.2 to 3.4) inside the models they use, with the network
-multispecies coalescent for Quartet Filtering. It is unconditional: the results from the literature
-that the proofs use, Observation 2 and the site model of Warnow, Tabatabaee and Evans (2025), are
-proved here, the coalescent probabilities come from a Lean formalization of Allman, Degnan and
-Rhodes (2011), and the network coalescent from the maintainer's formalization of BROOQS. Four
-claims of the paper are false, and the formalization refutes them: the best score with exactly `k`
-reticulations can decrease as `k` grows, and the stopping rule can stop before a better score
-(Section 2.4); the true network need not be the unique optimum, even with the fewest reticulations,
-cycles of length at least five and an outgroup, so that the SNP pipeline can fail under every
-hypothesis of its consistency argument; and a tree of a network need not be a basis for it (Section
-3.2). Under the network coalescent, Quartet Filtering can keep a quartet outside `Q(N_r)` and drop
-the one inside it (Sections 3.3 and 3.4).
+program over `T` finds such a network. The formalization proves Lemmas 1 and 2 and Theorem 1, by the paper's arguments except at two steps,
+Theorem 1 against every network built on `T` in the sense of Definition 1, whose root may lie above
+the root of `T`; the running time and peak memory of Sections 2.3 and 2.4, for CAMUS written as a
+program in a cost semantics; the claim of Section 2.4, for the networks returned by backtracking
+through a recurrence of its own; and the steps of the paper's statistical arguments (Sections 3.2 to
+3.4) inside the models they use, with the network multispecies coalescent for Quartet Filtering. It
+is unconditional: the results from the literature that the proofs use, Observation 2 and the site
+model of Warnow, Tabatabaee and Evans (2025), are proved here, the coalescent probabilities come
+from a Lean formalization of Allman, Degnan and Rhodes (2011), and the network coalescent from the
+maintainer's formalization of BROOQS. Four claims of the paper are false, and the formalization
+refutes them: the best score with exactly `k` reticulations can decrease as `k` grows, and the
+stopping rule can stop before a better score (Section 2.4); the true network need not be the unique
+optimum, even with the fewest reticulations, cycles of length at least five and an outgroup, so that
+the SNP pipeline can fail under every hypothesis of its consistency argument; and a tree of a
+network need not be a basis for it (Section 3.2). Under the network coalescent, Quartet Filtering
+can keep a quartet outside `Q(N_r)` and drop the one inside it (Sections 3.3 and 3.4), on the
+anomalous 3-cycle in an explicit region of parameters, and away from its boundary only there.
 
 ## What is proved
 
 - The paper's results, each by the paper's proof where it gives one: Lemma 1 ([`Camus.lemma1`](Camus/Preliminaries/Lemmas.lean#L139),
-  [`Camus.lemma1_union`](Camus/Preliminaries/Lemmas.lean#L290)), Lemma 2 ([`Camus.lemma2`](Camus/Preliminaries/Lemmas.lean#L161)), Theorem 1 ([`Camus.theorem1`](Camus/DP/Theorem1.lean#L109), and over
-  Definition 1's class [`Camus.theorem1_builtOn`](Camus/DP/Definition1.lean#L76)), the running time `O(n²(|Q| + n))` and memory
-  `O(n⁴)` of Section 2.3 for CAMUS as a program, with `δ_T` in constant time
-  ([`Complexity.camus_array`](Camus/Complexity/Program.lean#L1090), [`Complexity.camus_time`](Camus/Complexity/Program.lean#L1193), [`Complexity.time_delta`](Camus/Complexity/Delta.lean#L746),
-  [`Complexity.storedIntegers_bound`](Camus/Complexity/Memory.lean#L181), and the peak memory [`Complexity.camus_memory`](Camus/Complexity/PeakMemory.lean#L391), with the
-  memory of each step declared in the program), the networks `N_k` of Section 2.4 returned by
-  backtracking
-  ([`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61), [`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499)), the running time
-  `O(n²(|Q| + m³n))` of computing the modified array and backtracking ([`Complexity.camusBudget_time`](Camus/Complexity/BudgetProgram.lean#L682),
-  [`Complexity.camusBudgetNetworks_time`](Camus/Complexity/BudgetBacktracking.lean#L1302)), and the bound
-  of `n − 1` reticulations
-  ([`RootedNetwork.anchored_reticulation_bound`](Camus/Network/Reticulations.lean#L228), and for every rooted binary level-1 network
-  [`RootedNetwork.reticulationCount_le`](Camus/Network/TreeBased/Root.lean#L267)), tree-basedness ([`RootedNetwork.treeBased`](Camus/Network/TreeBased/Main.lean#L135)), the SNP pipeline
-  of Section 3.2 as one statement in the site model of Warnow et al. ([`pipeline_tendsto`](Camus/Pipelines/Pipeline.lean#L486)), and the
-  test of Algorithm 1 with its motivation under the multispecies coalescent
-  ([`Coalescent.msc_filterQuartets`](Camus/Pipelines/Coalescent.lean#L250)) and the network coalescent
-  ([`Camus.NMSC.nmsc_filterQuartets_support`](Camus/Pipelines/NMSC/Recovery.lean#L100), [`Camus.NMSC.anomaly_filterQuartets`](Camus/Pipelines/NMSC/Anomaly.lean#L238)). Two steps depart from the paper: uniqueness in Lemma 1, and the
-  networks of Definition 1 whose root lies above the root of `T` (see the audit summary).
+  [`Camus.lemma1_union`](Camus/Preliminaries/Lemmas.lean#L290)), Lemma 2 ([`Camus.lemma2`](Camus/Preliminaries/Lemmas.lean#L161)), Theorem 1 ([`Camus.theorem1`](Camus/DP/Theorem1.lean#L109), and over Definition
+  1's class [`Camus.theorem1_builtOn`](Camus/DP/Definition1.lean#L76)), the running time `O(n²(|Q| + n))` and memory `O(n⁴)` of
+  Section 2.3 for CAMUS as a program, with `δ_T` in constant time ([`Complexity.camus_array`](Camus/Complexity/Program.lean#L1090),
+  [`Complexity.camus_time`](Camus/Complexity/Program.lean#L1193), [`Complexity.time_delta`](Camus/Complexity/Delta.lean#L746), [`Complexity.storedIntegers_bound`](Camus/Complexity/Memory.lean#L181), and the peak
+  memory [`Complexity.camus_memory`](Camus/Complexity/PeakMemory.lean#L391), with the memory of each step declared in the program), the
+  networks `N_k` of Section 2.4 returned by backtracking ([`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61),
+  [`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499)), the running time `O(n²(|Q| + m³n))` of computing the modified
+  array and backtracking ([`Complexity.camusBudget_time`](Camus/Complexity/BudgetProgram.lean#L682), [`Complexity.camusBudgetNetworks_time`](Camus/Complexity/BudgetBacktracking.lean#L1302)), and
+  the bound of `n − 1` reticulations ([`RootedNetwork.anchored_reticulation_bound`](Camus/Network/Reticulations.lean#L228), and for every
+  rooted binary level-1 network [`RootedNetwork.reticulationCount_le`](Camus/Network/TreeBased/Root.lean#L267)), tree-basedness
+  ([`RootedNetwork.treeBased`](Camus/Network/TreeBased/Main.lean#L135)), the SNP pipeline of Section 3.2 as one statement in the site model of
+  Warnow et al. ([`pipeline_tendsto`](Camus/Pipelines/Pipeline.lean#L486)), and the test of Algorithm 1 with its motivation under the
+  multispecies coalescent ([`Coalescent.msc_filterQuartets`](Camus/Pipelines/Coalescent.lean#L250)) and the network coalescent
+  ([`Camus.NMSC.nmsc_filterQuartets_support`](Camus/Pipelines/NMSC/Recovery.lean#L100), [`Camus.NMSC.anomaly_filterQuartets`](Camus/Pipelines/NMSC/Anomaly.lean#L238)), with recovery,
+  under identifiability under inclusion and the tie-break, through every tree of the network when
+  its root has an outgroup leaf ([`Camus.NMSC.nmsc_recovery_builtOn`](Camus/Pipelines/NMSC/Trees.lean#L212)), the symmetry of the model
+  under the exchange of the sides of a cycle ([`Brooqs.Net.SideSwap.geneTreeDist_eq`](Camus/External/NMSC/Swap.lean#L307)), and the exact
+  region of the anomaly ([`Brooqs.net32_anomalous_iff`](Camus/External/NMSC/AnomalyRegion.lean#L140)). Two steps depart from the paper: uniqueness
+  in Lemma 1, and the networks of Definition 1 whose root lies above the root of `T` (see the audit
+  summary).
 - The cited results: Observation 2 of Warnow, Tabatabaee and Evans ([`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L187)), proved
   from general facts about switchings and cycles, and the convergence of the quartets of SNPs under
   their site model ([`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99)), with a hypothesis their model omits.
@@ -115,7 +117,8 @@ From [`REPORT.md`](REPORT.md):
   argument, an outgroup included (E7). A tree of a network need not be a basis for it, contrary to
   Section 3.2 (E8). Under the network coalescent, on a network in the anomalous configuration of
   Ané et al. (2024), with suitable edge lengths, Quartet Filtering keeps a quartet outside `Q(N_r)`
-  and drops the one inside it, against the aims of Section 3.3 (E9). Theorem 1 is unaffected.
+  and drops the one inside it, against the aims of Section 3.3; for the 3-cycle above two taxa the
+  region of parameters is determined up to its boundary (E9). Theorem 1 is unaffected.
 - **Gaps.** Lemma 1's proof derives uniqueness from Observation 2, which gives only existence;
   uniqueness follows from the vertex-disjointness of the cycles (E1). Section 2.2 calls `M[r]` the
   score of the best network, but `M[r]` counts the satisfied quartets, a constant fewer (E2). The
@@ -139,16 +142,18 @@ From [`REPORT.md`](REPORT.md):
 
 ## Credits
 
-- Formalized in three rounds, at the request of The-Anh Vu-Le, following the
+- Formalized in five rounds, at the request of The-Anh Vu-Le, following the
   [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) procedure (version 2.2.0):
   first by OpenAI's `gpt-6.1-sol` in Codex CLI, with three sub-agents (8 October 2026, 1.9 hours);
-  then restyled and audited again by Claude Opus 5.5 in Claude Code, which also proved
-  Observation 2 (10 October 2026, 1.8 hours, 9 sub-agents); then extended by Claude Opus 5.5 to the
-  parts that the second round left out: the cost semantics, backtracking and the stopping rule of
-  Sections 2.3 and 2.4, Definition 1's class, the models of Sections 3.2 and 3.4, and the
-  counterexamples (10 October 2026, 2.8 hours, 10 sub-agents); then, in a fourth round, the items
-  that remained: tree-basedness, the SNP pipeline as one statement, backtracking time and peak memory,
-  and Quartet Filtering under the network coalescent (10 October 2026, 3.2 hours, 5 sub-agents, then a review by 4 more).
+  then restyled and audited again by Claude Opus 5.5 in Claude Code, which also proved Observation 2
+  (10 October 2026, 1.8 hours, 9 sub-agents); then extended by Claude Opus 5.5 to the parts that the
+  second round left out: the cost semantics, backtracking and the stopping rule of Sections 2.3 and
+  2.4, Definition 1's class, the models of Sections 3.2 and 3.4, and the counterexamples (10 October
+  2026, 2.8 hours, 10 sub-agents); then, in a fourth round, the items that remained: tree-basedness,
+  the SNP pipeline as one statement, backtracking time and peak memory, and Quartet Filtering under
+  the network coalescent (10 October 2026, 3.2 hours, 5 sub-agents, then a review by 4 more); then,
+  in a fifth round, three items left under the network coalescent: recovery through every tree, the
+  exchange of the sides of a cycle, and the region of the anomaly (10 October 2026, @@R5@@).
 - No person has reviewed the proofs yet; independent agents reviewed the statements, the proofs, the
   findings and the account of the literature. [`CREDITS.md`](CREDITS.md) gives the details.
 
@@ -174,14 +179,15 @@ From [`REPORT.md`](REPORT.md), Section 10 (search of 10 October 2026):
 
 ## What's next
 
-Identifiability under inclusion fails even for networks whose cycles have length at least five
-(E7); a second tie-break toward the fewest displayed quartets selects the true network in the
+Identifiability under inclusion fails even for networks whose cycles have length at least five (E7);
+a second tie-break toward the fewest displayed quartets selects the true network in the
 counterexample, and whether it recovers every such network is open. Under the network coalescent,
-which parameters make the anomaly of E9 defeat Quartet Filtering, and whether a filter that tests
-all three frequencies avoids it, are open. Theorem 1 splits into Lemma 1 and a weighted packing of
-paths in a tree, which is how the formal proof is organized, and display by the clades of
-switchings makes every question about one added edge a finite computation. See [`REPORT.md`](REPORT.md),
-Section 11.
+the region in which the anomaly of E9 defeats Quartet Filtering is determined for the 3-cycle above
+two taxa, up to its boundary; the region for an arbitrary network, and whether a filter that tests
+all three frequencies avoids the anomaly, are open. Theorem 1 splits into Lemma 1 and a weighted
+packing of paths in a tree, which is how the formal proof is organized, and display by the clades of
+switchings makes every question about one added edge a finite computation. See [`REPORT.md`](REPORT.md), Section
+11.
 
 ## Building
 
@@ -208,7 +214,7 @@ writes.
 | [`Camus/Tree/`](Camus/Tree) | Lowest common ancestors, cycle footprints, Lemma 2 for families of added edges; hanging subtrees |
 | [`Camus/Network/`](Camus/Network) | Directed networks: the canonical network of a family of added edges is level-1 and built on `T` ([`Camus/Network/Realization/`](Camus/Network/Realization)), every network built on `T` is one up to isomorphism ([`Camus/Network/Completeness/`](Camus/Network/Completeness)), display is invariant under subdivision and isomorphism ([`Camus/Network/Subdivision/`](Camus/Network/Subdivision), [`Camus/Network/Isomorphism/`](Camus/Network/Isomorphism)), a tree displays its own quartets ([`Camus/Network/Baseline/`](Camus/Network/Baseline)), switchings and cycle cuts ([`Camus/Network/Cuts.lean`](Camus/Network/Cuts.lean)), display by the clades of switchings ([`Camus/Network/Clades.lean`](Camus/Network/Clades.lean)), the quartets displayed by `T + e` and the deeper donor ([`Camus/Network/SingleEdge.lean`](Camus/Network/SingleEdge.lean), [`Camus/Network/SingleEdge/`](Camus/Network/SingleEdge)), Definition 1's networks whose root lies above the root of `T` ([`Camus/Network/RootAbove/`](Camus/Network/RootAbove)), tree-basedness ([`Camus/Network/TreeBased/`](Camus/Network/TreeBased)), trees equal up to the order of children ([`Camus/Network/RootedIso.lean`](Camus/Network/RootedIso.lean)), reticulation counts ([`Camus/Network/Reticulations.lean`](Camus/Network/Reticulations.lean)) |
 | [`Camus/External/WarnowTabatabaeeEvans/`](Camus/External/WarnowTabatabaeeEvans) | Observation 2, and the site model with the convergence of the quartets of SNPs and the gap in Theorem 6, with a README on their source |
-| [`Camus/External/NMSC/`](Camus/External/NMSC) | The network multispecies coalescent, copied from the maintainer's formalization of BROOQS, and files written for CAMUS: the displayed quartets, the pattern of the quartet concordance factors of every four taxa (strict outside the anomalous configuration), the anomalous 3-cycle of E9, and independent gene trees; a README gives its source |
+| [`Camus/External/NMSC/`](Camus/External/NMSC) | The network multispecies coalescent, copied from the maintainer's formalization of BROOQS, and files written for CAMUS: the displayed quartets, the pattern of the quartet concordance factors of every four taxa (strict outside the anomalous configuration), the anomalous 3-cycle of E9 and its exact region, the exchange of the sides of a cycle, and independent gene trees; a README gives its source |
 | [`Camus/Preliminaries/`](Camus/Preliminaries) | Section 2.1: Lemmas 1 and 2 ([`Camus/Preliminaries/Lemmas.lean`](Camus/Preliminaries/Lemmas.lean)), with the steps of Lemma 1 ([`Camus/Preliminaries/Lemma1/`](Camus/Preliminaries/Lemma1)), and Figure 1 ([`Camus/Preliminaries/Figure1.lean`](Camus/Preliminaries/Figure1.lean)) |
 | [`Camus/DP/`](Camus/DP) | Section 2.2: the geometry of feasible families and hanging subtrees ([`Camus/DP/Packing.lean`](Camus/DP/Packing.lean), [`Camus/DP/Frontier.lean`](Camus/DP/Frontier.lean)), the recurrence's correctness ([`Camus/DP/Correctness.lean`](Camus/DP/Correctness.lean)), Theorem 1 ([`Camus/DP/Theorem1.lean`](Camus/DP/Theorem1.lean)), over Definition 1's class ([`Camus/DP/Definition1.lean`](Camus/DP/Definition1.lean)) |
 | [`Camus/Complexity/`](Camus/Complexity) | Sections 2.3 and 2.4: the cost monad ([`Camus/Complexity/Timed.lean`](Camus/Complexity/Timed.lean)), the preprocessing ([`Camus/Complexity/Tables.lean`](Camus/Complexity/Tables.lean)), `δ_T` in constant time ([`Camus/Complexity/Delta.lean`](Camus/Complexity/Delta.lean)), CAMUS as a program and its running time ([`Camus/Complexity/Program.lean`](Camus/Complexity/Program.lean), [`Camus/Complexity/Backtracking.lean`](Camus/Complexity/Backtracking.lean), [`Camus/Complexity/BudgetProgram.lean`](Camus/Complexity/BudgetProgram.lean), [`Camus/Complexity/BudgetBacktracking.lean`](Camus/Complexity/BudgetBacktracking.lean)), memory ([`Camus/Complexity/Memory.lean`](Camus/Complexity/Memory.lean), [`Camus/Complexity/Counts.lean`](Camus/Complexity/Counts.lean), and the peak in [`Camus/Complexity/Space.lean`](Camus/Complexity/Space.lean), [`Camus/Complexity/PeakMemory.lean`](Camus/Complexity/PeakMemory.lean), [`Camus/Complexity/PeakMemoryBudget.lean`](Camus/Complexity/PeakMemoryBudget.lean)) |
