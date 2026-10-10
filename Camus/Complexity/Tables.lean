@@ -15,17 +15,17 @@ label, or an internal vertex with its two children); the tables of parents, dept
 the table of the leaf of each taxon, are filled from this list. The table of lowest common
 ancestors is then filled pair by pair, each entry in `O(1)` from entries computed before it, by the
 recurrence `lca(p, q) = p` if `p = q`, `lca(parent p, q)` if `|p| ≥ |q|`, and `lca(p, parent q)`
-otherwise (`lca_recurrence`): looping over `p` and then over `q` in preorder, the entries
+otherwise (`Complexity.lca_recurrence`): looping over `p` and then over `q` in preorder, the entries
 `(parent p, q)` and `(p, parent q)` come first, since a vertex comes after its ancestors in
 preorder. The leaf sets are not tabulated: a taxon `a` is in the clade of `p` exactly when `p` is
 an ancestor of the leaf of `a`, and the ancestor test `p <+: x` is `lca(p, x) = p`, one read of the
-table.
+table (`Complexity.prefix_iff_lca`).
 
 ## Main results
 
 * `PhyloTree.preorder`: the vertices of `T` in preorder; `PhyloTree.preorder_ancestor_before`: a
   vertex comes after its proper ancestors.
-* `lca_recurrence`: the recurrence of the table of lowest common ancestors.
+* `Complexity.lca_recurrence`: the recurrence of the table of lowest common ancestors.
 * `Complexity.preprocess`: the preprocessing, as a program.
 * `Complexity.preprocess_correct`: the tables agree with `parent`, `List.length`, the kinds of the
   vertices, the leaves of the taxa and `Camus.lca` on the vertices of `T`
@@ -136,6 +136,8 @@ theorem reverse_preorder_descendant_before {t : PhyloTree} {A B : List Address}
 
 end PhyloTree
 
+namespace Complexity
+
 /-- `lca p p = p`. -/
 theorem lca_self (p : Address) : lca p p = p := (lca_eq_left_iff p p).mpr (List.prefix_refl p)
 
@@ -175,8 +177,6 @@ theorem lca_recurrence (p q : Address) :
 /-- The ancestor test from the table of lowest common ancestors: `p <+: x` iff
 `lca(p, x) = p`. -/
 theorem prefix_iff_lca (p x : Address) : p <+: x ↔ lca p x = p := (lca_eq_left_iff p x).symm
-
-namespace Complexity
 
 open Timed
 
@@ -307,7 +307,11 @@ def lcaTable (pre : List Address) (T : Tables) : Timed Tables :=
 
 /-- Section 2.3: the preprocessing. A traversal lists the vertices of `T` in preorder; the tables
 of parents, depths, kinds and leaves are filled from the list; then the table of lowest common
-ancestors. Returns the tables and the vertices of `T` in preorder. -/
+ancestors. Returns the tables and the vertices of `T` in preorder.
+
+Departure from the paper: the leaf sets of the vertices are not tabulated. The leaf of each taxon
+and the ancestor test (`Complexity.prefix_iff_lca`) answer the same membership queries in constant
+time: a taxon is in the clade of `p` iff `p` is an ancestor of its leaf. -/
 def preprocess (t : PhyloTree) : Timed (Tables × List Address) := do
   let es ← visit t [] [] 0 []
   let T ← forList record es Tables.empty

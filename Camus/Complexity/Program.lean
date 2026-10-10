@@ -20,11 +20,12 @@ The program (`Complexity.camus`) follows the paper.
    `lca(u, w)`, its weight `s_e(u, w)` of Equation (1) being computed in this preprocessing step
    by one scan of the distinct quartets of `Q` with their multiplicities, each tested in `O(1)` by
    `Complexity.delta` (`Complexity.weightScan`).
-3. `M` is filled bottom-up (`Complexity.fill`), in the reverse of the preorder: `M[v] = 0` at a
-   leaf, and otherwise `M[v] = max(M[l(v)] + M[r(v)], s(v))` (Equation (2)), where `s(v)` is the
-   maximum over the bucket of `v` of `s_e + s_dp` (Equation (3)), and `s_dp` is the sum of `M` over
-   the roots of the subtrees hanging off the cycle (Equations (4) and (5)), listed by walking from
-   `u` and from `w` up to the target (`Complexity.hangingList`).
+3. `M` is filled bottom-up (`Complexity.fill`), in the reverse of the preorder, a postorder in
+   which every vertex comes after its descendants: `M[v] = 0` at a leaf, and otherwise
+   `M[v] = max(M[l(v)] + M[r(v)], s(v))` (Equation (2)), where `s(v)` is the maximum over the
+   bucket of `v` of `s_e + s_dp` (Equation (3)), and `s_dp` is the sum of `M` over the roots of
+   the subtrees hanging off the cycle (Equations (4) and (5)), listed by walking from `u` and from
+   `w` up to the target (`Complexity.hangingList`).
 
 ## Main results
 
@@ -34,8 +35,14 @@ The program (`Complexity.camus`) follows the paper.
 * `Complexity.camus_optimal`: so, by Theorem 1, `M[root]` is the largest number of quartets of `Q`
   satisfied by a network built on `T`, attained by a network obtained by backtracking.
 * `Complexity.camus_time`: Section 2.3's running time, at most `600 n² (|Q| + n)` operations.
-* `Complexity.hangingList_spec`, `Complexity.enumerate_buckets`: the walks list the subtrees
-  hanging off a cycle, and the buckets are the sets Pairs(v).
+* `Complexity.mem_hanging_cross`, `Complexity.mem_hanging_ghost`: the roots of the subtrees hanging
+  off a cycle are `u`, `w` and the siblings of the vertices on the paths from the target to `u` and
+  to `w` (the terms of Equations (4) and (5)).
+* `Complexity.hangingList_spec`, `Complexity.enumerate_buckets`: the walks list these roots, and
+  the buckets are the sets Pairs(v).
+
+Backtracking, within the same bound, is in `Camus/Complexity/Backtracking.lean`, and the memory in
+`Camus/Complexity/Memory.lean`.
 
 The weights are computed with the test of `Camus/Complexity/Delta.lean`, which returns
 `EdgeAbove.satisfies`; that its sum is Equation (1) is
@@ -62,6 +69,8 @@ The running time follows the four steps of the paper's analysis.
 @[expose] public section
 
 namespace Camus
+
+namespace Complexity
 
 /-- The sibling of a vertex: the other child of its parent. -/
 def sibling (c : Address) : Address := parent c ++ [!(c.getLast?.getD false)]
@@ -149,7 +158,9 @@ theorem length_lt_of_strict {p x : Address} (h : p <+: x) (hne : p ≠ x) : p.le
 theorem prefix_of_le {a b x : Address} (ha : a <+: x) (hb : b <+: x) (hl : a.length ≤ b.length) :
     a <+: b := List.prefix_of_prefix_length_le ha hb hl
 
-namespace EdgeAbove
+section Hanging
+
+open EdgeAbove
 
 /-- A vertex of `T` hangs off the cycle `γ(e)` if it is not on the cycle and its parent is. -/
 theorem mem_hanging_of {t : PhyloTree} {e : Address × Address} {r : Address}
@@ -314,9 +325,7 @@ theorem mem_hanging_ghost {t : PhyloTree} {e : Address × Address} (he : Admissi
         omega
       · exact sibling_not_prefix hy0 hyw h.1
 
-end EdgeAbove
-
-namespace Complexity
+end Hanging
 
 open Timed DynamicProgramming
 
@@ -565,7 +574,7 @@ theorem hangingList_spec {t : PhyloTree} {T : Tables} (hT : T.Correct t) {e : Ad
       apply sibling_not_prefix hy0 hyw
       rw [← hzy, hzz]
     · intro r
-      rw [EdgeAbove.mem_hanging_ghost he hg, List.mem_append, List.mem_reverse, hmem,
+      rw [mem_hanging_ghost he hg, List.mem_append, List.mem_reverse, hmem,
         List.mem_singleton]
       constructor
       · rintro (⟨y, hyw, hy, rfl⟩ | rfl)
@@ -634,7 +643,7 @@ theorem hangingList_spec {t : PhyloTree} {T : Tables} (hT : T.Correct t) {e : Ad
           exact off _ e.1 y hyw hy (hpar ▸ (parent_prefix y').trans hyu) (Or.inr ⟨rfl, rfl⟩)
         · exact (not_end _ y hyw hy (Or.inr rfl)).1 (hzy.symm.trans h)
     · intro r
-      rw [EdgeAbove.mem_hanging_cross he hg, List.mem_append, List.mem_reverse, memW,
+      rw [mem_hanging_cross he hg, List.mem_append, List.mem_reverse, memW,
         List.mem_cons, List.mem_append, List.mem_reverse, memU, List.mem_singleton]
       constructor
       · rintro (h | h | h | h)

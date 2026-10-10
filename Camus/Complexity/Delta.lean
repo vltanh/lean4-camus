@@ -15,22 +15,7 @@ with a constant number of table reads and comparisons (`Complexity.delta`), whic
 
 `EdgeAbove.satisfies t e q` asks that the taxa of `q` be taxa of `T`, that `T` not induce `q`,
 and that some clade of the tree `T'` displayed by `T + e` through the added edge
-(`EdgeAbove.switchedClades`) cut `q`, that is, contain one side of `q` and avoid the other. Both
-tests reduce to ancestor tests between the leaves of `q`, the donor `u` and the recipient `w`:
-
-* `T` induces `ab|cd` iff the clade of `lca(a, b)` contains neither `c` nor `d`, or the clade of
-  `lca(c, d)` contains neither `a` nor `b` (`exists_clade_iff`): the clades containing `a` and `b`
-  are those of the ancestors of `lca(a, b)`, and the smallest is that of `lca(a, b)`.
-* The same holds in `T'` with its own lowest common ancestors (`exists_switchedClade_iff`). The
-  lowest vertex of `T'` above two leaves `x`, `y` of `T` (`Complexity.lowest`) is `lca(x, y)` if
-  both or neither lie below `w`; if only `x` does, it is the new vertex u' above `u` when `y` lies
-  below `u`, and `lca(u, y)` otherwise (`below_lowest_left`, `below_of_below_lowest`).
-* A leaf `x` lies below a vertex `p` of `T` in `T'` iff `p` is an ancestor of `x` in `T`, except
-  that the leaves below `w` leave the strict ancestors of `w` and join the strict ancestors of `u`
-  (`mem_switchedClade_iff`): a Boolean combination of ancestor tests among `p`, `u`, `w` and `x`.
-
-Each ancestor test `p <+: x` is one read of the table of lowest common ancestors and one comparison
-(`prefix_iff_lca`).
+(`EdgeAbove.switchedClades`) cut `q`, that is, contain one side of `q` and avoid the other.
 
 ## Main results
 
@@ -39,6 +24,27 @@ Each ancestor test `p <+: x` is one read of the table of lowest common ancestors
 * `Complexity.delta`: the test, as a program.
 * `Complexity.val_delta`: it computes `EdgeAbove.satisfies t e q`.
 * `Complexity.time_delta`: it takes at most `130` operations.
+
+## Proof (the paper's)
+
+Both tests reduce to ancestor tests between the leaves of `q`, the donor `u` and the recipient
+`w`, the vertices where the quartet attaches to the cycle.
+
+* `T` induces `ab|cd` iff the clade of `lca(a, b)` contains neither `c` nor `d`, or the clade of
+  `lca(c, d)` contains neither `a` nor `b` (`Complexity.exists_clade_iff`,
+  `Complexity.induced_iff`): the clades containing `a` and `b` are those of the ancestors of
+  `lca(a, b)`, and the smallest is that of `lca(a, b)`.
+* The same holds in `T'` with its own lowest common ancestors
+  (`Complexity.exists_switchedClade_iff`, `Complexity.switched_cut_iff`). The lowest vertex of
+  `T'` above two leaves `x`, `y` of `T` (`Complexity.lowest`) is `lca(x, y)` if both or neither
+  lie below `w`; if only `x` does, it is the new vertex u' above `u` when `y` lies below `u`, and
+  `lca(u, y)` otherwise (`Complexity.below_lowest_left`, `Complexity.below_of_below_lowest`).
+* A leaf `x` lies below a vertex `p` of `T` in `T'` iff `p` is an ancestor of `x` in `T`, except
+  that the leaves below `w` leave the strict ancestors of `w` and join the strict ancestors of `u`
+  (`Complexity.mem_switchedClade_iff`): a Boolean combination of ancestor tests among `p`, `u`,
+  `w` and `x`.
+* Each ancestor test `p <+: x` is one read of the table of lowest common ancestors and one
+  comparison (`Complexity.prefix_iff_lca`, `Complexity.val_ancestor`).
 -/
 
 @[expose] public section
@@ -238,8 +244,7 @@ theorem lowest_comm (e : Address × Address) (x y : Address) : lowest e x y = lo
 theorem not_prefix_donor {e : Address × Address} (he : ¬e.2 <+: e.1) {p : Address}
     (hwp : e.2 <+: p) : ¬p <+: e.1 := fun h => he (hwp.trans h)
 
-/-- A vertex below `lca(u, z)`... the strict ancestors of `u` below `p`: if `p <+: m` and `m` is a
-strict ancestor of `u`, so is `p`. -/
+/-- An ancestor of a strict ancestor `m` of `u` is a strict ancestor of `u`. -/
 theorem strict_of_prefix {p m u : Address} (hpm : p <+: m) (hmu : m <+: u) (hne : m ≠ u) :
     p <+: u ∧ p ≠ u := by
   refine ⟨hpm.trans hmu, fun h => hne ?_⟩
@@ -584,7 +589,7 @@ theorem val_belowOldTest (hT : T.Correct t) {e : Address × Address}
   simp
   tauto
 
-/-- The vertex of `T` named by a vertex of `T'`, if any, is a vertex of `T`. -/
+/-- The vertex `s` of `T'` comes from `T`: for `s = old p`, `p` is a vertex of `T`. -/
 def InTree (t : PhyloTree) : SwitchedVertex → Prop
   | old p => p ∈ t.nodes
   | donor => True
