@@ -5,21 +5,20 @@ public import Camus.Network.SingleEdge
 /-!
 # Moving a donor from above the root of `T`
 
-In a network built on `T` in the sense of Definition 1 whose root lies above the root of `T`, one
-added edge starts above the root of `T` and ends above a vertex `w` of `T`. Write such an edge as
-the pair `([], w)`: its donor end lies on the edge above the root `[]`, which only exists in the
-network. Its cycle meets `T` in the vertices strictly above `w` (`EdgeAbove.footprint t ([], w)`).
-This file moves the donor below the root: to the child `x` of the root that is an ancestor of `w`
-if `x ≠ w`, and to the other child of the root if `w` is a child of the root
-(`EdgeAbove.rootDonor`). The pair `EdgeAbove.lowerPair ([], w)` so obtained is admissible, its
-cycle meets `T` in a subset of the vertices of the old cycle, and the tree displayed through the
-added edge has the same splits: as unrooted trees, attaching `T_w` above the root of `T` or on the
-edge above `x` gives the same tree, and the clades differ only by complements, which cut the same
-quartets.
+A network built on `T` in the sense of Definition 1 whose root lies above the root of `T` may
+have an added edge that starts above the root of `T` and ends above a vertex `w` of `T`. Write
+such an edge as the pair `([], w)`: its donor end lies on the edge above the root `[]`, which only
+exists in the network. Its cycle meets `T` in the vertices strictly above `w`
+(`EdgeAbove.footprint t ([], w)`). This file moves the donor below the root: to the child `x` of
+the root that is an ancestor of `w` if `x ≠ w`, and to the other child of the root if `w` is a
+child of the root (`EdgeAbove.rootDonor`). The pair `EdgeAbove.lowerPair ([], w)` so obtained is
+admissible, and its cycle meets `T` in a subset of the vertices of the old cycle; so moving the
+donors keeps the cycles disjoint (`EdgeAbove.RootSeparated.image_lowerPair`). The tree displayed
+through the moved edge has the same splits (`Camus/Network/RootAbove/Splits.lean`).
 
 The file also passes from the tree `T⁺ = fork (leaf z) T` with an outgroup to `T`: the pairs
-`(true :: u, true :: w)` of `T⁺` are the pairs `(u, w)` of `T`, with the same cycle and the same
-splits on the taxa of `T`; the donor `[true]`, the root of `T` in `T⁺`, becomes the donor `[]`.
+`(true :: u, true :: w)` of `T⁺` are the pairs `(u, w)` of `T`, with the same cycle; the donor
+`[true]`, the root of `T` in `T⁺`, becomes the donor `[]` (`EdgeAbove.outgroup_rootSeparated`).
 
 ## Main results
 
@@ -27,15 +26,17 @@ splits on the taxa of `T`; the donor `[true]`, the root of `T` in `T⁺`, become
   with vertex-disjoint cycles.
 * `EdgeAbove.RootSeparated.image_lowerPair`, `EdgeAbove.RootSeparated.card_image_lowerPair`:
   moving the donors below the root gives a cycle-separated family with as many pairs.
-* `EdgeAbove.cuts_outgroup_iff`, `EdgeAbove.cuts_lowerPair_iff`: the splits displayed through an
-  added edge are unchanged on the taxa of `T`.
+* `EdgeAbove.outgroup_rootSeparated`, `EdgeAbove.outgroup_card_image`: the pairs of a
+  cycle-separated family of `T⁺` below the root of `T` give such a family of `T`.
+* `Quartet.cutBy_eq_of_compl`: complementary sets cut the same quartets.
 -/
 
 @[expose] public section
 
 namespace Camus
 
-/-- `p` is a strict ancestor of `q`. -/
+/-- `true :: p` is a strict ancestor of `true :: q` if and only if `p` is a strict ancestor of
+`q`. -/
 theorem prefix_ne_of_cons_true {p q : Address} :
     (true :: p <+: true :: q ∧ true :: p ≠ true :: q) ↔ (p <+: q ∧ p ≠ q) := by
   simp [List.cons_prefix_cons]

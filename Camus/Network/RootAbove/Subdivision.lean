@@ -170,7 +170,7 @@ theorem disjoint_outgroup_image (H : DisplayedSubdivision t N S) {z ρ ℓ : ℕ
 edges out of `ρ`, which keeps the root: the root of `T⁺` is the root `ρ` of `N⁺`, the wire above
 the leaf `z` is the edge from `ρ` to `ℓ`, the wire above the root of `T` is the root wire of `N`
 preceded by `ρ`, and the other wires are those of `H`. -/
-noncomputable def toOutgroup (H : DisplayedSubdivision t N S) (hN : N.RootedBinaryLevelOne)
+def toOutgroup (H : DisplayedSubdivision t N S) (hN : N.RootedBinaryLevelOne)
     {z ρ ℓ : ℕ} (hρ : ρ ∉ N.vertices) (hℓ : ℓ ∉ N.vertices) (hρℓ : ρ ≠ ℓ) (hz : z ∉ t.taxa) :
     SupportSubdivision (.fork (.leaf z) t) (N.withOutgroup z ρ ℓ)
       (insert (ρ, N.root) (insert (ρ, ℓ) S)) where

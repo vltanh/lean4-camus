@@ -29,6 +29,8 @@ anchored extensions.
   network, a vertex without children is a labelled leaf.
 * `SupportSubdivision.toDisplayed`, `RootedNetwork.AnchoredExtension.builtOn`: a network built on
   `T` with the root of `T` at its root is built on `T` in the sense of Definition 1.
+* `DisplayedSubdivision.toSupport`: a displayed subdivision whose root wire is the root alone is a
+  support subdivision.
 -/
 
 @[expose] public section
@@ -37,15 +39,15 @@ namespace Camus
 
 /-- The switching `S` of `N` gives the tree `T` of Definition 1, with the root of `N` at or above
 the root of `T`. Deleting the edges of `N` outside `S` deletes one of the two edges into each
-reticulation. The clean-up of Definition 1 then deletes unlabelled leaves, of which there are none
-(`RootedNetwork.switching_leaf_of_childless`), and suppresses the vertices with one child, a root
-with one child included. `DisplayedSubdivision t N S` says that the result is `T`: `S` is `T` with
-each edge replaced by a directed path, below a directed path from the root of `N` to the root of
-`T`. The map `original` sends the vertices of `T` injectively to vertices of `N`; for each
-non-root vertex `p` of `T`, `wire p` is the directed path of `N` that replaces the edge of `T`
-from `parent p` to `p`; and `rootWire` is the directed path from `N.root` to `original []`, which
-is `[N.root]` when the root of `T` is the root of `N` (`SupportSubdivision.toDisplayed`). The
-laws:
+reticulation; the tree of Definition 1 is the rooted binary tree obtained by deleting the
+unlabelled leaves, of which there are none (`RootedNetwork.switching_leaf_of_childless`), and
+suppressing the vertices with one child, a root with one child included. The structure says that
+this tree is `T`: `S` is `T` with each edge replaced by a directed path, below a directed path
+from the root of `N` to the root of `T`. The map `original` sends the vertices of `T` injectively
+to vertices of `N`; for each non-root vertex `p` of `T`, `wire p` is the directed path of `N`
+that replaces the edge of `T` from `parent p` to `p`; and `rootWire` is the directed path from
+`N.root` to `original []`, which is `[N.root]` when the root of `T` is the root of `N`
+(`SupportSubdivision.toDisplayed`). The laws:
 * `original` sends the leaf of `T` labelled `a` to `N.leaf a`, and `N` has the taxa of `T`;
 * the root wire runs from `N.root` to `original []` without repeating a vertex, and its vertices
   other than `original []` are not images of vertices of `T`;
@@ -57,7 +59,8 @@ laws:
   wire;
 * `S` is a switching of `N`.
 
-`SupportSubdivision` is the case `rootWire = [N.root]`. -/
+`SupportSubdivision` is the case `rootWire = [N.root]` (`SupportSubdivision.toDisplayed`,
+`DisplayedSubdivision.toSupport`). -/
 structure DisplayedSubdivision (t : PhyloTree) (N : RootedNetwork)
     (S : Finset (ℕ × ℕ)) where
   original : Address → ℕ
@@ -173,6 +176,28 @@ def toDisplayed {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
   switching := H.switching
 
 end SupportSubdivision
+
+/-- A displayed subdivision of `T` in `N` whose root wire is the root of `N` alone keeps the root:
+it is a support subdivision. -/
+def DisplayedSubdivision.toSupport {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
+    (H : DisplayedSubdivision t N S) (h : H.rootWire = [N.root]) : SupportSubdivision t N S where
+  original := H.original
+  wire := H.wire
+  original_injective := H.original_injective
+  root_preserved := by
+    have hlast := H.rootWire_laws.2.2.1
+    rw [h, List.getLast?_singleton, Option.some.injEq] at hlast
+    exact hlast.symm
+  taxa_preserved := H.taxa_preserved
+  leaves_preserved := H.leaves_preserved
+  wire_laws := H.wire_laws
+  interiors_disjoint := H.interiors_disjoint
+  vertices_covered := by rw [H.vertices_covered, h]; simp
+  edges_covered := by
+    have hS := H.edges_covered
+    rw [h, show wireEdges [N.root] = ∅ by simp [wireEdges], Finset.union_empty] at hS
+    exact hS
+  switching := H.switching
 
 /-- A network built on `T` with the root of `T` at its root (`RootedNetwork.AnchoredExtension`)
 is built on `T` in the sense of Definition 1. -/

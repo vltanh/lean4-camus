@@ -17,8 +17,9 @@ taxa of `T`, in two situations.
 * The moved donor: an edge from above the root of `T` to above `w` (the pair `([], w)`) and the
   edge of `EdgeAbove.lowerPair` cut the same quartets (`EdgeAbove.cuts_lowerPair_iff`). As
   unrooted trees, attaching `T_w` above the root of `T ∖ T_w` or on the edge above the child of
-  the root that contains `w` is the same; the clades differ only by complements within the taxa of
-  `T`, and complementary sets cut the same quartets (`Quartet.cutBy_eq_of_compl`).
+  the root that contains `w` is the same. The clades differ only by complements within the taxa
+  of `T`, which cut the same quartets (`Quartet.cutBy_eq_of_compl`), and by clades containing all
+  the taxa of `T`, which cut none.
 
 ## Main results
 

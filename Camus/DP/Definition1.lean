@@ -22,6 +22,15 @@ root of `T` in `N`.
 * `BudgetDP.exact_graph_optimal_builtOn`: the networks `N_k` of Section 2.4 are optimal among
   Definition 1's networks built on `T` with exactly `k` reticulations.
 * `RootedNetwork.builtOn_reticulation_bound`: Section 2.4's bound of `n − 1` reticulations.
+
+## Proof
+
+The paper's proof of Theorem 1 ranges over the networks obtained by adding edges with targets in
+`T`, and Section 2.2 excludes an edge that begins above the root of `T`. A network built on `T` in
+the sense of Definition 1 whose root lies above the root of `T` has such an edge. The proofs here
+replace the network by one built on `T` with the root kept, with the same displayed quartets and
+the same number of reticulations (`RootedNetwork.BuiltOn.exists_anchored`), and apply `theorem1`
+and `BudgetDP.exact_graph_optimal`, which follow the paper.
 -/
 
 @[expose] public section
@@ -59,8 +68,10 @@ and let `E` be a backtracking trace of `M` from the root. Then the network `Real
 * displays at least as many quartets of `Q` as any network built on `T` in the sense of
   Definition 1.
 
-The proof applies `theorem1` to the network built on `T` with the root kept that has the
-quartets of `N` (`RootedNetwork.BuiltOn.exists_anchored`). -/
+Departure from the paper: the paper's proof does not consider networks whose root lies above the
+root of `T`, whose edge beginning above the root of `T` has no pair in Pairs(r). The proof applies
+`theorem1` to the network built on `T` with the root kept that has the quartets of `N`
+(`RootedNetwork.BuiltOn.exists_anchored`). -/
 theorem theorem1_builtOn
     (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ) (hM : Array t (edgeWeight t Q) M)
@@ -95,8 +106,10 @@ satisfies `z` quartets of `Q` (with multiplicity); every network built on `T` in
 Definition 1 with exactly `k` reticulations satisfies at most `z` quartets of `Q`, and displays at
 most as many as `Realization.graph t E`.
 
-The proof applies `BudgetDP.exact_graph_optimal` to the network built on `T` with the root kept
-that has the reticulations and the quartets of `N` (`RootedNetwork.BuiltOn.exists_anchored`). -/
+Departure from the paper: the paper does not consider networks whose root lies above the root of
+`T`. The proof applies `BudgetDP.exact_graph_optimal` to the network built on `T` with the root
+kept that has the reticulations and the quartets of `N` (`RootedNetwork.BuiltOn.exists_anchored`).
+-/
 theorem exact_graph_optimal_builtOn
     (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ → Finset ℕ) (hM : Array t (edgeWeight t Q) M)

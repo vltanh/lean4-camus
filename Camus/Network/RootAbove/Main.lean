@@ -47,7 +47,8 @@ begin above a child of the root; the tree displayed through it keeps its splits.
 
 namespace Camus
 
-/-- A tree with an outgroup taxon `z` that is not a taxon of `T` is well-labelled. -/
+/-- If `T` is well-labelled and `z` is not a taxon of `T`, the tree `T⁺ = fork (leaf z) T` with
+the outgroup `z` is well-labelled. -/
 theorem PhyloTree.outgroup_wellLabelled {t : PhyloTree} (ht : t.WellLabelled) {z : ℕ}
     (hz : z ∉ t.taxa) : (PhyloTree.fork (.leaf z) t).WellLabelled := by
   change ([z] ++ t.labels).Nodup
@@ -58,8 +59,8 @@ its root above the root of `T`, has the same number of reticulations and display
 quartets as a network built on `T` with the root of `T` at its root. So the class of networks
 over which the dynamic program of Section 2.2 optimizes ("we cannot add an edge to T that begins
 above the root of T") loses nothing: the edge that begins above the root of `T` can begin above a
-child of the root instead. The network is the canonical network `Realization.graph t E'` of a
-cycle-separated family `E'`. -/
+child of the root instead. In the proof, `N'` is the canonical network `Realization.graph t E'`
+of a cycle-separated family `E'`. -/
 theorem RootedNetwork.BuiltOn.exists_anchored {t : PhyloTree} (ht : t.WellLabelled)
     {N : RootedNetwork} (hN : N.BuiltOn t) :
     ∃ N' : RootedNetwork, N'.AnchoredExtension t ∧
