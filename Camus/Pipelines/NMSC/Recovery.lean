@@ -1,6 +1,7 @@
 module
 
 public import Camus.Pipelines.NMSC.Filtering
+public import Camus.Pipelines.NMSC.Bridge
 public import Camus.Pipelines.Uniqueness
 
 /-!
@@ -13,11 +14,12 @@ configuration (`NMSC.NoAnomaly`) and a threshold `0 < t < t₀(N)`, almost surel
 numbers of genes, the support of the output of Quartet Filtering is Q(N_r)
 (`NMSC.nmsc_filterQuartets_support`): every quartet tree in Q(N_r) has positive probability, so it
 eventually appears among the quartet trees of the gene trees (`NMSC.eventually_mem_geneQuartets`).
-The corrected recovery theorem of Section 3.2 (`recovery`) then applies to CAMUS's networks
-(`NMSC.nmsc_recovery`), for a network `Nr` built on `T`, in the graph representation of CAMUS, that
-displays the quartet trees that `N` displays: that `Nr` exists and is built from `N` is a hypothesis
-here, since the networks `Brooqs.Net` of the NMSC and the graphs `RootedNetwork` of CAMUS are not
-related in the library.
+In the graph representation of CAMUS, `N` is the network `Realization.graph (baseTree N) (pairs N)`
+built on the base tree of `N`, which displays the same quartet trees
+(`NMSC.graph_displaysQuartet_iff`), so the support is Q(N_r) for that network too
+(`NMSC.nmsc_filterQuartets_graph`). The corrected recovery theorem of Section 3.2 (`recovery`)
+then applies (`NMSC.nmsc_recovery` for any network of CAMUS that displays the quartet trees of
+`N`, `NMSC.nmsc_recovery_graph` for the graph of `N` and its base tree).
 
 ## Main results
 
@@ -26,7 +28,10 @@ related in the library.
   appears.
 * `NMSC.nmsc_filterQuartets_support`: almost surely, eventually the support of the output of
   Quartet Filtering is Q(N_r).
-* `NMSC.nmsc_recovery`: with Section 3.2's corrected recovery theorem.
+* `NMSC.nmsc_filterQuartets_graph`: the same, with Q(N_r) the quartet trees displayed by the graph
+  of `N`.
+* `NMSC.nmsc_recovery`, `NMSC.nmsc_recovery_graph`: with Section 3.2's corrected recovery
+  theorem.
 -/
 
 @[expose] public noncomputable section
@@ -114,8 +119,9 @@ open DynamicProgramming in
 be independent, each with the law of the NMSC on a metric level-1 network `N` with distinct leaf
 labels on the taxa `L`, without the anomalous configuration, and let `0 < t < t₀(N)`. Let `Nr` be a
 rooted binary level-1 network of CAMUS built on the tree `T` that displays the quartet trees that
-`N` displays (`hbridge`: `Nr` stands for `N` in the graph representation), and assume, as
-`recovery` does, that `Nr` is identifiable under inclusion among the networks built on `T`. Almost
+`N` displays (`hbridge`; the graph of `N` is such a network, `NMSC.nmsc_recovery_graph`), and
+assume, as `recovery` does, that `Nr` is identifiable under inclusion among the networks built on
+`T`. Almost
 surely, for all large numbers `n` of genes, every network built on `T` that has the best score for
 the output `Q` of Quartet Filtering on the quartet trees of the first `n` gene trees, with the
 fewest reticulations among the networks with the best score, is isomorphic to `Nr`. The paper's
@@ -146,6 +152,61 @@ theorem nmsc_recovery {N : Brooqs.Net L} (hN : N.WellFormed) (htaxa : ∀ x : L,
   filter_upwards [nmsc_filterQuartets_support hN htaxa hna G hind hid hlaw ht ht₀] with ω hω
   filter_upwards [hω] with n hn R hR hopt hfew
   exact recovery T Nr hNr _ (fun q => (hn q).trans (hbridge q).symm) identifiable R hR hopt hfew
+
+/-- **Sections 3.3 and 3.4 in the graph representation.** Under the assumptions of
+`NMSC.nmsc_filterQuartets_support`, almost surely, for all large numbers `n` of genes, the quartet
+trees that Quartet Filtering returns are exactly those displayed by the network
+`Realization.graph (baseTree N) (pairs N)` of CAMUS, the graph of `N` built on its base tree
+(`NMSC.graph_displaysQuartet_iff`). -/
+theorem nmsc_filterQuartets_graph {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) (hna : NoAnomaly N) (G : ℕ → Ω → Finset (Finset L))
+    (hind : iIndepFun G P) (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) {t : ℝ} (ht : 0 < t)
+    (ht₀ : t < threshold N) :
+    ∀ᵐ ω ∂P, ∀ᶠ n in atTop, ∀ q,
+      q ∈ filterQuartets t (geneQuartets (fun i => G i ω) n) ↔
+        (Realization.graph (baseTree N) (pairs N)).DisplaysQuartet q := by
+  filter_upwards [nmsc_filterQuartets_support hN htaxa hna G hind hid hlaw ht ht₀] with ω hω
+  filter_upwards [hω] with n hn q
+  rw [hn q, graph_displaysQuartet_iff hN htaxa q]
+
+open DynamicProgramming in
+/-- **Sections 3.2 to 3.4 under the NMSC, in the graph representation.** Let the gene trees be
+independent, each with the law of the NMSC on a metric level-1 network `N` with distinct leaf
+labels on the taxa `L`, without the anomalous configuration, and let `0 < t < t₀(N)`. Let `T` be
+the base tree of `N` and `Nr = Realization.graph T (pairs N)` the graph of `N`, a rooted binary
+level-1 network built on `T` that displays the quartet trees of `N` (`NMSC.graph_anchoredExtension`,
+`NMSC.graph_displaysQuartet_iff`), and assume, as `recovery` does, that `Nr` is identifiable under
+inclusion among the networks built on `T`. Almost surely, for all large numbers `n` of genes,
+every network built on `T` that has the best score for the output `Q` of Quartet Filtering on the
+quartet trees of the first `n` gene trees, with the fewest reticulations among the networks with
+the best score, is isomorphic to `Nr`. -/
+theorem nmsc_recovery_graph {N : Brooqs.Net L} (hN : N.WellFormed) (htaxa : ∀ x : L, x ∈ N.taxa)
+    (hna : NoAnomaly N) (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
+    (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) {t : ℝ} (ht : 0 < t)
+    (ht₀ : t < threshold N)
+    (identifiable : ∀ R : RootedNetwork, R.AnchoredExtension (baseTree N) →
+      (∀ q, (Realization.graph (baseTree N) (pairs N)).DisplaysQuartet q →
+        R.DisplaysQuartet q) →
+      R.reticulationCount ≤ (Realization.graph (baseTree N) (pairs N)).reticulationCount →
+      Nonempty (R.Iso (Realization.graph (baseTree N) (pairs N)))) :
+    ∀ᵐ ω ∂P, ∀ᶠ n in atTop, ∀ R : RootedNetwork, R.AnchoredExtension (baseTree N) →
+      (∀ R' : RootedNetwork, R'.AnchoredExtension (baseTree N) →
+        score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+            (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R') ≤
+          score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+            (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R)) →
+      (∀ R' : RootedNetwork, R'.AnchoredExtension (baseTree N) →
+        (∀ R'' : RootedNetwork, R''.AnchoredExtension (baseTree N) →
+          score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+              (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R'') ≤
+            score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+              (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R')) →
+        R.reticulationCount ≤ R'.reticulationCount) →
+      Nonempty (R.Iso (Realization.graph (baseTree N) (pairs N))) :=
+  nmsc_recovery hN htaxa hna G hind hid hlaw ht ht₀ (baseTree N) _ (graph_anchoredExtension hN)
+    (graph_displaysQuartet_iff hN htaxa) identifiable
 
 end Genes
 
