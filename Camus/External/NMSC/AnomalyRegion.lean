@@ -19,10 +19,11 @@ so the displayed quartet `xy|zw` is strictly less probable than the two others i
 that is,
 `γ²(1 - e^{-h₁}) + (1 - γ)²(1 - e^{-h₂}) + (e^ℓ - 1) < γ(1 - γ)(1 - e^{-L})`,
 strictly more probable iff the reverse strict inequality holds, and the three CFs are `1/3` on the
-boundary. The right side is the chance that the lineages of `x` and `y` take different sides at the
-hybrid node, one given side each, and that the one on `S₁` then coalesces with the lineage of `z`;
-the left side collects the chances that they coalesce on a hybrid edge after taking the same side,
-and the odds `e^ℓ - 1` that they coalesce below the hybrid node.
+boundary. Given that the lineages of `x` and `y` reach the hybrid node apart, the right side is the
+probability that the lineage of `x` takes `S₁`, that of `y` takes `S₂`, and the first coalesces
+with the lineage of `z` on the edge of length `L`; the left side adds the probabilities that both
+take the same side and coalesce on its hybrid edge, and the odds `e^ℓ - 1` against their reaching
+the hybrid node apart.
 
 For a metric `N₃₂` with `0 < γ < 1` and `L > 0`, the anomaly holds as soon as `ℓ`, `h₁` and `h₂`
 are at most `log(1 + γ(1 - γ)(1 - e^{-L})/3)`, and it fails as soon as
