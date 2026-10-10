@@ -28,7 +28,7 @@ The file also passes from the tree `T⁺ = fork (leaf z) T` with an outgroup to 
   moving the donors below the root gives a cycle-separated family with as many pairs.
 * `EdgeAbove.outgroup_rootSeparated`, `EdgeAbove.outgroup_card_image`: the pairs of a
   cycle-separated family of `T⁺` below the root of `T` give such a family of `T`.
-* `Quartet.cutBy_eq_of_compl`: complementary sets cut the same quartets.
+* `Quartet.cutBy_complement`: complementary sets cut the same quartets.
 -/
 
 @[expose] public section
@@ -44,7 +44,7 @@ theorem prefix_ne_of_cons_true {p q : Address} :
 namespace PhyloTree
 
 /-- The clade of a vertex lies in the clade of each of its ancestors. -/
-theorem taxaAt_mono {t : PhyloTree} {x y : Address} (hxy : x <+: y) (hy : y ∈ t.nodes) :
+theorem taxaAt_subset_of_prefix {t : PhyloTree} {x y : Address} (hxy : x <+: y) (hy : y ∈ t.nodes) :
     t.taxaAt y ⊆ t.taxaAt x := by
   obtain ⟨r, rfl⟩ := hxy
   obtain ⟨s, hs⟩ := (t.mem_nodes_iff _).mp hy
@@ -58,14 +58,14 @@ theorem taxaAt_mono {t : PhyloTree} {x y : Address} (hxy : x <+: y) (hy : y ∈ 
     exact subtree_taxa_subset hs
 
 /-- The clade of the root is the set of taxa. -/
-theorem taxaAt_nil (t : PhyloTree) : t.taxaAt [] = t.taxa := by
+theorem taxaAt_root (t : PhyloTree) : t.taxaAt [] = t.taxa := by
   cases t <;> rfl
 
 /-- The clade of a vertex is a set of taxa of `T`. -/
-theorem taxaAt_subset {t : PhyloTree} {p : Address} (hp : p ∈ t.nodes) :
+theorem taxaAt_subset_taxa {t : PhyloTree} {p : Address} (hp : p ∈ t.nodes) :
     t.taxaAt p ⊆ t.taxa := by
-  rw [← taxaAt_nil]
-  exact taxaAt_mono List.nil_prefix hp
+  rw [← taxaAt_root]
+  exact taxaAt_subset_of_prefix List.nil_prefix hp
 
 /-- In `T⁺ = fork (leaf z) T`, the clade of the leaf `z` is `{z}`. -/
 theorem outgroup_taxaAt_false (t : PhyloTree) (z : ℕ) :
@@ -77,13 +77,13 @@ theorem outgroup_taxaAt_true (t : PhyloTree) (z : ℕ) (p : Address) :
     (PhyloTree.fork (.leaf z) t).taxaAt (true :: p) = t.taxaAt p := rfl
 
 /-- A tree with a vertex `[b]` is a fork, and `[!b]` is a vertex too. -/
-theorem sibling_mem_nodes {t : PhyloTree} {b : Bool} (h : [b] ∈ t.nodes) : [!b] ∈ t.nodes := by
+theorem root_sibling_mem_nodes {t : PhyloTree} {b : Bool} (h : [b] ∈ t.nodes) : [!b] ∈ t.nodes := by
   cases t with
   | leaf a => simp [nodes] at h
   | fork l r => cases b <;> simp [nodes, root_mem_nodes]
 
 /-- In a well-labelled fork, the clades of the two children of the root partition the taxa. -/
-theorem children_taxaAt {t : PhyloTree} (ht : t.WellLabelled) {b : Bool} (h : [b] ∈ t.nodes) :
+theorem root_children_taxaAt {t : PhyloTree} (ht : t.WellLabelled) {b : Bool} (h : [b] ∈ t.nodes) :
     t.taxaAt [b] ∪ t.taxaAt [!b] = t.taxa ∧ Disjoint (t.taxaAt [b]) (t.taxaAt [!b]) := by
   cases t with
   | leaf a => simp [nodes] at h
@@ -107,13 +107,13 @@ end PhyloTree
 namespace Quartet
 
 /-- A set containing the four taxa of `q` does not cut `q`. -/
-theorem cutBy_eq_false_of_superset (q : Quartet) {C : Finset ℕ} (h : q.taxa ⊆ C) :
+theorem cutBy_false_of_taxa_subset (q : Quartet) {C : Finset ℕ} (h : q.taxa ⊆ C) :
     q.cutBy C = false := by
   have := q.cutBy_not_whole C h
   simpa using this
 
 /-- A set disjoint from the four taxa of `q` does not cut `q`. -/
-theorem cutBy_eq_false_of_disjoint (q : Quartet) {C : Finset ℕ} (h : Disjoint q.taxa C) :
+theorem cutBy_false_of_taxa_disjoint (q : Quartet) {C : Finset ℕ} (h : Disjoint q.taxa C) :
     q.cutBy C = false := by
   simp only [cutBy, decide_eq_false_iff_not, not_or, not_and]
   obtain ⟨⟨a, ha⟩, ⟨b, hb⟩⟩ := q.sides_nonempty
@@ -123,7 +123,7 @@ theorem cutBy_eq_false_of_disjoint (q : Quartet) {C : Finset ℕ} (h : Disjoint 
 
 /-- Complementary sets cut the same quartets: if `A` and `B` are disjoint and together contain the
 four taxa of `q`, then `A` cuts `q` if and only if `B` does. -/
-theorem cutBy_eq_of_compl (q : Quartet) {A B : Finset ℕ} (hAB : q.taxa ⊆ A ∪ B)
+theorem cutBy_complement (q : Quartet) {A B : Finset ℕ} (hAB : q.taxa ⊆ A ∪ B)
     (hd : Disjoint A B) : q.cutBy A = q.cutBy B := by
   have h1 : q.sides.1 ⊆ A ∪ B := q.sides_subset_taxa.1.trans hAB
   have h2 : q.sides.2 ⊆ A ∪ B := q.sides_subset_taxa.2.trans hAB
@@ -185,7 +185,7 @@ theorem rootDonor_spec {t : PhyloTree} {w : Address} (hw : w ∈ t.nodes) (hw0 :
     rootDonor w ∈ t.nodes ∧ rootDonor w ≠ [] ∧ ¬w <+: rootDonor w := by
   match w, hw, hw0 with
   | [b], hw, _ =>
-    refine ⟨PhyloTree.sibling_mem_nodes hw, List.cons_ne_nil _ _, ?_⟩
+    refine ⟨PhyloTree.root_sibling_mem_nodes hw, List.cons_ne_nil _ _, ?_⟩
     simp [rootDonor, List.cons_prefix_cons]
   | b :: c :: w', hw, _ =>
     refine ⟨t.nodes_prefix_closed hw (by simp [rootDonor]), List.cons_ne_nil _ _, ?_⟩

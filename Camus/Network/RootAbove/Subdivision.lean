@@ -59,7 +59,8 @@ end PhyloTree
 
 /-- The parent of the vertex `true :: p` of `T⁺`, for `p` not the root of `T`, is
 `true :: parent p`. -/
-theorem parent_cons_true {p : Address} (hp : p ≠ []) : parent (true :: p) = true :: parent p := by
+theorem parent_cons_true_of_ne_nil {p : Address} (hp : p ≠ []) :
+    parent (true :: p) = true :: parent p := by
   cases p with
   | nil => exact absurd rfl hp
   | cons b p => simp [parent]
@@ -236,7 +237,7 @@ def toOutgroup (H : DisplayedSubdivision t N S) (hN : N.RootedBinaryLevelOne)
             exact H.rootWire_mem (List.dropLast_subset _ (List.mem_toFinset.mp hv))
           · exact H.rootWire_laws.2.2.2
       -- the wires of `H` below the root of `T`
-      · rw [H.outgroupWire_cons_true ρ ℓ hp'0, parent_cons_true hp'0]
+      · rw [H.outgroupWire_cons_true ρ ℓ hp'0, parent_cons_true_of_ne_nil hp'0]
         obtain ⟨h1, h2, h3, h4, h5⟩ := H.wire_laws p' hp' hp'0
         refine ⟨h1, h2, h3, h4, ?_⟩
         exact H.disjoint_outgroup_image hρ hℓ (fun v hv => H.interior_mem hp' hp'0 hv) h5

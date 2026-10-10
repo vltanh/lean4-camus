@@ -40,7 +40,7 @@ namespace Camus
 namespace DynamicProgramming
 
 /-- Networks that display the same quartets display the same quartets of `Q`. -/
-theorem repertoire_eq_of_displays_iff (Q : Multiset Quartet) {N P : RootedNetwork}
+theorem repertoire_congr_displays (Q : Multiset Quartet) {N P : RootedNetwork}
     (h : ∀ q, N.DisplaysQuartet q ↔ P.DisplaysQuartet q) : repertoire Q N = repertoire Q P := by
   classical
   ext q
@@ -48,10 +48,10 @@ theorem repertoire_eq_of_displays_iff (Q : Multiset Quartet) {N P : RootedNetwor
   exact and_congr_right (fun _ => h q)
 
 /-- Networks that display the same quartets satisfy the same quartets of `Q`. -/
-theorem novel_eq_of_displays_iff (t : PhyloTree) (Q : Multiset Quartet) {N P : RootedNetwork}
+theorem novel_congr_displays (t : PhyloTree) (Q : Multiset Quartet) {N P : RootedNetwork}
     (h : ∀ q, N.DisplaysQuartet q ↔ P.DisplaysQuartet q) : novel t Q N = novel t Q P := by
   unfold novel
-  rw [repertoire_eq_of_displays_iff Q h]
+  rw [repertoire_congr_displays Q h]
 
 end DynamicProgramming
 
@@ -87,11 +87,11 @@ theorem theorem1_builtOn
   -- a network built on `T` has the quartets of a network built on `T` with the root kept
   · intro N hN
     obtain ⟨N', hN', _, hq⟩ := hN.exists_anchored ht
-    rw [novel_eq_of_displays_iff t Q hq]
+    rw [novel_congr_displays t Q hq]
     exact hnovel N' hN'
   · intro N hN
     obtain ⟨N', hN', _, hq⟩ := hN.exists_anchored ht
-    rw [repertoire_eq_of_displays_iff Q hq]
+    rw [repertoire_congr_displays Q hq]
     exact hrep N' hN'
 
 namespace BudgetDP
@@ -128,11 +128,11 @@ theorem exact_graph_optimal_builtOn
   -- the root kept
   · intro N hN hNk
     obtain ⟨N', hN', hret, hq⟩ := hN.exists_anchored ht
-    rw [novel_eq_of_displays_iff t Q hq]
+    rw [novel_congr_displays t Q hq]
     exact hnovel N' hN' (hret.trans hNk)
   · intro N hN hNk
     obtain ⟨N', hN', hret, hq⟩ := hN.exists_anchored ht
-    rw [repertoire_eq_of_displays_iff Q hq]
+    rw [repertoire_congr_displays Q hq]
     exact hrep N' hN' (hret.trans hNk)
 
 end BudgetDP

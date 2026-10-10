@@ -51,7 +51,8 @@ theorem rootAboveNet_nbrs {v w : ℕ} (h : rootAboveNet.underlying.Adj v w) :
 
 /-- In a cycle, a vertex whose neighbours on the cycle are among `a ≠ b` is adjacent on the cycle
 to both. -/
-theorem cycle_adj_of_nbrs {G : SimpleGraph ℕ} {u v a b : ℕ} {c : G.Walk u u} (hc : c.IsCycle)
+theorem rootAbove_cycle_adj_of_nbrs {G : SimpleGraph ℕ} {u v a b : ℕ} {c : G.Walk u u}
+    (hc : c.IsCycle)
     (hv : v ∈ c.support) (hab : a ≠ b) (hsub : ∀ w, c.toSubgraph.Adj v w → w = a ∨ w = b) :
     c.toSubgraph.Adj v a ∧ c.toSubgraph.Adj v b := by
   have h2 := hc.ncard_neighborSet_toSubgraph_eq_two hv
@@ -62,7 +63,7 @@ theorem cycle_adj_of_nbrs {G : SimpleGraph ℕ} {u v a b : ℕ} {c : G.Walk u u}
   exact ⟨ha, hb⟩
 
 /-- A vertex with at most one neighbour on a cycle does not lie on it. -/
-theorem cycle_not_mem_of_nbr {G : SimpleGraph ℕ} {u v a : ℕ} {c : G.Walk u u}
+theorem rootAbove_cycle_not_mem_of_nbr {G : SimpleGraph ℕ} {u v a : ℕ} {c : G.Walk u u}
     (hc : c.IsCycle) (hsub : ∀ w, c.toSubgraph.Adj v w → w = a) : v ∉ c.support := by
   intro hv
   have h2 := hc.ncard_neighborSet_toSubgraph_eq_two hv
@@ -82,32 +83,32 @@ theorem rootAboveNet_cycle_edges {u : ℕ} (c : rootAboveNet.underlying.Walk u u
   have hmem : ∀ {v w}, c.toSubgraph.Adj v w → w ∈ c.support :=
     fun h => c.mem_verts_toSubgraph.mp (SimpleGraph.Subgraph.Adj.snd_mem h)
   -- the leaves are not on the cycle
-  have h4 : 4 ∉ c.support := cycle_not_mem_of_nbr hc
+  have h4 : 4 ∉ c.support := rootAbove_cycle_not_mem_of_nbr hc
     (fun w h => (rootAboveNet_nbrs (hnb h)).2.2.2.2.1 rfl)
-  have h5 : 5 ∉ c.support := cycle_not_mem_of_nbr hc
+  have h5 : 5 ∉ c.support := rootAbove_cycle_not_mem_of_nbr hc
     (fun w h => (rootAboveNet_nbrs (hnb h)).2.2.2.2.2.1 rfl)
-  have h6 : 6 ∉ c.support := cycle_not_mem_of_nbr hc
+  have h6 : 6 ∉ c.support := rootAbove_cycle_not_mem_of_nbr hc
     (fun w h => (rootAboveNet_nbrs (hnb h)).2.2.2.2.2.2.1 rfl)
   -- the neighbours on the cycle of `0`, `1`, `2`, `3`
   have hn0 : 0 ∈ c.support → c.toSubgraph.Adj 0 1 ∧ c.toSubgraph.Adj 0 3 := fun hv =>
-    cycle_adj_of_nbrs hc hv (by decide) (fun w h => (rootAboveNet_nbrs (hnb h)).1 rfl)
+    rootAbove_cycle_adj_of_nbrs hc hv (by decide) (fun w h => (rootAboveNet_nbrs (hnb h)).1 rfl)
   have hn1 : 1 ∈ c.support → c.toSubgraph.Adj 1 0 ∧ c.toSubgraph.Adj 1 2 := by
     intro hv
-    refine cycle_adj_of_nbrs hc hv (by decide) (fun w h => ?_)
+    refine rootAbove_cycle_adj_of_nbrs hc hv (by decide) (fun w h => ?_)
     rcases (rootAboveNet_nbrs (hnb h)).2.1 rfl with h' | h' | h'
     · exact Or.inl h'
     · exact Or.inr h'
     · exact absurd (h' ▸ hmem h) h6
   have hn2 : 2 ∈ c.support → c.toSubgraph.Adj 2 1 ∧ c.toSubgraph.Adj 2 3 := by
     intro hv
-    refine cycle_adj_of_nbrs hc hv (by decide) (fun w h => ?_)
+    refine rootAbove_cycle_adj_of_nbrs hc hv (by decide) (fun w h => ?_)
     rcases (rootAboveNet_nbrs (hnb h)).2.2.1 rfl with h' | h' | h'
     · exact Or.inl h'
     · exact Or.inr h'
     · exact absurd (h' ▸ hmem h) h4
   have hn3 : 3 ∈ c.support → c.toSubgraph.Adj 3 0 ∧ c.toSubgraph.Adj 3 2 := by
     intro hv
-    refine cycle_adj_of_nbrs hc hv (by decide) (fun w h => ?_)
+    refine rootAbove_cycle_adj_of_nbrs hc hv (by decide) (fun w h => ?_)
     rcases (rootAboveNet_nbrs (hnb h)).2.2.2.1 rfl with h' | h' | h'
     · exact Or.inl h'
     · exact Or.inr h'
@@ -250,7 +251,7 @@ theorem rootAboveNet_builtOn : rootAboveNet.BuiltOn cherryTree :=
 
 /-- The vertices of a path whose edges lie in `E` lie in every set that contains its first vertex
 and is closed under the edges of `E`. -/
-theorem wire_mem_of_closed {E : Finset (ℕ × ℕ)} {R : Finset ℕ}
+theorem rootAbove_wire_mem_of_closed {E : Finset (ℕ × ℕ)} {R : Finset ℕ}
     (hR : ∀ e ∈ E, e.1 ∈ R → e.2 ∈ R) (L : List ℕ) {x : ℕ} (hx : L.head? = some x)
     (hxR : x ∈ R) (hE : wireEdges L ⊆ E) : ∀ v ∈ L, v ∈ R := by
   induction L generalizing x with
@@ -269,7 +270,8 @@ theorem wire_mem_of_closed {E : Finset (ℕ × ℕ)} {R : Finset ℕ}
           (fun e he => hE (Finset.mem_insert_of_mem he)) v hv
 
 /-- A wire starts with its first vertex and a second one, joined by an edge of the wire. -/
-theorem wire_cons_cons {L : List ℕ} {x : ℕ} (hlen : 2 ≤ L.length) (hx : L.head? = some x) :
+theorem rootAbove_wire_cons_cons {L : List ℕ} {x : ℕ} (hlen : 2 ≤ L.length)
+    (hx : L.head? = some x) :
     ∃ b rest, L = x :: b :: rest := by
   match L, hlen, hx with
   | a :: b :: rest, _, hx =>
@@ -277,7 +279,7 @@ theorem wire_cons_cons {L : List ℕ} {x : ℕ} (hlen : 2 ≤ L.length) (hx : L.
     exact ⟨b, rest, by rw [hx]⟩
 
 /-- The second vertex of a wire is its last vertex or an interior one. -/
-theorem second_interior_or_last (x b : ℕ) (rest : List ℕ) :
+theorem rootAbove_second_interior_or_last (x b : ℕ) (rest : List ℕ) :
     b ∈ wireInterior (x :: b :: rest) ∨ (x :: b :: rest).getLast? = some b := by
   cases rest with
   | nil => exact Or.inr rfl
@@ -306,7 +308,7 @@ theorem rootAboveNet_not_anchored : ¬rootAboveNet.AnchoredExtension cherryTree 
   -- the wire above `C` runs from `0` through `1`
   obtain ⟨hlenC, _, hheadC, hlastC, hdisC⟩ := H.wire_laws [true] (by decide) (by decide)
   rw [show parent [true] = [] from rfl, hroot] at hheadC
-  obtain ⟨bC, restC, hLC⟩ := wire_cons_cons hlenC hheadC
+  obtain ⟨bC, restC, hLC⟩ := rootAbove_wire_cons_cons hlenC hheadC
   have hEC := hwireE [true] (by decide) (by decide)
   rw [hLC] at hEC hlastC hdisC
   have hbC : (0, bC) ∈ rootAboveNet.edges :=
@@ -320,7 +322,7 @@ theorem rootAboveNet_not_anchored : ¬rootAboveNet.AnchoredExtension cherryTree 
     · -- from `3`, the leaf `6` of `C` is not reachable
       exfalso
       rw [Realization.wireEdges_cons_cons] at hEC
-      have hmem := wire_mem_of_closed hclosed (bC :: restC) rfl (by rw [h]; decide)
+      have hmem := rootAbove_wire_mem_of_closed hclosed (bC :: restC) rfl (by rw [h]; decide)
         (fun e he => hEC (Finset.mem_insert_of_mem he))
       have hlast : (bC :: restC).getLast? = some 6 := by
         rw [← hC, ← hlastC, List.getLast?_cons_cons]
@@ -329,14 +331,14 @@ theorem rootAboveNet_not_anchored : ¬rootAboveNet.AnchoredExtension cherryTree 
   subst h1C
   -- so `1` lies inside the wire above `C`
   have h1int : 1 ∈ wireInterior (0 :: 1 :: restC) := by
-    rcases second_interior_or_last 0 1 restC with h | h
+    rcases rootAbove_second_interior_or_last 0 1 restC with h | h
     · exact h
     · rw [hlastC, hC] at h
       simp at h
   -- the wire above the cherry runs from `0`
   obtain ⟨hlenF, _, hheadF, hlastF, hdisF⟩ := H.wire_laws [false] (by decide) (by decide)
   rw [show parent [false] = [] from rfl, hroot] at hheadF
-  obtain ⟨bF, restF, hLF⟩ := wire_cons_cons hlenF hheadF
+  obtain ⟨bF, restF, hLF⟩ := rootAbove_wire_cons_cons hlenF hheadF
   have hEF := hwireE [false] (by decide) (by decide)
   rw [hLF] at hEF hlastF hdisF
   have hbF : (0, bF) ∈ rootAboveNet.edges :=
@@ -347,7 +349,7 @@ theorem rootAboveNet_not_anchored : ¬rootAboveNet.AnchoredExtension cherryTree 
   rcases hbF' with h | h
   -- through `1`: `1` would be the parent of the cherry, or inside two wires
   · subst h
-    rcases second_interior_or_last 0 1 restF with h | h
+    rcases rootAbove_second_interior_or_last 0 1 restF with h | h
     · have hdis : Disjoint (wireInterior (H.wire [false])) (wireInterior (H.wire [true])) :=
         H.interiors_disjoint (show [false] ∈ (cherryTree.nodes.erase [] : Set _) by decide)
           (show [true] ∈ (cherryTree.nodes.erase [] : Set _) by decide) (by decide)
@@ -360,7 +362,7 @@ theorem rootAboveNet_not_anchored : ¬rootAboveNet.AnchoredExtension cherryTree 
   -- through the reticulation `3`: the leaf `A` is not reachable
   · subst h
     rw [Realization.wireEdges_cons_cons] at hEF
-    have hmemF := wire_mem_of_closed hclosed (3 :: restF) rfl (by decide)
+    have hmemF := rootAbove_wire_mem_of_closed hclosed (3 :: restF) rfl (by decide)
       (fun e he => hEF (Finset.mem_insert_of_mem he))
     have hlastF' : (3 :: restF).getLast? = some (H.original [false]) := by
       rw [← hlastF, List.getLast?_cons_cons]
@@ -368,7 +370,7 @@ theorem rootAboveNet_not_anchored : ¬rootAboveNet.AnchoredExtension cherryTree 
     -- the wire above `A` starts at the parent of the cherry
     obtain ⟨hlenA, _, hheadA, hlastA, _⟩ := H.wire_laws [false, false] (by decide) (by decide)
     rw [show parent [false, false] = [false] from rfl] at hheadA
-    have hmemA := wire_mem_of_closed hclosed (H.wire [false, false]) hheadA hα
+    have hmemA := rootAbove_wire_mem_of_closed hclosed (H.wire [false, false]) hheadA hα
       (hwireE [false, false] (by decide) (by decide))
     have h4 := hmemA _ (List.mem_of_getLast? hlastA)
     rw [hA] at h4

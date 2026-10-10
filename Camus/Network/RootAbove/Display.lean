@@ -16,14 +16,14 @@ sense of Definition 1 with a network built on `T` with the root kept.
   of `N`.
 * The quartets displayed by the canonical network of a cycle-separated family `E`: those induced
   by `T`, and those cut by a clade of the tree displayed through one added edge
-  (`Realization.displays_iff_cuts`). This is Lemma 1 (`lemma1`) with the quartets displayed by
+  (`Realization.graph_displays_iff_cuts`). This is Lemma 1 (`lemma1`) with the quartets displayed by
   `T + e` (`Realization.single_displays_iff`).
 
 ## Main results
 
 * `RootedNetwork.withOutgroup_displays_iff`: `N⁺` and `N` display the same quartets avoiding `z`.
 * `RootedNetwork.withOutgroup_reachable_iff`: the outgroup does not connect vertices of `N`.
-* `Realization.displays_iff_cuts`: the quartets displayed by `Realization.graph t E`.
+* `Realization.graph_displays_iff_cuts`: the quartets displayed by `Realization.graph t E`.
 * `Quartet.induced_outgroup`: `T⁺` and `T` induce the same quartets on the taxa of `T`.
 -/
 
@@ -43,8 +43,8 @@ theorem induced_outgroup {t : PhyloTree} {z : ℕ} (hz : z ∉ t.taxa) {q : Quar
     exact hq.trans (Finset.subset_insert _ _)
   have hsup' : q.taxa ⊆ (PhyloTree.leaf z).taxa ∪ t.taxa := hq.trans Finset.subset_union_right
   simp only [induced, PhyloTree.clades, List.any_cons, List.any_append, List.any_nil,
-    decide_eq_true hsup, decide_eq_true hq, Bool.true_and, q.cutBy_eq_false_of_superset hsup',
-    q.cutBy_eq_false_of_disjoint hqz, Bool.false_or]
+    decide_eq_true hsup, decide_eq_true hq, Bool.true_and, q.cutBy_false_of_taxa_subset hsup',
+    q.cutBy_false_of_taxa_disjoint hqz, Bool.false_or]
 
 end Quartet
 
@@ -56,7 +56,7 @@ displayed through one added edge cuts. By Lemma 1 (`lemma1`), a displayed quarte
 not induce is displayed by `T + e` for an added edge `e`, and `Realization.single_displays_iff`
 gives the quartets displayed by `T + e`; conversely, `T + e` and `T` are subnetworks of the
 canonical network (`Realization.single_displays_full`, `DynamicProgramming.baseline_subset`). -/
-theorem displays_iff_cuts {t : PhyloTree} (ht : t.WellLabelled) {E : Finset Pair}
+theorem graph_displays_iff_cuts {t : PhyloTree} (ht : t.WellLabelled) {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) (q : Quartet) :
     (graph t E).DisplaysQuartet q ↔ q.taxa ⊆ t.taxa ∧
       (q.induced t = true ∨

@@ -39,7 +39,7 @@ def withOutgroup (N : RootedNetwork) (z ρ ℓ : ℕ) : RootedNetwork where
 variable {N : RootedNetwork} {z ρ ℓ : ℕ}
 
 /-- Counting the elements of `insert a s` with a property. -/
-theorem card_filter_insert_of_notMem {α : Type*} [DecidableEq α] {s : Finset α} {a : α}
+theorem withOutgroup_card_filter_insert {α : Type*} [DecidableEq α] {s : Finset α} {a : α}
     (ha : a ∉ s) (p : α → Prop) [DecidablePred p] :
     ((insert a s).filter p).card = (s.filter p).card + if p a then 1 else 0 := by
   rw [Finset.filter_insert]
@@ -77,7 +77,7 @@ theorem withOutgroup_filter_in (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.ver
       (X.filter (fun e => e.2 = v)).card + (if ℓ = v then 1 else 0) +
         (if N.root = v then 1 else 0) := by
   obtain ⟨h1, h2⟩ := withOutgroup_new_notMem hN hρ hℓ hX
-  rw [card_filter_insert_of_notMem h1, card_filter_insert_of_notMem h2]
+  rw [withOutgroup_card_filter_insert h1, withOutgroup_card_filter_insert h2]
 
 /-- The edges out of `v` of a subset `X` of the edges of `N`, with the two new edges added. -/
 theorem withOutgroup_filter_out (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vertices)
@@ -86,7 +86,7 @@ theorem withOutgroup_filter_out (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.ve
       (X.filter (fun e => e.1 = v)).card + (if ρ = v then 1 else 0) +
         (if ρ = v then 1 else 0) := by
   obtain ⟨h1, h2⟩ := withOutgroup_new_notMem hN hρ hℓ hX
-  rw [card_filter_insert_of_notMem h1, card_filter_insert_of_notMem h2]
+  rw [withOutgroup_card_filter_insert h1, withOutgroup_card_filter_insert h2]
 
 /-- The indegrees of `N⁺`: those of `N`, plus one at the root of `N` and at the new leaf. -/
 theorem withOutgroup_indegree (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vertices)
@@ -103,7 +103,7 @@ theorem withOutgroup_outdegree (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.ver
   withOutgroup_filter_out hN hρ hℓ (Finset.Subset.refl _) v
 
 /-- A vertex outside `N` has no edge of `N` into it. -/
-theorem indegree_eq_zero_of_notMem (hN : N.RootedBinaryLevelOne) {v : ℕ}
+theorem indegree_eq_zero_of_not_vertex (hN : N.RootedBinaryLevelOne) {v : ℕ}
     (hv : v ∉ N.vertices) : N.indegree v = 0 := by
   apply Finset.card_eq_zero.mpr
   apply Finset.eq_empty_iff_forall_notMem.mpr
@@ -112,7 +112,7 @@ theorem indegree_eq_zero_of_notMem (hN : N.RootedBinaryLevelOne) {v : ℕ}
   exact hv (hev ▸ (hN.2.1 e heN).2)
 
 /-- A vertex outside `N` has no edge of `N` out of it. -/
-theorem outdegree_eq_zero_of_notMem (hN : N.RootedBinaryLevelOne) {v : ℕ}
+theorem outdegree_eq_zero_of_not_vertex (hN : N.RootedBinaryLevelOne) {v : ℕ}
     (hv : v ∉ N.vertices) : N.outdegree v = 0 := by
   apply Finset.card_eq_zero.mpr
   apply Finset.eq_empty_iff_forall_notMem.mpr
@@ -258,11 +258,11 @@ theorem withOutgroup_levelOne (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vert
     exact lt_irrefl _ (hlt v v hv)
   -- the new root has indegree 0
   · change (N.withOutgroup z ρ ℓ).indegree ρ = 0
-    rw [hin, indegree_eq_zero_of_notMem hN hρ, ite_eq_right hρℓ.symm, ite_eq_right hrootρ]
+    rw [hin, indegree_eq_zero_of_not_vertex hN hρ, ite_eq_right hρℓ.symm, ite_eq_right hrootρ]
   -- the new root has outdegree 2
   · right
     change (N.withOutgroup z ρ ℓ).outdegree ρ = 2
-    rw [hout, outdegree_eq_zero_of_notMem hN hρ, ite_eq_left rfl]
+    rw [hout, outdegree_eq_zero_of_not_vertex hN hρ, ite_eq_left rfl]
   -- every vertex is reachable from the new root
   · intro v hv
     rcases (hvert v).mp hv with h | h | h
@@ -299,9 +299,9 @@ theorem withOutgroup_levelOne (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vert
     by_cases haz : a = z
     · simp only [ite_eq_left haz]
       refine ⟨(hvert ℓ).mpr (Or.inr (Or.inl rfl)), ?_, ?_⟩
-      · rw [hin, indegree_eq_zero_of_notMem hN hℓ, ite_eq_left rfl, ite_eq_right hrootℓ,
+      · rw [hin, indegree_eq_zero_of_not_vertex hN hℓ, ite_eq_left rfl, ite_eq_right hrootℓ,
           ite_eq_right hρℓ.symm]
-      · rw [hout, outdegree_eq_zero_of_notMem hN hℓ, ite_eq_right hρℓ]
+      · rw [hout, outdegree_eq_zero_of_not_vertex hN hℓ, ite_eq_right hρℓ]
     · have haN := ha'.resolve_left haz
       have hlv := hleafN a haN
       have hlρ : N.leaf a ≠ ρ := fun h => hρ (h ▸ hlv)
@@ -320,7 +320,7 @@ theorem withOutgroup_levelOne (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vert
       ∃ a ∈ insert z N.taxa, (if a = z then ℓ else N.leaf a) = v
     rcases (hvert v).mp hv with h | h | h
     · subst v
-      rw [hout, outdegree_eq_zero_of_notMem hN hρ, ite_eq_left rfl]
+      rw [hout, outdegree_eq_zero_of_not_vertex hN hρ, ite_eq_left rfl]
       constructor
       · omega
       · rintro ⟨a, ha, hav⟩
@@ -331,7 +331,7 @@ theorem withOutgroup_levelOne (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vert
           have haN : a ∈ N.taxa := by simpa [haz] using ha
           exact absurd (hav ▸ hleafN a haN) hρ
     · subst v
-      rw [hout, outdegree_eq_zero_of_notMem hN hℓ, ite_eq_right hρℓ]
+      rw [hout, outdegree_eq_zero_of_not_vertex hN hℓ, ite_eq_right hρℓ]
       exact ⟨fun _ => ⟨z, Finset.mem_insert_self _ _, ite_eq_left rfl⟩, fun _ => rfl⟩
     · have hvρ : ρ ≠ v := fun h' => hρ (h' ▸ h)
       have hvℓ : v ≠ ℓ := fun h' => hℓ (h' ▸ h)
@@ -356,7 +356,7 @@ theorem withOutgroup_levelOne (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vert
     · exact absurd h hvρ
     · subst v
       left
-      rw [hin, hout, indegree_eq_zero_of_notMem hN hℓ, outdegree_eq_zero_of_notMem hN hℓ,
+      rw [hin, hout, indegree_eq_zero_of_not_vertex hN hℓ, outdegree_eq_zero_of_not_vertex hN hℓ,
         ite_eq_left rfl, ite_eq_right hrootℓ, ite_eq_right hρℓ]
       exact ⟨rfl, rfl⟩
     · have hvℓ : ℓ ≠ v := fun h' => hℓ (h' ▸ h)
@@ -399,10 +399,10 @@ theorem withOutgroup_reticulationCount (hN : N.RootedBinaryLevelOne) (hρ : ρ �
     constructor
     · rintro ⟨h | h | h, hd⟩
       · subst v
-        rw [indegree_eq_zero_of_notMem hN hρ, ite_eq_right hρℓ.symm, ite_eq_right hrootρ] at hd
+        rw [indegree_eq_zero_of_not_vertex hN hρ, ite_eq_right hρℓ.symm, ite_eq_right hrootρ] at hd
         omega
       · subst v
-        rw [indegree_eq_zero_of_notMem hN hℓ, ite_eq_left rfl, ite_eq_right hrootℓ] at hd
+        rw [indegree_eq_zero_of_not_vertex hN hℓ, ite_eq_left rfl, ite_eq_right hrootℓ] at hd
         omega
       · have hvℓ : ℓ ≠ v := fun h' => hℓ (h' ▸ h)
         rw [ite_eq_right hvℓ] at hd

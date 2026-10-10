@@ -36,7 +36,7 @@ begin above a child of the root; the tree displayed through it keeps its splits.
    Its canonical network `N'` is built on `T` with the root kept and has `|E'| = |E⁺|`
    reticulations, as many as `N⁺` and `N` (`Realization.reticulationCount_eq_card`,
    `RootedNetwork.Iso.reticulationCount_eq`).
-4. By Lemma 1 and the quartets displayed by `T + e` (`Realization.displays_iff_cuts`), the
+4. By Lemma 1 and the quartets displayed by `T + e` (`Realization.graph_displays_iff_cuts`), the
    canonical networks of `E⁺` and `E'` display the quartets induced by `T⁺` and `T`, which agree
    on the taxa of `T` (`Quartet.induced_outgroup`), and the quartets cut by the trees displayed
    through single edges, which agree pair by pair (`EdgeAbove.cuts_outgroup_iff`,
@@ -118,7 +118,7 @@ theorem RootedNetwork.BuiltOn.exists_anchored {t : PhyloTree} (ht : t.WellLabell
         (Realization.graph t (F.image EdgeAbove.lowerPair)).DisplaysQuartet q) := by
       intro hqt
       have hqz : z ∉ q.taxa := fun h => hz (hqt h)
-      rw [Realization.displays_iff_cuts ht' hEp, Realization.displays_iff_cuts ht hE',
+      rw [Realization.graph_displays_iff_cuts ht' hEp, Realization.graph_displays_iff_cuts ht hE',
         Quartet.induced_outgroup hz hqt]
       have hsub : q.taxa ⊆ (PhyloTree.fork (.leaf z) t).taxa := by
         rw [PhyloTree.outgroup_taxa]
