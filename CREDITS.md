@@ -1,38 +1,100 @@
 # Credits
 
+How this formalization was made, from the run logs and the session transcripts.
+
 ## Who
 
-- Human author and maintainer: The-Anh Vu-Le, from the workspace's Git identity and skill configuration. The user chose the target and approved the corrected recovery and budget statements, the cited conditional premise, and completion of the directed-network library.
-- Formalization: Codex CLI 0.162.0-alpha.2 with model `gpt-6.1-sol`, as recorded by the local session transcripts. Work began from an empty project, with no imported Lean draft.
-- Procedure: [formalize-math-paper](https://github.com/vltanh/formalize-math-paper), version 2.2.0. Statements were reviewed before proofs and recorded in commit `f51f064`.
-- Review: independent collaborating agents checked the published JATS source, proof routes, graph bridges, budget recurrence, cost model, findings and literature. No human mathematical review or paper-author endorsement is claimed.
+- **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose its scope (the
+  directed-graph model of networks, the corrected statements of Sections 2.4 and 3.2) and asked for
+  the second round.
+- **Formalization:** two AI systems, in two rounds. The first formalization was made by OpenAI's
+  `gpt-6.1-sol` in Codex CLI 0.162.0-alpha.2, from an empty project, with three sub-agents. The
+  second round, a restyle with a new audit, was made by Claude Opus 5.5 (`claude-opus-5-5`,
+  Anthropic) in Claude Code 2.1.296 (VS Code extension), in one session with sub-agents.
+- **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill,
+  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in both rounds.
+- **Review:** no person has reviewed the proofs. In each round, agents other than the provers
+  reviewed the statements against the paper and compared the proofs with the paper's; in the second
+  round, other agents also checked the report's findings and its account of the literature against
+  their sources.
 
-## First formalization, 8–9 October 2026 UTC
+## The first formalization (8 October 2026)
 
-- The parent agent set up the pinned Lean/Mathlib project, archived the source, proved scalar DP geometry, literal equation/frontier bridges, baseline display and general subdivision invariance, assembled the main theorem, and integrated the checks and packaging.
-- Three distinct subagents worked on graph completeness, directed realization and source/proof review. The reviewer was resumed for attribution, budget proofs and audit work. All used the inherited model; no model override was supplied.
-- The graph completeness agent proved extraction, admissibility, cycle geometry, vertex decoding, canonical isomorphism and suppression transport.
-- The realization agent proved degrees, DAG and cactus laws, support construction, canonical wire refinement, reticulation bounds, operation/storage counts and the directed budget counterexample.
-- The source-review agent independently checked statements and proof routes, proved isomorphism transport and quartet attribution, developed the exact-budget knapsack recurrence and prepared the audit report. Review of each large proof group came from an agent other than its prover.
-- Agents compiled against private artifact snapshots. The parent ran one integrating Lake build at a time.
+How it was made, from the first round's own record:
 
-Accounting runs from **2026-10-08 17:29:13 America/Chicago (22:29:13 UTC)** to the REPORT completion commit **a13d877**, at **2026-10-08 19:25:44 America/Chicago (2026-10-09 00:25:44 UTC)**. Figures come from local Codex JSONL transcripts, summarized in [docs/run-stats.json](docs/run-stats.json).
+- **The paper.** The main session set up the project on Lean and Mathlib `v4.35.0-rc4` and took the
+  publisher's JATS XML as the source of record, since no TeX source is public.
+- **The statements.** The main session wrote the definitions and the statements, with a
+  directed-graph model of rooted level-1 networks; a review sub-agent checked them against the
+  paper, and the baseline was committed. The author chose a conditional formalization, which
+  assumed Observation 2 of Warnow, Tabatabaee and Evans, and the corrected statements of Sections
+  2.4 and 3.2.
+- **The proofs.** The main session proved the geometry of the dynamic program, the forms of the
+  equations, the display of the tree and the invariance under subdivision, and assembled Theorem 1.
+  Three sub-agents proved the rest: one the completeness of the canonical networks, one their
+  realization (with the reticulation bounds, the operation counts and the counterexample of Section
+  2.4), and the review sub-agent, resumed eight times, the invariance under isomorphism, Lemma 1,
+  the exact-budget recurrence and the report. Each large group of proofs was reviewed by a
+  sub-agent other than its prover.
+- **The checks.** The main session ran the builds, the axiom audit, the route check and Comparator,
+  and wrote the Palomar files.
 
-- Elapsed time to the audited report: **1 h 56 min 31 s**.
-- Distinct subagents: 3; maximum active subagents: 3; maximum agents including the parent: 4.
-- Combined subagent active time: **2 h 30 min 15 s**, excluding idle intervals; including the parent: **4 h 26 min 46 s**. Active time includes tool execution and waiting inside an active turn.
-- Source reviewer: 9 own turns (8 resumptions); completeness agent: 3 (2 resumptions); realization agent: 2 (1 resumption). Their inherited fork histories are excluded.
-- Top-level tool requests: **980**. Nested calls inside orchestration cells and shell commands are not counted as additional top-level requests.
-- Model: `gpt-6.1-sol`; exact model-call counts are not exposed. The raw summary records distinct cumulative token-usage reports instead.
-- Monetary spend: not tracked. Local Lean builds and a remote model service were used.
-- Publishing, external preflight and registry submission were not performed.
+Figures, from 8 October 2026, 17:29 CDT, to the commit that completed its report (`a13d877`,
+19:25 CDT), as the first round computed them from the Codex session transcripts:
 
-Token accounting, with input split into uncached input and cache reads:
+- **Elapsed time:** 1.94 hours (1 hour 56 minutes).
+- **Sub-agents:** 3, at most 3 running at once, for 2.5 hours of working time in all (4.45 hours
+  with the main session).
+- **Tool calls and tokens:** 980 top-level tool calls in all. The sub-agents used 0.35 million
+  output tokens, 1.83 million uncached input tokens and 71 million cache reads; the main session
+  used 0.23 million output tokens, 1.04 million uncached input tokens and 40 million cache reads.
+- **Model calls:** all to `gpt-6.1-sol`; the transcripts do not record their number.
 
-| Work | Uncached input | Cache reads | Total input | Output |
-| --- | --- | --- | --- | --- |
-| Parent | 1,039,125 | 40,162,432 | 41,201,557 | 227,852 |
-| Subagents | 1,826,042 | 71,052,416 | 72,878,458 | 345,950 |
-| Total | 2,865,167 | 111,214,848 | 114,080,015 | 573,802 |
+## The restyle (10 October 2026)
 
-Reported reasoning output: 205,527 tokens, included in output. Cache-write input: 0. Counts use the latest cumulative usage at the report commit, subtracting each child's inherited baseline before its first own turn. They exclude packaging work after that commit. No raw transcript text or session identifiers are published. [`scripts/codex_run_stats.py`](scripts/codex_run_stats.py) implements this accounting.
+The author asked to "restyle it in your usual way": to present the formalization as the procedure's
+other formalizations are presented.
+
+How it was made:
+
+- **The library.** The main session moved the 87 modules into directories by the paper's sections
+  and topics, removed six modules that only re-exported others, and later removed three duplicated
+  lemmas. Six sub-agents, each on its own group of files, wrote a module docstring for every file,
+  rewrote the declaration docstrings in the paper's terms with the paper's labels, and marked the
+  paper's steps in the main proofs, changing no code; the main session checked that with comments
+  removed every file was unchanged.
+- **Observation 2.** The main session proved Observation 2 of Warnow, Tabatabaee and Evans, which
+  the first round had assumed (and which its authors state without proof), from the library's
+  lemmas on switchings and cycles, and removed the hypothesis from every result: the formalization
+  became unconditional. It also proved the second sentence of Lemma 1 for every network built on
+  the tree.
+- **The statements.** The main session restated the Challenge in the procedure's form: Theorem 1,
+  the claim of Section 2.4 for networks, the two refuted claims as negations, the corrected
+  Section 3.2 for networks, and theorems that show the definitions and hypotheses meaningful. It
+  replaced three statements of the first round that were generic lemmas about finite families.
+- **Review.** A sub-agent reviewed every statement against the paper's JATS source and found them
+  faithful; it also showed that CAMUS itself may return the wrong network on the counterexample of
+  Section 3.2, which the main session added to the library. A sub-agent searched the literature and
+  the paper's versions.
+- **The audit.** The main session rewrote the audit script, the routes of the paper's proofs, CI,
+  and wrote [`REPORT.md`](REPORT.md) and [`README.md`](README.md), renumbering the findings in the paper's order and adding
+  three (E1, E2, E7). A sub-agent
+  checked every finding of the report and every summary of another work against its source, and the
+  main session applied its corrections.
+
+Figures, from 10 October 2026, 08:21 CDT, to the commit that completes [`REPORT.md`](REPORT.md) (`d23396d`,
+10:08 CDT), taken from the session's transcript with the skill's `session_stats.py`:
+
+- **Elapsed time:** 1.78 hours (1 hour 47 minutes).
+- **Sub-agents:** 9 (six for the documentation, one for the review of the statements, one for the
+  literature, one for the verification of the report), at most 8 running at once, for 4.2 hours of
+  working time in all.
+- **Tool calls and tokens:** the sub-agents made 1,324 tool calls, with 3.71 million input tokens and
+  187 million cache reads; the main session made 245 tool calls, with 0.40 million output tokens,
+  0.86 million input tokens and 125 million cache reads. The sub-agents' transcripts record their
+  output tokens only in part (most messages carry the count at the start of their stream), so their
+  recorded 0.03 million output tokens is a lower bound.
+- **Model calls:** 1,020, all to Claude Opus 5.5 (234 by the main session, 786 by the sub-agents).
+
+The elapsed time includes the builds, which the transcript does not separate from the rest. The
+figures leave out the work after the report: the credits, and the final checks of the packaging.

@@ -91,7 +91,7 @@ From [`REPORT.md`](REPORT.md):
   [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) procedure (version 2.2.0):
   first by OpenAI's `gpt-6.1-sol` in Codex CLI, with three sub-agents (8 October 2026, 1.9 hours);
   then restyled and audited again by Claude Opus 5.5 in Claude Code, which also proved
-  Observation 2 (10 October 2026, ROUND2-HOURS hours, ROUND2-AGENTS sub-agents).
+  Observation 2 (10 October 2026, 1.8 hours, 9 sub-agents).
 - No person has reviewed the proofs yet; independent agents reviewed the statements, the proofs, the
   findings and the account of the literature. [`CREDITS.md`](CREDITS.md) gives the details.
 

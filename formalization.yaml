@@ -1,11 +1,22 @@
 version: "v0.4"
 project:
-  name: "CAMUS: conditional optimality and audited corrections"
+  name: "CAMUS: optimality of a dynamic program for level-1 phylogenetic networks"
   description: >-
-    Conditional Lean formalization of CAMUS over finite directed rooted binary
-    level-1 support-tree extensions. It develops graph realization and completeness,
-    switching and cut invariance, quartet attribution, dynamic programming and
-    explicit corrections to reticulation monotonicity and statistical recovery.
+    A Lean 4 and Mathlib formalization of Willson and Warnow, "CAMUS: scalable phylogenetic
+    network estimation" (Bioinformatics 2026). CAMUS adds edges to a rooted binary tree T to
+    obtain a rooted level-1 phylogenetic network that displays as many quartets of a multiset Q
+    as possible. The formalization proves the paper's Theorem 1 (its dynamic program is optimal
+    over every finite directed rooted binary level-1 network built on T), Lemmas 1 and 2, and the
+    reticulation-restricted dynamic program of Section 2.4, by the paper's arguments. It also
+    proves Observation 2 of Warnow, Tabatabaee and Evans (2025), a characterization of the
+    quartets displayed by a level-1 network that the paper's Lemma 1 rests on and that its
+    authors state without proof, so the formalization is unconditional.
+
+
+    Two claims of the paper are refuted: the best score with exactly k reticulations can
+    decrease as k grows (Section 2.4), and the true network need not be the unique optimal
+    network, which CAMUS itself may miss (Section 3.2). A corrected recovery theorem holds under
+    identifiability under inclusion and a tie-break toward the fewest reticulations.
   authors: ["The-Anh Vu-Le"]
   license: "Apache-2.0"
   responsible_maintainers: ["The-Anh Vu-Le"]
@@ -17,9 +28,9 @@ sources:
     authors: ["James Willson", "Tandy Warnow"]
     id: "doi:10.1093/bioinformatics/btag245"
     type: "article"
-    location: "https://academic.oup.com/bioinformatics/article/42/Supplement_1/btag245/8726316"
+    location: "https://doi.org/10.1093/bioinformatics/btag245"
     relationship: "formalizes"
-    note: "Published JATS/MathML source; conditional cited result and approved corrections are detailed in REPORT.md."
+    note: "The published version (Bioinformatics 42, Supplement 1, 2026), audited against its JATS XML (Europe PMC PMC13340232); REPORT.md lists the readings, the two refuted claims and the one departure from the paper's proofs."
     license: "CC-BY-4.0"
     author_endorsement: "not-contacted"
   - title: "Advances in Estimating Level-1 Phylogenetic Networks from Unrooted SNPs"
@@ -28,21 +39,22 @@ sources:
     type: "article"
     location: "https://doi.org/10.1089/cmb.2024.0710"
     relationship: "background"
-    note: "Observation 2 is an explicitly named, unproved hypothesis of the main formal theorem."
+    note: "Its Observation 2, stated there without proof and used by the paper's Lemma 1, is proved in Camus/External/WarnowTabatabaeeEvans."
     author_endorsement: "not-contacted"
 related_formalizations: []
 status:
   scope: >-
-    Conditional on named Warnow–Tabatabaee–Evans Observation 2. Proves unrestricted
-    CAMUS optimality and exact-count knapsack optimality over every finite directed
-    rooted binary level-1 extension with a root-preserving support subdivision.
-    Includes actual graph realization/completeness, quartet attribution, scalar
-    and exact-budget array existence, reticulation bounds and abstract unit-cost
-    operation/storage bounds. Recovery assumes explicit inclusion-identifiability,
-    minimum-reticulation tie-breaking and empirical-support convergence. Biological
-    model implications, experiments, executable-runtime correspondence and the
-    exact-budget early-stopping claim are not formalized. Counterexamples certify
-    the approved corrections; the directed budget refutation uses Observation 2 only for its universal upper bound.
+    Unconditional. Proves Lemmas 1 and 2, Theorem 1 and the four properties of the networks of
+    Section 2.4 over every finite directed rooted binary level-1 network built on the constraint
+    tree with its root preserved (the class over which the paper's dynamic program optimizes),
+    the bound of n - 1 reticulations for such networks, Observation 2 of Warnow, Tabatabaee and
+    Evans, unit-cost operation and memory counts for Sections 2.3 and 2.4, and the test of
+    Algorithm 1. Refutes Section 2.4's monotonicity claim for exact numbers of reticulations and
+    Section 3.2's uniqueness claim, and proves corrected versions. Equation (1) is read over
+    distinct quartets and Pairs(v) restricted to pairs that give a network. Not formalized: the
+    statistical models and consistency arguments of Section 3, Section 2.4's stopping rule and
+    backtracking, a cost semantics of an implementation, Definition 1's networks whose root lies
+    above the constraint tree's, and the experiments.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -52,54 +64,92 @@ automation:
       models: ["gpt-6.1-sol"]
       framework: "Codex CLI 0.162.0-alpha.2"
       tool_setup: >-
-        formalize-math-paper skill 2.2.0; three collaborating subagents,
-        maximum four agents including parent; Lean kernel and Mathlib,
-        private artifact snapshots, independent source and proof review.
+        First formalization (8 October 2026): formalize-math-paper skill 2.2.0
+        (https://github.com/vltanh/formalize-math-paper); a main session and three sub-agents
+        (at most three at once), with independent review of the statements and proofs.
       cost:
-        wall_time: "1 h 56 min 31 s to REPORT commit a13d877; 2 h 30 min 15 s subagent active time; 4 h 26 min 46 s including parent"
+        wall_time: "1.94 hours to the audited report; 2.5 hours of sub-agent working time (4.45 with the main session)"
         spend_usd: "not tracked"
-        hardware: "local Lean build environment; remote model service"
-      prompting_notes: >-
-        User invoked the formalization skill and authorized corrected consistency,
-        at-most monotonicity, an explicit Observation 2 hypothesis and completion
-        of the directed-network library and full theorem.
+        hardware: "local machine (Lean builds); model API"
+      prompting_notes: "The maintainer invoked the skill and approved a conditional formalization (later made unconditional), the corrected statements of Sections 2.4 and 3.2, and the directed-graph network library."
+    - method: "agent"
+      models: ["claude-opus-5-5"]
+      framework: "Claude Code 2.1.296"
+      tool_setup: >-
+        Second round (10 October 2026): formalize-math-paper skill 2.2.0
+        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 9
+        sub-agents (at most 8 at once): documentation, an independent statement
+        review, a literature search and a verification of the report.
+      cost:
+        wall_time: "1.78 hours to the audited report; 4.2 hours of sub-agent working time"
+        spend_usd: "not tracked"
+        hardware: "local machine (Lean builds); model API"
+      prompting_notes: "The maintainer asked to restyle the first formalization in the procedure's usual way; the round reorganized and documented the library, proved Observation 2, restated the Challenge and rewrote the audit."
   spend_usd: "not tracked"
-  notes: "Final run accounting is derived from local Codex JSONL transcripts; inherited fork histories are excluded. See CREDITS.md and docs/run-stats.json."
+  notes: "Two rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
 fidelity:
   divergences: >-
-    Conditional on named cited Observation 2. Equation 1 counts each observed
-    topology once with multiplicity as its weight. Candidate pairs obey the valid
-    directed-network condition implicit in the source edge-above construction.
-    The extension domain preserves the supplied root. Exact-budget monotonicity
-    is refuted and replaced by at-most-budget monotonicity. Automatic uniqueness
-    and consistency are replaced by explicit inclusion-identifiability,
-    minimum-reticulation tie-breaking and empirical-support convergence.
-    The main proof follows the paper's own cycle decomposition and Equations 1–5.
-    A supplementary Lemma 1 representation bridge proves deletion/suppression
-    equivalent to the canonical endpoint graph, reusing Lemma 2 for ghost-wire
-    ownership without replacing the attribution argument.
+    Equation (1) is read over the distinct quartets of Q, with their multiplicities as weights,
+    as Section 2.3 allows (summing over the multiset would count multiplicities twice).
+    Pairs(v) is restricted to pairs that give a network (recipient not an ancestor of the donor,
+    ends not the root), as the paper's description of Pairs(v) intends; read literally it makes
+    the recurrence circular. "Built on T" is read with the root of T preserved, the class over
+    which the dynamic program optimizes. Section 2.4's recurrence is the formalization's own
+    (the paper describes only the meaning of M[v,k]); its networks are given by existence.
+    Section 2.3's bounds bound explicit operation counts under a unit-cost model. The
+    monotonicity claim of Section 2.4 is refuted for exact numbers of reticulations and proved
+    for at most k; the uniqueness claim of Section 3.2 is refuted, and recovery is proved under
+    identifiability under inclusion and a fewest-reticulation tie-break. Every proof follows the
+    paper's, except uniqueness in Lemma 1: the paper derives it from Observation 2, which gives
+    only existence, and the formalization proves it from the vertex-disjointness of the cycles.
 review:
   status: "agent-reviewed"
-  reviewers: ["Independent Codex source-review agent", "Independent Codex completeness reviewer"]
-  notes: "Published JATS statements, proof routes, graph bridges and findings reviewed; all-library axiom audit, source routes and Lean/NanoDa Comparator passed; no human mathematical endorsement claimed."
+  reviewers: ["Independent Codex review agents (first round)", "Independent Claude review agents (second round)"]
+  notes: "Statements checked against the published JATS source by agents other than their writers, in each round; proofs compared with the paper's; the report's findings and account of the literature checked against their sources. No person has reviewed the proofs."
 alignment:
-  namespace: "CamusResults"
+  namespace: "Camus.Challenge"
   statements:
     - source: "Theorem 1"
-      lean: "CamusResults.optimalNetwork"
+      lean: "Camus.Challenge.theorem1"
       module: "Solution"
       status: "proved"
-      note: "Full graph optimizer statement, conditional on named cited Observation 2; proved graph bridges."
-    - source: "Equation 1, weighted distinct-topology interpretation"
-      lean: "CamusResults.equation1"
+    - source: "Theorem 1, the hypotheses can be met"
+      lean: "Camus.Challenge.exists_array_trace"
       module: "Solution"
       status: "proved"
-    - source: "Section 2.4, approved correction"
-      lean: "CamusResults.atMostBudgetMonotone"
+    - source: "Definition 1, quartets of a tree"
+      lean: "Camus.Challenge.tree_displays_iff"
+      module: "Solution"
+      status: "proved"
+    - source: "Equation (1)"
+      lean: "Camus.Challenge.edgeWeight_eq"
+      module: "Solution"
+      status: "proved"
+    - source: "Section 2.4, the reticulation restriction"
+      lean: "Camus.Challenge.reticulation_restriction"
+      module: "Solution"
+      status: "proved"
+    - source: "Section 2.4, the modified array exists"
+      lean: "Camus.Challenge.exists_budgetArray"
+      module: "Solution"
+      status: "proved"
+    - source: "Section 2.4, monotonicity claim (refuted)"
+      lean: "Camus.Challenge.not_exactCountMonotone"
+      module: "Solution"
+      status: "proved"
+      note: "Refutes the paper's claim for exact numbers of reticulations."
+    - source: "Section 3.2, uniqueness claim (refuted)"
+      lean: "Camus.Challenge.not_uniqueOptimum"
+      module: "Solution"
+      status: "proved"
+      note: "Refutes the paper's claim."
+    - source: "Section 3.2, corrected recovery"
+      lean: "Camus.Challenge.recovery"
       module: "Solution"
       status: "adapted"
-    - source: "Section 3.2, approved corrected recovery"
-      lean: "CamusResults.correctedRecovery"
+      note: "Adds identifiability under inclusion and a fewest-reticulation tie-break."
+    - source: "Section 3.2, corrected recovery applies to trees"
+      lean: "Camus.Challenge.tree_identifiable"
       module: "Solution"
-      status: "adapted"
-acknowledgements: "Lean, Mathlib and the formalize-math-paper skill; source authors credited bibliographically."
+      status: "proved"
+acknowledgements: "Lean, Mathlib and the formalize-math-paper skill; the paper's authors are credited bibliographically."
