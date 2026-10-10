@@ -68,7 +68,7 @@ probability that c changes on e and no other edge in T is strictly positive."
 the number of gene trees increases, this multiset will be identical to Q(N_r) (when considered as a
 set), with probability converging to 1." Here the multiset is that of the quartets `ab|cd` of the
 SNPs, `a`, `b` in one state and `c`, `d` in the other, and "gene trees" means sites (the report's
-E9).
+E10).
 
 **The Lean statement.** The model is [`External.SiteModel`](SiteModel.lean#L316) in
 [`Camus/External/WarnowTabatabaeeEvans/SiteModel.lean`](SiteModel.lean) (its parameters, with the constraints of Section 4.2 and their designation of the reticulation edges, at least one of the two edges into each reticulation, are [`External.SiteParameters`](SiteModel.lean#L290)), and the convergence is [`External.support_tendsto`](Sampling.lean#L99) in
