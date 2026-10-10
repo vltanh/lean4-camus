@@ -2,6 +2,45 @@ module
 
 public import Camus.External.NMSC.FourComponents
 
+/-!
+# A pair of taxa that stays together
+
+Section 3.3 of CAMUS expects, for four taxa on which the network displays one quartet `xy|zw`, that
+`xy|zw` is strictly the most probable quartet. This file proves the lower bound behind it when the
+pair `x, y` hangs below a cut edge and stays together until it meets a third lineage: below a child
+of a tree node (`Brooqs.Net.tree_pair_bound`) or from a node of a side of a cycle
+(`Brooqs.Net.cycle_pair_bound`). With the four lineages relabelled so that the pair is `0, 1`, the
+expected score `Brooqs.expectedScore` of the forest at the tree node or at the top node of the cycle
+is at least `1/3 + (2/3) (1 - e^{-b})`, `b` the length of the edge above the pair; so the quartet CF
+of `xy|zw` exceeds `1/3`.
+
+## Main results
+
+* `Brooqs.IsForestDist`, `Brooqs.Net.isForestDist`, `Brooqs.Side.isForestDist`: probability
+  distributions on good forests with given lineages.
+* `Brooqs.expectedScore_vecMul_nice`, `Brooqs.expectedScore_forestUnion`,
+  `Brooqs.quartetScore_union_ge`, `Brooqs.expectedScore_union_ge`: expected scores.
+* `Brooqs.pairProb_ge`: the pair has coalesced along the edge above it with probability at least
+  `1 - e^{-b}`.
+* `Brooqs.steps_bound`, `Brooqs.arm_bound`, `Brooqs.Side.pair_bound`: the bound along a side, after
+  the pair has entered it.
+* `Brooqs.Net.cycle_pair_bound`, `Brooqs.Net.tree_pair_bound`, `Brooqs.Net.tree_pair_bound'`: the
+  bound at the top of a cycle and at a tree node.
+
+## Proof
+
+Until a third lineage joins the pair, only the two lineages of the pair can coalesce: a cluster of
+two lineages is then `{0, 1}`, or `{2, 3}` among the other lineages, both on the side of the split
+`{0, 1} | {2, 3}`, so the score is at least `1/3`, and `1` once the pair has coalesced
+(`Brooqs.quartetScore_union_ge`). Once a third lineage has joined, the rest of the process is a
+nice kernel and the expected score stays (`Brooqs.NiceKernel.score`). Along a side, the pair enters
+at its node, possibly joining lineages that arrived from below (`Brooqs.arm_bound`); then the
+forests of the networks hanging above it join one by one (`Brooqs.steps_bound`), and at the top node
+of the cycle the forest of the other side joins. At a cycle, the bound holds for each choice of
+sides at the hybrid node, whose lineages are not those of the pair, and the choices are weighted by
+probabilities adding up to `1`.
+-/
+
 @[expose] public noncomputable section
 
 namespace Brooqs
@@ -730,6 +769,21 @@ theorem Net.tree_pair_bound (s : Fin 4 → X) {ℓ₁ ℓ₂ : ℝ} {C₁ C₂ :
     (pr_sub23 _ (hlin ▸ hd))
   have hpp := pairProb_ge hC₁ hC₁n hlin ℓ₁
   exact le_trans (by linarith) h
+
+/-- The same when the pair hangs below the right child of the tree node. -/
+theorem Net.tree_pair_bound' (s : Fin 4 → X) {ℓ₁ ℓ₂ : ℝ} {C₁ C₂ : Net X}
+    (hC : (Net.tree ℓ₁ C₁ ℓ₂ C₂).IsMetric) (hCn : (Net.tree ℓ₁ C₁ ℓ₂ C₂).leaves.Nodup)
+    (hlin : C₂.lin s = {0, 1}) :
+    1 / 3 + 2 / 3 * (1 - Real.exp (-ℓ₂)) ≤
+      expectedScore ((Net.tree ℓ₁ C₁ ℓ₂ C₂).forestDist s) := by
+  obtain ⟨hℓ₁, hℓ₂, hC₁, hC₂⟩ := hC
+  have hCn' : (C₁.leaves ++ C₂.leaves).Nodup := hCn
+  have hCn'' : (C₂.leaves ++ C₁.leaves).Nodup := List.nodup_append_comm.1 hCn'
+  have h := Net.tree_pair_bound s (ℓ₁ := ℓ₂) (ℓ₂ := ℓ₁) (C₁ := C₂) (C₂ := C₁)
+    ⟨hℓ₂, hℓ₁, hC₂, hC₁⟩ hCn'' hlin
+  have heq : (Net.tree ℓ₁ C₁ ℓ₂ C₂).forestDist s = (Net.tree ℓ₂ C₂ ℓ₁ C₁).forestDist s :=
+    forestUnion_comm _ _
+  rwa [heq]
 
 end Sides
 
