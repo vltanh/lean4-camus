@@ -19,7 +19,8 @@ How this formalization was made, from the run logs and the session transcripts.
   provers reviewed the statements against the paper and compared the proofs with the paper's; in
   the second and third rounds, other agents also checked the report's findings and its account of
   the literature against their sources. In the fourth round, an agent other than the prover
-  reviewed only the files of the SNP pipeline.
+  reviewed the files of the SNP pipeline during the round, and four more reviewed the round's other
+  files after the report, at the author's request.
 
 ## The first formalization (8 October 2026)
 
@@ -179,9 +180,9 @@ How it was made:
   - the time of backtracking in Section 2.4, `O(n²(|Q| + m³n))`, and the peak memory of the
     programs of Sections 2.3 and 2.4, in a cost semantics with a space component;
   - Quartet Filtering under the network coalescent: the pattern of the quartet concordance factors
-    outside the anomalous configuration, the consistency of the filter there, and the anomalous
-    3-cycle of Ané et al. (2024), under which the filter keeps a quartet tree that the network does
-    not display (E9).
+    outside the anomalous configuration, the consistency of the filter there, and a network with
+    the anomalous 3-cycle of Ané et al. (2024) on which the filter keeps a quartet tree that the
+    network does not display (E9).
 - **Integration.** The main session merged the four branches, removed two modules that duplicated
   others, wrapped long lines, updated the audit, and rewrote the report with the new finding.
 - **Review.** A read-only sub-agent, started by the sub-agent of the pipeline, reviewed its new
@@ -205,3 +206,24 @@ report of this round (`e96eedd`, 16:56 CDT), taken from the session's transcript
 
 The figures leave out the work after the report: the credits, and the final checks of the
 packaging.
+
+### The review before the push
+
+Before the round was pushed, the author asked for a review ("review then push"). Four read-only
+sub-agents checked, against the paper and the sources it cites, the files of the round that no
+agent other than their writer had reviewed: tree-basedness and Figure 1; the time and memory of
+Sections 2.3 and 2.4; the network coalescent copied from BROOQS and the files written for it, with
+the anomaly recomputed in three ways (a closed form, an exact propagation written independently of
+the Lean code, and a simulation of a million gene trees); and its use in Sections 3.2 to 3.4. They
+found no false statement. They found that the report said more than the Lean statements in places:
+that the anomalous configuration defeats Quartet Filtering, where Lean proves it for one network
+(one reviewer compiled a network in the same configuration on which the filter works), and that a
+tree fails to be a basis whenever the root lies on a cycle; and that it did not say that the memory
+of the programs is declared by hand rather than checked by Lean. Some statements said less than
+their docstrings. The main session applied the findings, with three new lemmas (commit
+`142001f`).
+
+Figures, from 17:06 CDT (the author's request) to that commit (17:32 CDT), from the same transcript:
+0.43 hours elapsed; 4 sub-agents, at most 4 at once, for 0.7 hours of working time and 191 tool
+calls; the main session made 59 tool calls; 224 model calls, all to Claude Opus 5.5 (55 by the main
+session, 169 by the sub-agents).
