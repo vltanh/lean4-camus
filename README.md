@@ -1,5 +1,7 @@
 # CAMUS's optimality, in Lean
 
+[![Lean Action CI](https://github.com/vltanh/lean4-camus/actions/workflows/lean_action_ci.yml/badge.svg)](https://github.com/vltanh/lean4-camus/actions/workflows/lean_action_ci.yml)
+
 A Lean 4 and Mathlib formalization of James Willson and Tandy Warnow, *CAMUS: scalable
 phylogenetic network estimation*, Bioinformatics 42, Supplement 1 (2026), btag245,
 <https://doi.org/10.1093/bioinformatics/btag245>. CAMUS takes a rooted binary tree `T` and a
