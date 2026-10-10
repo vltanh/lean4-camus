@@ -6,11 +6,15 @@ public meta import Lean.DocString
 -- traversal (the module system hides them from a plain `import`). Generate the lines with
 --   find Camus -name '*.lean' | sort | sed 's/\.lean$//; s#/#.#g; s/^/import all /'
 import all Camus.Complexity.Backtracking
+import all Camus.Complexity.BudgetBacktracking
 import all Camus.Complexity.BudgetProgram
 import all Camus.Complexity.Counts
 import all Camus.Complexity.Delta
 import all Camus.Complexity.Memory
+import all Camus.Complexity.PeakMemory
+import all Camus.Complexity.PeakMemoryBudget
 import all Camus.Complexity.Program
+import all Camus.Complexity.Space
 import all Camus.Complexity.Tables
 import all Camus.Complexity.Timed
 import all Camus.DP.Computable
@@ -82,6 +86,7 @@ import all Camus.Network.RootAbove.RootWire
 import all Camus.Network.RootAbove.Splits
 import all Camus.Network.RootAbove.Subdivision
 import all Camus.Network.RootAbove.Transport
+import all Camus.Network.RootedIso
 import all Camus.Network.SingleEdge
 import all Camus.Network.SingleEdge.Deeper
 import all Camus.Network.SingleEdge.Switchings
@@ -92,8 +97,14 @@ import all Camus.Network.Subdivision.Incoming
 import all Camus.Network.Subdivision.Invariance
 import all Camus.Network.Subdivision.Switching
 import all Camus.Network.Subdivision.Wires
+import all Camus.Network.TreeBased.Branch
+import all Camus.Network.TreeBased.Display
+import all Camus.Network.TreeBased.Glue
+import all Camus.Network.TreeBased.Main
+import all Camus.Network.TreeBased.Root
 import all Camus.Pipelines.Algorithm1
 import all Camus.Pipelines.Astral
+import all Camus.Pipelines.AstralTree
 import all Camus.Pipelines.Coalescent
 import all Camus.Pipelines.Coalescent.Frequencies
 import all Camus.Pipelines.Coalescent.Quartets
@@ -103,11 +114,13 @@ import all Camus.Pipelines.Counterexample
 import all Camus.Pipelines.Filtering
 import all Camus.Pipelines.Inclusion
 import all Camus.Pipelines.InclusionOutgroup
+import all Camus.Pipelines.Pipeline
 import all Camus.Pipelines.Recovery
 import all Camus.Pipelines.SNP
 import all Camus.Pipelines.SNPCondition
 import all Camus.Pipelines.Statistical
 import all Camus.Pipelines.Uniqueness
+import all Camus.Preliminaries.Figure1
 import all Camus.Preliminaries.Lemma1.Cuts
 import all Camus.Preliminaries.Lemma1.Switches
 import all Camus.Preliminaries.Lemma1.Tree
@@ -173,7 +186,10 @@ meta def externalResults : List (String × Name) :=
 
 /-- The numbered results of the paper, and its unnumbered claims, in the order of the paper. -/
 meta def paperResults : List (String × Name) :=
-  [("Def 1, networks built on T", ``Camus.RootedNetwork.BuiltOn.exists_anchored),
+  [("Def 1, every network is built on one of its trees", ``Camus.RootedNetwork.treeBased),
+   ("Def 1, Q(N_r) is the union of the Q(t)", ``Camus.RootedNetwork.displays_iff_exists_builtOn),
+   ("Def 1, networks built on T", ``Camus.RootedNetwork.BuiltOn.exists_anchored),
+   ("Figure 1", ``Camus.Figure1.net_displays_iff),
    ("Lemma 1", ``Camus.lemma1),
    ("Lemma 1, second sentence", ``Camus.lemma1_union),
    ("Lemma 1, second sentence, edge families", ``Camus.DynamicProgramming.novel_disjoint_union),
@@ -193,13 +209,17 @@ meta def paperResults : List (String × Name) :=
    ("Sec 2.3, the program computes M", ``Camus.Complexity.camus_array),
    ("Sec 2.3, running time", ``Camus.Complexity.camus_time),
    ("Sec 2.3, memory", ``Camus.Complexity.storedIntegers_bound),
+   ("Sec 2.3, peak memory", ``Camus.Complexity.camus_memory),
    ("Sec 2.4, n - 1 reticulations", ``Camus.RootedNetwork.anchored_reticulation_bound),
+   ("Sec 2.4, n - 1 reticulations, every network", ``Camus.RootedNetwork.reticulationCount_le),
    ("Sec 2.4, the restricted DP", ``Camus.BudgetDP.reticulation_restriction),
    ("Sec 2.4, backtracking", ``Camus.BudgetDP.trace_graph_optimal),
    ("Sec 2.4, the networks N_k", ``Camus.BudgetDP.backtracking_networks),
    ("Sec 2.4, Definition 1's class", ``Camus.BudgetDP.exact_graph_optimal_builtOn),
    ("Sec 2.4, the program computes M", ``Camus.Complexity.camusBudget_agrees),
    ("Sec 2.4, running time", ``Camus.Complexity.camusBudget_time),
+   ("Sec 2.4, backtracking and its time", ``Camus.Complexity.camusBudgetNetworks_time),
+   ("Sec 2.4, peak memory", ``Camus.Complexity.camusBudgetNetworks_memory),
    ("Sec 2.4, monotonicity fails (E5)", ``Camus.not_exactCountMonotone),
    ("Sec 2.4, at most k", ``Camus.atMostScore_mono),
    ("Sec 2.4, the stopping rule fails (E6)", ``Camus.not_exactStoppingRule),
@@ -213,11 +233,17 @@ meta def paperResults : List (String × Name) :=
    ("Sec 3.2, corrected", ``Camus.recovery),
    ("Sec 3.2, corrected, trees are identifiable", ``Camus.tree_identifiable),
    ("Sec 3.2, the ASTRAL step", ``Camus.astral_maximizer_tendsto),
+   ("Sec 3.2, quartets determine the tree", ``Camus.PhyloTree.rootedIso_of_induced_eq),
+   ("Sec 3.2, the pipeline always returns a network", ``Camus.pipeline_output_exists),
+   ("Sec 3.2, the pipeline, corrected", ``Camus.pipeline_tendsto),
+   ("Sec 3.2, the pipeline without identifiability (E7)", ``Camus.pipeline_outgroup_tendsto),
    ("Sec 3.2, corrected, in the site model", ``Camus.snp_recovery_tendsto),
    ("Sec 3.2, corrected, in probability", ``Camus.snp_correctedStatisticalConsistency),
    ("Sec 3.2, E7 in the site model", ``Camus.snp_deeperDonor_tendsto),
    ("Sec 3.2, E7 under every hypothesis, with an outgroup",
     ``Camus.Counterexamples.deeperDonor_meets_hypotheses),
+   ("Sec 3.2, with an outgroup, every tree of N is a basis",
+    ``Camus.RootedNetwork.BuiltOn.anchored_of_outgroup),
    ("Sec 3.2, a tree of N need not be a basis (E8)",
     ``Camus.Counterexamples.camus_output_not_rootAboveNet),
    ("Sec 3.4, Algorithm 1", ``Camus.Algorithm1.filterQuartets_mono),
