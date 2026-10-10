@@ -34,8 +34,11 @@ convolution, the budgets chosen attain the value kept.
 * `BudgetDP.trace_graph_optimal`: the network of a trace from the root is built on `T`, has exactly
   `k` reticulations, satisfies the value of `M[r][k]` quartets of `Q`, and is optimal among the
   networks built on `T` with exactly `k` reticulations.
-* `BudgetDP.backtracking_networks`, `BudgetDP.exists_traces`: the networks `N_1, …, N_m` of
-  Section 2.4, obtained by backtracking.
+* `BudgetDP.backtracking_networks`, `BudgetDP.exists_backtracking_networks`: the networks
+  `N_1, …, N_m` of Section 2.4, obtained by backtracking, with its four properties.
+* `BudgetDP.root_row_nonempty_iff_le`: the root row of `k` is nonempty iff `k ≤ n − 1`.
+* `RootedNetwork.nonTree_card_eq`: a network built on `T` has as many non-tree edges as
+  reticulations.
 
 ## Proof (the paper's)
 
@@ -65,6 +68,53 @@ the budgets of the hanging subtrees (`BudgetDP.exists_knapsack`), whose rows are
 -/
 
 @[expose] public section
+
+namespace Camus.RootedNetwork
+
+/-- In a rooted binary level-1 network `N` with a switching `S`, the edges outside `S` (the
+non-tree edges, when `S` is a subdivision of a tree `T` on which `N` is built) are as many as the
+reticulations: each reticulation has two incoming edges, one of them in `S`, and every other
+non-root vertex has one, in `S`. -/
+theorem nonTree_card_eq {N : RootedNetwork}
+    (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)} (hS : N.Switching S) :
+    (N.edges \ S).card = N.reticulationCount := by
+  classical
+  obtain ⟨-, hends, -, hin, -, -, -, -, -, hdeg, -⟩ := hN
+  -- count the edges outside `S` by their heads
+  have hpart : (N.edges \ S).card =
+      ∑ v ∈ N.vertices, ((N.edges \ S).filter (fun e => e.2 = v)).card :=
+    Finset.card_eq_sum_card_fiberwise (fun e he => (hends e (Finset.mem_sdiff.mp he).1).2)
+  -- at a vertex `v`, they are the edges into `v` other than the one in `S`
+  have hv : ∀ v ∈ N.vertices, ((N.edges \ S).filter (fun e => e.2 = v)).card =
+      if N.indegree v = 2 then 1 else 0 := by
+    intro v hv
+    have hsplit : N.indegree v = ((N.edges \ S).filter (fun e => e.2 = v)).card +
+        (S.filter (fun e => e.2 = v)).card := by
+      unfold RootedNetwork.indegree
+      rw [← Finset.card_union_of_disjoint
+        (Finset.disjoint_filter_filter Finset.sdiff_disjoint), ← Finset.filter_union,
+        Finset.sdiff_union_of_subset hS.1]
+    by_cases hr : v = N.root
+    · subst hr
+      rw [hin] at hsplit ⊢
+      simp only [OfNat.zero_ne_ofNat, ↓reduceIte]
+      omega
+    · have h1 := hS.2 v hv hr
+      rcases hdeg v hv hr with ⟨h, _⟩ | ⟨h, _⟩ | ⟨h, _⟩
+      · rw [h] at hsplit ⊢
+        rw [ite_eq_right (by decide)]
+        omega
+      · rw [h] at hsplit ⊢
+        rw [ite_eq_right (by decide)]
+        omega
+      · rw [h] at hsplit ⊢
+        rw [ite_eq_left rfl]
+        omega
+  rw [hpart, Finset.sum_congr rfl hv, ← Finset.card_filter]
+  unfold RootedNetwork.reticulationCount
+  congr 1
+
+end Camus.RootedNetwork
 
 namespace Camus.BudgetDP
 
@@ -483,12 +533,13 @@ reticulations, and let `E k` be a backtracking trace from the root with budget `
 `k ≤ m` whose root row is nonempty (`BudgetDP.exists_traces`; the rows of `k ≤ n − 1` are all
 nonempty, `BudgetDP.root_row_nonempty_iff_le`). Then for every such `k`, the network
 `N_k = Realization.graph t (E k)`:
-* is level-1;
-* contains the constraint tree `T`: it is built on `T`, with the root of `T` at its root;
-* contains exactly `k` non-tree edges (edges outside the subdivided tree `T`), and has exactly `k`
-  reticulations;
+* is level-1 (a rooted binary level-1 network);
+* contains the constraint tree `T`: the switching `S_k = Realization.supportEdges t (E k)` of
+  `N_k` is a subdivision of `T` with the root of `T` at the root of `N_k`;
+* contains exactly `k` non-tree edges, the edges outside `S_k`;
 * maximizes the number of quartets of `Q` it contains (displays, counted with multiplicity) subject
-  to these constraints: no network built on `T` with exactly `k` reticulations displays more.
+  to these constraints: every level-1 network `N` with a switching `S` that is a subdivision of `T`
+  and exactly `k` edges outside `S` displays at most as many.
 The paper lists `N_1, …, N_m`; the statement also covers `k = 0`, where `N_0` is `T`. -/
 theorem backtracking_networks (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ → Finset ℕ) (hM : Array t (edgeWeight t Q) M) (m : ℕ)
@@ -496,14 +547,44 @@ theorem backtracking_networks (t : PhyloTree) (ht : t.WellLabelled) (Q : Multise
     (traces : ∀ k ≤ m, (M [] k).Nonempty → Trace t (edgeWeight t Q) M [] k (E k))
     {k : ℕ} (hk : k ≤ m) (hrow : (M [] k).Nonempty) :
     (Realization.graph t (E k)).RootedBinaryLevelOne ∧
-      (Realization.graph t (E k)).AnchoredExtension t ∧
+      Nonempty (SupportSubdivision t (Realization.graph t (E k))
+        (Realization.supportEdges t (E k))) ∧
       ((Realization.graph t (E k)).edges \ Realization.supportEdges t (E k)).card = k ∧
-      (Realization.graph t (E k)).reticulationCount = k ∧
-      ∀ N : RootedNetwork, N.AnchoredExtension t → N.reticulationCount = k →
+      ∀ (N : RootedNetwork) (S : Finset (ℕ × ℕ)), N.RootedBinaryLevelOne →
+        Nonempty (SupportSubdivision t N S) → (N.edges \ S).card = k →
         score Q (repertoire Q N) ≤ score Q (repertoire Q (Realization.graph t (E k))) := by
   have trace := traces k hk hrow
   obtain ⟨hE, hEk, _⟩ := trace_sound t (edgeWeight t Q) M hM t.root_mem_nodes trace
-  obtain ⟨hN, hret, _, _, hopt⟩ := trace_graph_optimal t ht Q M hM trace
-  exact ⟨hN.1, hN, (graph_nonTree_card t hE.1.1).trans hEk, hret, hopt⟩
+  obtain ⟨hN, _, _, _, hopt⟩ := trace_graph_optimal t ht Q M hM trace
+  refine ⟨hN.1, ⟨Realization.support t ht (E k) hE.1⟩,
+    (graph_nonTree_card t hE.1.1).trans hEk, ?_⟩
+  -- a competitor has as many reticulations as non-tree edges
+  intro N S hN hS hNk
+  obtain ⟨H⟩ := hS
+  exact hopt N ⟨hN, S, ⟨H⟩⟩ ((RootedNetwork.nonTree_card_eq hN H.switching).symm.trans hNk)
+
+/-- Section 2.4: for every `m ≤ n − 1` ("m ≤ n−1 is guaranteed"), the modified dynamic program
+returns networks `N_1, …, N_m` with the four properties of Section 2.4. Every root row of a budget
+`k ≤ m` is nonempty (`BudgetDP.root_row_nonempty_iff_le`), so backtracking gives a trace `E k`
+from the root with budget `k`, and `N_k = Realization.graph t (E k)` is level-1, contains `T`
+(with the switching `Realization.supportEdges t (E k)`), contains exactly `k` non-tree edges, and
+displays at least as many quartets of `Q` as every level-1 network that contains `T` and has
+exactly `k` non-tree edges (`BudgetDP.backtracking_networks`). -/
+theorem exists_backtracking_networks (t : PhyloTree) (ht : t.WellLabelled)
+    (Q : Multiset Quartet) (M : Address → ℕ → Finset ℕ) (hM : Array t (edgeWeight t Q) M)
+    (m : ℕ) (hm : m ≤ t.labels.length - 1) :
+    ∃ E : ℕ → Finset Pair, ∀ k ≤ m, Trace t (edgeWeight t Q) M [] k (E k) ∧
+      (Realization.graph t (E k)).RootedBinaryLevelOne ∧
+      Nonempty (SupportSubdivision t (Realization.graph t (E k))
+        (Realization.supportEdges t (E k))) ∧
+      ((Realization.graph t (E k)).edges \ Realization.supportEdges t (E k)).card = k ∧
+      ∀ (N : RootedNetwork) (S : Finset (ℕ × ℕ)), N.RootedBinaryLevelOne →
+        Nonempty (SupportSubdivision t N S) → (N.edges \ S).card = k →
+        score Q (repertoire Q N) ≤ score Q (repertoire Q (Realization.graph t (E k))) := by
+  obtain ⟨E, hE⟩ := exists_traces t (edgeWeight t Q) M hM
+  have hrow k (hk : k ≤ m) : (M [] k).Nonempty :=
+    (root_row_nonempty_iff_le t (edgeWeight t Q) M hM k).mpr (hk.trans hm)
+  exact ⟨E, fun k hk => ⟨hE k (hrow k hk),
+    backtracking_networks t ht Q M hM m E (fun j _ hj => hE j hj) hk (hrow k hk)⟩⟩
 
 end Camus.BudgetDP
