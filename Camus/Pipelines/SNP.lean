@@ -15,8 +15,8 @@ tree `t` displayed by `N` induces the most probable quartet on every four taxa. 
 three steps:
 
 1. ASTRAL returns `t`, with probability tending to 1 (`astral_tendsto`,
-   `astral_maximizer_tendsto` in `Camus/Pipelines/Astral.lean`, up to the classical fact that a
-   binary tree is determined by its quartets);
+   `astral_maximizer_tendsto` in `Camus/Pipelines/Astral.lean`, and the determination of a tree by
+   its quartets, `PhyloTree.rootedIso_of_induced_eq` in `Camus/Pipelines/AstralTree.lean`);
 2. "According to the theory given in Warnow et al. (2025)", the support of `Q` is `Q(N_r)`, with
    probability tending to 1 (`External.support_tendsto`);
 3. "When Q is a multi-set version of Q(Nr), then CAMUS will add the correct reticulations and
@@ -76,8 +76,8 @@ Departure from the paper: the paper concludes that CAMUS returns `N` because `N`
 network that can satisfy all the quartets in Q(Nr)", which is false (the report's E7,
 `snp_deeperDonor_tendsto`); identifiability under inclusion and the tie-break toward the fewest
 reticulations replace that step, as in `recovery`. The constraint tree is `t` itself: that ASTRAL
-returns `t` is step 1 (`astral_maximizer_tendsto`), formalized up to the determination of a tree
-by its quartets. -/
+returns `t` is step 1; the three steps together are `pipeline_tendsto`
+(`Camus/Pipelines/Pipeline.lean`). -/
 theorem snp_recovery_tendsto (t : PhyloTree) (N : RootedNetwork) (hN : N.AnchoredExtension t)
     (identifiable : ∀ P : RootedNetwork, P.AnchoredExtension t →
       (∀ q, N.DisplaysQuartet q → P.DisplaysQuartet q) →

@@ -23,8 +23,10 @@ of `t`, the quartet that `t` induces is strictly the most probable quartet on th
 (`MostProbableQuartets`), the probability that the score of `t` is larger than the score of every
 well-labelled tree on the same taxa that induces a different set of quartets tends to 1
 (`astral_tendsto`); so every tree of maximum score induces the quartets of `t`
-(`astral_maximizer_tendsto`). That such a tree, rooted at the outgroup, is `t` itself is the
-classical fact that the quartets of a binary tree determine it; it is not formalized here.
+(`astral_maximizer_tendsto`). That such a tree, rooted at the outgroup, is `t` itself, up to the
+order of children, is the determination of a tree by its quartets
+(`PhyloTree.rootedIso_of_induced_eq`, in `Camus/Pipelines/AstralTree.lean`); the pipeline as one
+statement is in `Camus/Pipelines/Pipeline.lean`.
 
 Trees are rooted (`PhyloTree`) and stand for their unrooted forms: `Quartet.induced` computes
 `Q(T)` of the unrooted tree, and every unrooted binary tree is the unrooted form of a rooted one,
@@ -537,9 +539,10 @@ theorem astral_tendsto (M : External.SiteModel N σ) (hN : N.RootedBinaryLevelOn
 `MostProbableQuartets`, the probability that every well-labelled tree on the taxa of `t` with the
 largest quartet support score for `Q_m` induces the quartets of `t` tends to 1.
 
-Departure from the paper: the conclusion is that every tree ASTRAL may return induces the
-quartets of `t`. That such a tree, rooted at the outgroup, is `t` is the classical fact that a
-binary tree is determined by its quartets, which is not formalized here. -/
+The conclusion is that every tree ASTRAL may return induces the quartets of `t`; that such a
+tree, rooted at the outgroup, is `t` up to the order of children is
+`PhyloTree.rootedIso_of_induced_eq` (`Camus/Pipelines/AstralTree.lean`), and the two are combined in
+`pipeline_tendsto` (`Camus/Pipelines/Pipeline.lean`). -/
 theorem astral_maximizer_tendsto (M : External.SiteModel N σ) (hN : N.RootedBinaryLevelOne)
     (t : PhyloTree) (ht : t.WellLabelled) (hcond : MostProbableQuartets M t)
     {P : Measure Ω} [IsProbabilityMeasure P] (X : ℕ → Ω → External.SiteHistory N σ)
