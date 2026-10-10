@@ -118,7 +118,7 @@ theorem switching_leaf_of_childless {N : RootedNetwork} (hN : N.RootedBinaryLeve
     refine Finset.mem_sdiff.mpr ⟨heN, fun heS => hchild e.2 ?_⟩
     rw [← hev]
     exact heS
-  -- two distinct edges out of `v` would put `v` on two disjoint cycles
+  -- two distinct edges out of `v` put `v` on the cycles of two non-tree edges, which are disjoint
   have htwo : N.outdegree v = 2 → False := by
     intro h2
     obtain ⟨e, he, f, hf, hef⟩ := Finset.one_lt_card.mp (show 1 < N.outdegree v by omega)
