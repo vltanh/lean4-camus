@@ -350,10 +350,11 @@ displays to be the most frequent. Under the network multispecies coalescent they
 taxa a level-1 network displays one or two quartet trees; when one, the other two have equal
 probabilities, and when two, the third is strictly the least probable ([`Brooqs.Net.weakPattern`](Camus/External/NMSC/Pattern.lean#L880)).
 Outside the anomalous configuration of Ané, Fogg, Allman, Baños and Rhodes (2024), two of the four
-taxa below the reticulation of a cycle whose smallest subnetwork holds three of them, the displayed
-quartets are strictly the most probable ([`Brooqs.Net.regularOn_of_not_anomalous`](Camus/External/NMSC/Pattern.lean#L871)), and for every
-threshold below a positive bound, almost surely, for all large numbers of gene trees, the output of
-Quartet Filtering has support `Q(N_r)` ([`Camus.NMSC.nmsc_filterQuartets_support`](Camus/Pipelines/NMSC/Recovery.lean#L100); a network whose
+taxa below the reticulation of a cycle and the two others in two other components of that cycle (the
+parts into which its edges cut the network), the displayed quartets are strictly the most probable
+([`Brooqs.Net.regularOn_of_not_anomalous`](Camus/External/NMSC/Pattern.lean#L871)), and for every positive threshold below a bound that
+depends on `N`, almost surely, for all large numbers of gene trees, the output of Quartet Filtering
+has support `Q(N_r)` ([`Camus.NMSC.nmsc_filterQuartets_support`](Camus/Pipelines/NMSC/Recovery.lean#L100); a network whose
 reticulations have at most one leaf below them has no anomalous configuration,
 [`Camus.NMSC.noAnomaly_of_below`](Camus/Pipelines/NMSC/Filtering.lean#L243)). In the anomalous configuration this fails. For a 3-cycle with `x`
 and `y` below its reticulation, `z` on one side and `w` outside, with inheritance probability 1/2,
@@ -577,8 +578,8 @@ reason.
   Filtering eventually keeps the second quartet too ([`Coalescent.filterBlock_keeps_second`](Camus/Pipelines/Coalescent.lean#L334)): the
   signal the paper attributes to horizontal gene transfer. Under the network multispecies coalescent
   ([`Camus/External/NMSC/`](Camus/External/NMSC): networks described from the root, [`Brooqs.Net`](Camus/External/NMSC/Model.lean#L61), with Kingman's coalescent
-  along their edges), Quartet Filtering is proved to return `Q(N_r)` outside the anomalous
-  configuration, and to fail in it (E9). Its conclusions are stated for CAMUS's networks through a
+  along their edges), Quartet Filtering with a small positive threshold is proved to return the
+  quartets of `Q(N_r)` outside the anomalous configuration, and to fail in it (E9). Its conclusions are stated for CAMUS's networks through a
   displayed tree of `N` that keeps its root, [`Camus.NMSC.baseTree`](Camus/Pipelines/NMSC/BaseTree.lean#L70), and the canonical network
   `Realization.graph (baseTree N) (pairs N)`, which displays exactly the quartets that `N` displays
   ([`Camus.NMSC.graph_displaysQuartet_iff`](Camus/Pipelines/NMSC/Bridge.lean#L895)).
