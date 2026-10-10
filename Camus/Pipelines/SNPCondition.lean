@@ -10,13 +10,15 @@ public import Camus.Pipelines.SNP
 The consistency argument of Section 3.2 assumes that the sites evolve under the model of Warnow,
 Tabatabaee and Evans ("WTE"; `External.SiteModel`) on the true network `N`, and that some tree `t`
 displayed by `N` induces the most probable quartet on every four taxa
-(`MostProbableQuartets`). This file shows that these hypotheses can be met by every network
-`Realization.graph t E` built on `t`: with two states, uniform substitutions on the tree edges,
+(`MostProbableQuartets`). This file shows that these hypotheses can be met by every canonical
+network `Realization.graph t E` built on `t` (every network built on `t` is isomorphic to one,
+`SupportSubdivision.canonical_iso`): with two states, uniform substitutions on the tree edges,
 and small transmission probabilities on the added edges (`Realization.lowTransfer`), the quartet
 that `t` induces on four taxa is strictly the most probable quartet on them
 (`Realization.exists_mostProbable`). A site that evolves down the support switching, the subdivided
-tree `t`, only contributes quartets induced by `t`
-(`Realization.induced_of_mem_quartets_support`), and it does so with probability close to 1.
+tree `t`, only contributes quartets induced by `t`, since the clades of that switching are those
+of `t` (`Realization.cladeBelow_support_code`, `Realization.induced_of_mem_quartets_support`), and
+it evolves down that switching with probability close to 1.
 
 In particular the deeper-donor example meets every hypothesis of the paper's argument: the true
 network `Counterexamples.shallowNet` is built on `Counterexamples.donorTree`, the tree displayed
