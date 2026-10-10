@@ -19,8 +19,9 @@ from above the cherry `(D,E)` to above `A` (`shallowNet`), or from above `D` to 
 (`deepNet`). Moving the donor down the tree keeps every quartet that the first edge satisfies
 (`Realization.deeper_donor_displays`): the second network displays every quartet that the first
 displays, and three more (`AD|BE`, `AD|CE` and `AD|EF`). Of the 45 quartets on the six taxa, `T`
-induces 15, `shallowNet` displays 22 and `deepNet` 25. Both networks have one reticulation, and
-their cycles have six and seven vertices. So if `Q` is a multiset version of `Q(N_r)` for the true
+induces 15, `shallowNet` displays 22 and `deepNet` 25 (`induced_shallowQuartets`,
+`mem_shallowQuartets`, `mem_deepQuartets`). Both networks have one reticulation, and their cycles
+have six and seven vertices (`shallow_cycle_card`, `deep_cycle_card`). So if `Q` is a multiset version of `Q(N_r)` for the true
 network `N = shallowNet`, the network `deepNet` displays all of `Q` with the fewest reticulations
 possible, and is not isomorphic to `N`. The dynamic program itself may return `deepNet` on such an
 input (`Counterexamples.camus_may_return_deep`).
@@ -282,6 +283,38 @@ theorem mem_shallowQuartets (q : Quartet) :
           ∃ C ∈ EdgeAbove.switchedClades donorTree shallowPair, q.cutBy C = true) →
         q ∈ shallowQuartets) ?_ hq
     decide +kernel
+
+/-- The 25 quartets displayed by `deepNet` (`mem_deepQuartets`): those of `shallowNet`, and `AD|BE`,
+`AD|CE` and `AD|EF`. -/
+def deepQuartets : Finset Quartet :=
+  shallowQuartets ∪ {mkQuartet 0 1 3 4 1, mkQuartet 0 2 3 4 1, mkQuartet 0 3 4 5 0}
+
+/-- `deepQuartets` has 25 quartets. -/
+theorem deepQuartets_card : deepQuartets.card = 25 := by decide
+
+/-- `deepQuartets` is the set of quartets displayed by `deepNet`. -/
+theorem mem_deepQuartets (q : Quartet) :
+    q ∈ deepQuartets ↔ deepNet.DisplaysQuartet q := by
+  rw [Realization.single_displays_iff donorTree_wellLabelled deepPair_mem]
+  constructor
+  · revert q
+    decide +kernel
+  · rintro ⟨hq, h⟩
+    revert h
+    refine quartet_of_taxa (P := fun q =>
+      (q.induced donorTree = true ∨
+          ∃ C ∈ EdgeAbove.switchedClades donorTree deepPair, q.cutBy C = true) →
+        q ∈ deepQuartets) ?_ hq
+    decide +kernel
+
+/-- `T` induces 15 quartets, one for each set of four of its six taxa: they are among the quartets
+displayed by `shallowNet`, and 15 of those are induced by `T`. -/
+theorem induced_shallowQuartets :
+    (∀ q, q.induced donorTree = true → q ∈ shallowQuartets) ∧
+      (shallowQuartets.filter fun q => q.induced donorTree = true).card = 15 := by
+  refine ⟨fun q hq => (mem_shallowQuartets q).mpr ?_, by decide⟩
+  rw [Realization.single_displays_iff donorTree_wellLabelled shallowPair_mem]
+  exact ⟨((Quartet.induced_iff_taxaAt q donorTree).mp hq).1, Or.inl hq⟩
 
 /-- A solution of the recurrence of Section 2.2 on `T` and the quartets of `shallowNet`, each once:
 `M[v] = 7` at the root, `M[v] = 2` at `(C,(F,(D,E)))` (the edge above `(C, F)` satisfies `AD|CF`
