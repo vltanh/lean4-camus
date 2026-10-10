@@ -6,17 +6,23 @@ project:
     network estimation" (Bioinformatics 2026). CAMUS adds edges to a rooted binary tree T to
     obtain a rooted level-1 phylogenetic network that displays as many quartets of a multiset Q
     as possible. The formalization proves the paper's Theorem 1 (its dynamic program is optimal
-    over every finite directed rooted binary level-1 network built on T), Lemmas 1 and 2, and the
-    reticulation-restricted dynamic program of Section 2.4, by the paper's arguments. It also
-    proves Observation 2 of Warnow, Tabatabaee and Evans (2025), a characterization of the
-    quartets displayed by a level-1 network that the paper's Lemma 1 rests on and that its
-    authors state without proof, so the formalization is unconditional.
+    over every finite directed rooted binary level-1 network built on T in the sense of
+    Definition 1), Lemmas 1 and 2, the running time and memory of Section 2.3 for CAMUS written as
+    a program in a cost semantics, the reticulation-restricted dynamic program of Section 2.4 with
+    its backtracking, and the steps of the statistical arguments of Sections 3.2 and 3.4 inside the
+    models they use, by the paper's arguments. It also proves Observation 2 of Warnow, Tabatabaee
+    and Evans (2025), on which Lemma 1 rests and which its authors state without proof, and the
+    convergence of the quartets of SNPs under their site model, which needs a hypothesis that their
+    model omits; the formalization is unconditional.
 
 
-    Two claims of the paper are refuted: the best score with exactly k reticulations can
-    decrease as k grows (Section 2.4), and the true network need not be the unique optimal
-    network, which CAMUS itself may miss (Section 3.2). A corrected recovery theorem holds under
-    identifiability under inclusion and a tie-break toward the fewest reticulations.
+    Four claims of the paper are refuted: the best score with exactly k reticulations can decrease
+    as k grows, and the stopping rule can stop before a better score (Section 2.4); the true network
+    need not be the unique optimal network, even with the fewest reticulations and long cycles, so
+    that CAMUS can return another network under every hypothesis of the SNP pipeline's consistency
+    argument; and a tree of a network need not be a basis for it (Section 3.2). A corrected
+    recovery theorem holds under identifiability under inclusion and a tie-break toward the fewest
+    reticulations.
   authors: ["The-Anh Vu-Le"]
   license: "Apache-2.0"
   responsible_maintainers: ["The-Anh Vu-Le"]
@@ -39,22 +45,39 @@ sources:
     type: "article"
     location: "https://doi.org/10.1089/cmb.2024.0710"
     relationship: "background"
-    note: "Its Observation 2, stated there without proof and used by the paper's Lemma 1, is proved in Camus/External/WarnowTabatabaeeEvans."
+    note: "Its Observation 2, stated there without proof and used by the paper's Lemma 1, and the convergence of the quartets of SNPs under its site model (the step of its Theorem 6 that the paper's Section 3.2 uses, with the hypothesis p(e, s, s) > 0 that its Section 4.2 omits), are proved in Camus/External/WarnowTabatabaeeEvans."
     author_endorsement: "not-contacted"
-related_formalizations: []
+  - title: "Identifying the rooted species tree from the distribution of unrooted gene trees under the coalescent"
+    authors: ["Elizabeth S. Allman", "James H. Degnan", "John A. Rhodes"]
+    id: "doi:10.1007/s00285-010-0355-7"
+    type: "article"
+    location: "https://doi.org/10.1007/s00285-010-0355-7"
+    relationship: "background"
+    note: "Its four-taxon distributions of unrooted gene trees under the multispecies coalescent, from the Lean formalization lean4-adr11 (a dependency), give the motivation of Algorithm 1 (Section 3.4)."
+    author_endorsement: "not-contacted"
+related_formalizations:
+  - id: "https://github.com/vltanh/lean4-adr11"
+    relationship: "builds-on"
+    note: "The library uses its four-taxon distributions of unrooted gene trees under the multispecies coalescent, for the motivation of Algorithm 1; the Challenge does not import it."
 status:
   scope: >-
-    Unconditional. Proves Lemmas 1 and 2, Theorem 1 and the four properties of the networks of
-    Section 2.4 over every finite directed rooted binary level-1 network built on the constraint
-    tree with its root preserved (the class over which the paper's dynamic program optimizes),
-    the bound of n - 1 reticulations for such networks, Observation 2 of Warnow, Tabatabaee and
-    Evans, unit-cost operation and memory counts for Sections 2.3 and 2.4, and the test of
-    Algorithm 1. Refutes Section 2.4's monotonicity claim for exact numbers of reticulations and
-    Section 3.2's uniqueness claim, and proves corrected versions. Equation (1) is read over
-    distinct quartets and Pairs(v) restricted to pairs that give a network. Not formalized: the
-    statistical models and consistency arguments of Section 3, Section 2.4's stopping rule and
-    backtracking, a cost semantics of an implementation, Definition 1's networks whose root lies
-    above the constraint tree's, and the experiments.
+    Unconditional. Proves Lemmas 1 and 2 and Theorem 1 over every network built on the constraint
+    tree in the sense of Definition 1 (whose root may lie above the root of the tree), the running
+    time O(n^2 (|Q| + n)) and memory O(n^4) of Section 2.3 for CAMUS written as a program in a
+    unit-cost semantics, with the quartet test in constant time, the four properties of the
+    networks of Section 2.4 for the networks returned by backtracking and the running time
+    O(n^2 (|Q| + m^3 n)) of the modified program, the bound of n - 1 reticulations, Observation 2
+    of Warnow, Tabatabaee and Evans and the convergence of the quartets of SNPs under their site
+    model, the ASTRAL step and the corrected final step of Section 3.2 in probability, and
+    Algorithm 1's test and its motivation under the multispecies coalescent. Refutes Section 2.4's
+    monotonicity claim for exact numbers of reticulations and its stopping rule, and Section 3.2's
+    uniqueness claim (also with the fewest-reticulation tie-break, and in the site model under every
+    hypothesis of its argument) and its claim that any tree of a network is a basis for it, and
+    proves corrected versions. Equation (1) is read over distinct quartets and Pairs(v) restricted
+    to pairs that give a network. Not formalized: that the quartets of a binary tree determine it
+    (ASTRAL's tree is proved to have the quartets of t), the composition of Section 3.2's
+    probabilistic steps into one statement, the network multispecies coalescent of Section 3.3,
+    peak memory, and the experiments.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -85,26 +108,49 @@ automation:
         spend_usd: "not tracked"
         hardware: "local machine (Lean builds); model API"
       prompting_notes: "The maintainer asked to restyle the first formalization in the procedure's usual way; the round reorganized and documented the library, proved Observation 2, restated the Challenge and rewrote the audit."
+    - method: "agent"
+      models: ["claude-opus-5-5"]
+      framework: "Claude Code 2.1.296"
+      tool_setup: >-
+        Third round (10 October 2026): formalize-math-paper skill 2.2.0
+        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 10
+        sub-agents (at most 6 at once), six of them working in separate git worktrees on
+        Definition 1 by clades and the counterexamples, backtracking and the stopping rule, the
+        cost semantics, Definition 1's class, the site model and ASTRAL, and the coalescent, two
+        reviewing the statements and the report, and two read-only helpers of a reviewer.
+      cost:
+        wall_time: "2.81 hours to the audited report; 7.1 hours of sub-agent working time"
+        spend_usd: "not tracked"
+        hardware: "local machine (Lean builds); model API"
+      prompting_notes: "The maintainer asked to formalize what the second round left out (\"I think there is a proof of running time complexity? Add counterexamples. Do 1-4.\"): backtracking in Section 2.4, Section 3.2 inside the model of Warnow, Tabatabaee and Evans, Definition 1's networks whose root lies above the root of T, Algorithm 1's motivation from the coalescent, a cost semantics for Section 2.3, and the counterexamples."
   spend_usd: "not tracked"
-  notes: "Two rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
+  notes: "Three rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
 fidelity:
   divergences: >-
     Equation (1) is read over the distinct quartets of Q, with their multiplicities as weights,
     as Section 2.3 allows (summing over the multiset would count multiplicities twice).
     Pairs(v) is restricted to pairs that give a network (recipient not an ancestor of the donor,
     ends not the root), as the paper's description of Pairs(v) intends; read literally it makes
-    the recurrence circular. "Built on T" is read with the root of T preserved, the class over
-    which the dynamic program optimizes. Section 2.4's recurrence is the formalization's own
-    (the paper describes only the meaning of M[v,k]); its networks are given by existence.
-    Section 2.3's bounds bound explicit operation counts under a unit-cost model. The
-    monotonicity claim of Section 2.4 is refuted for exact numbers of reticulations and proved
-    for at most k; the uniqueness claim of Section 3.2 is refuted, and recovery is proved under
-    identifiability under inclusion and a fewest-reticulation tie-break. Every proof follows the
-    paper's, except uniqueness in Lemma 1: the paper derives it from Observation 2, which gives
-    only existence, and the formalization proves it from the vertex-disjointness of the cycles.
+    the recurrence circular. Section 2.4's recurrence and backtracking are the formalization's own
+    (the paper describes only the meaning of M[v,k]); its stopping rule is read as the claim that
+    the score does not improve after the column where the rule stops, and refuted. Section 2.3's
+    bounds are proved for a program in a unit-cost semantics (one unit per table access,
+    arithmetic operation, comparison and loop iteration). Section 3.2 is formalized inside the site
+    model of Warnow, Tabatabaee and Evans, with p(e, s, s) > 0 on the tree edges added to their
+    constraints, which the step of their Theorem 6 needs; "the most probable quartet tree" is read
+    as strictly the most probable; ASTRAL's output is an exact maximizer of the quartet support
+    score, proved to have the quartets of t. Section 3.4's motivation is proved for a positive
+    threshold. The monotonicity claim of Section 2.4 is refuted for exact numbers of reticulations
+    and proved for at most k; the uniqueness claim of Section 3.2 is refuted, and recovery is
+    proved under identifiability under inclusion and a fewest-reticulation tie-break. Every proof
+    follows the paper's, except two steps: uniqueness in Lemma 1, which the paper derives from
+    Observation 2, which gives only existence (the formalization proves it from the
+    vertex-disjointness of the cycles); and Theorem 1 over Definition 1's class, whose networks
+    with the root above the root of T the paper's proof does not treat (the formalization reduces
+    them to networks obtained by adding edges, with the same quartets and reticulations).
 review:
   status: "agent-reviewed"
-  reviewers: ["Independent Codex review agents (first round)", "Independent Claude review agents (second round)"]
+  reviewers: ["Independent Codex review agents (first round)", "Independent Claude review agents (second and third rounds)"]
   notes: "Statements checked against the published JATS source by agents other than their writers, in each round; proofs compared with the paper's; the report's findings and account of the literature checked against their sources. No person has reviewed the proofs."
 alignment:
   namespace: "Camus.Challenge"
@@ -113,6 +159,7 @@ alignment:
       lean: "Camus.Challenge.theorem1"
       module: "Solution"
       status: "proved"
+      note: "Against every network built on T in the sense of Definition 1."
     - source: "Theorem 1, the hypotheses can be met"
       lean: "Camus.Challenge.exists_array_trace"
       module: "Solution"
@@ -125,12 +172,21 @@ alignment:
       lean: "Camus.Challenge.edgeWeight_eq"
       module: "Solution"
       status: "proved"
+    - source: "Definition 1, networks built on T"
+      lean: "Camus.Challenge.definition1_reduction"
+      module: "Solution"
+      status: "proved"
+    - source: "Definition 1, networks built on T, the class is larger than the root-kept class"
+      lean: "Camus.Challenge.builtOn_not_anchored"
+      module: "Solution"
+      status: "proved"
     - source: "Section 2.4, the reticulation restriction"
       lean: "Camus.Challenge.reticulation_restriction"
       module: "Solution"
       status: "proved"
-    - source: "Section 2.4, the modified array exists"
-      lean: "Camus.Challenge.exists_budgetArray"
+      note: "For the networks returned by backtracking through the formalization's recurrence."
+    - source: "Section 2.4, the modified array and its backtracking exist"
+      lean: "Camus.Challenge.exists_budget_traces"
       module: "Solution"
       status: "proved"
     - source: "Section 2.4, monotonicity claim (refuted)"
@@ -138,6 +194,15 @@ alignment:
       module: "Solution"
       status: "proved"
       note: "Refutes the paper's claim for exact numbers of reticulations."
+    - source: "Section 2.4, stopping rule (refuted)"
+      lean: "Camus.Challenge.not_exactStoppingRule"
+      module: "Solution"
+      status: "proved"
+      note: "Refutes the claim that the score does not improve after the column where the rule stops, for exact numbers of reticulations."
+    - source: "Section 2.4, stopping rule, at most k reticulations (refuted)"
+      lean: "Camus.Challenge.not_atMostStoppingRule"
+      module: "Solution"
+      status: "proved"
     - source: "Section 3.2, uniqueness claim (refuted)"
       lean: "Camus.Challenge.not_uniqueOptimum"
       module: "Solution"
@@ -152,4 +217,9 @@ alignment:
       lean: "Camus.Challenge.tree_identifiable"
       module: "Solution"
       status: "proved"
+    - source: "Section 3.2, corrected recovery needs identifiability"
+      lean: "Camus.Challenge.recovery_needs_identifiable"
+      module: "Solution"
+      status: "proved"
+      note: "Even with the fewest-reticulation tie-break, CAMUS may return a network that is not isomorphic to the true one."
 acknowledgements: "Lean, Mathlib and the formalize-math-paper skill; the paper's authors are credited bibliographically."

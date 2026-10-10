@@ -6,17 +6,18 @@ How this formalization was made, from the run logs and the session transcripts.
 
 - **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose its scope (the
   directed-graph model of networks, the corrected statements of Sections 2.4 and 3.2) and asked for
-  the second round.
-- **Formalization:** two AI systems, in two rounds. The first formalization was made by OpenAI's
+  the second and third rounds.
+- **Formalization:** two AI systems, in three rounds. The first formalization was made by OpenAI's
   `gpt-6.1-sol` in Codex CLI 0.162.0-alpha.2, from an empty project, with three sub-agents. The
-  second round, a restyle with a new audit, was made by Claude Opus 5.5 (`claude-opus-5-5`,
-  Anthropic) in Claude Code 2.1.296 (VS Code extension), in one session with sub-agents.
+  second round, a restyle with a new audit, and the third, which formalized what the second had left
+  out, were made by Claude Opus 5.5 (`claude-opus-5-5`, Anthropic) in Claude Code 2.1.296 (VS Code
+  extension), in one session with sub-agents.
 - **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill,
-  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in both rounds.
+  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in all three rounds.
 - **Review:** no person has reviewed the proofs. In each round, agents other than the provers
   reviewed the statements against the paper and compared the proofs with the paper's; in the second
-  round, other agents also checked the report's findings and its account of the literature against
-  their sources.
+  and third rounds, other agents also checked the report's findings and its account of the
+  literature against their sources.
 
 ## The first formalization (8 October 2026)
 
@@ -98,3 +99,54 @@ Figures, from 10 October 2026, 08:21 CDT, to the commit that completes [`REPORT.
 
 The elapsed time includes the builds, which the transcript does not separate from the rest. The
 figures leave out the work after the report: the credits, and the final checks of the packaging.
+
+## The third round (10 October 2026)
+
+The second round's report listed what it left out (its Section 9). Asked whether those items should
+be formalized, Claude proposed four: backtracking in the modified dynamic program of Section 2.4,
+Section 3.2 inside the site model of Warnow, Tabatabaee and Evans, Definition 1's networks whose root
+lies above the root of `T`, and the motivation of Algorithm 1 from the multispecies coalescent. The
+author answered: "I think there is a proof of running time complexity? Add counterexamples. Do 1-4."
+
+How it was made:
+
+- **The plan.** Before the round, the main session had found, in the block grammar, the deeper-donor
+  counterexample to identifiability under inclusion. It added lean4-adr11 as a dependency, wrote the
+  statements that the workstreams would share (Definition 1 by the clades of switchings, the
+  quartets displayed by `T + e`, the deeper-donor counterexample) with temporary proofs, checked them
+  by evaluation, and started six sub-agents at once, each in its own git worktree and branch.
+- **The work.** The sub-agents proved:
+  - the shared statements and the deeper-donor counterexample, with its general form for cross
+    pairs and a backtracking trace that returns the wrong network;
+  - backtracking for Section 2.4, and, after a computer search, the counterexample to the stopping
+    rule (E6);
+  - the cost semantics of Sections 2.3 and 2.4, with the constant-time quartet test;
+  - Definition 1's class, Theorem 1 over it, and the false claim of Section 3.2 on bases (E8);
+  - the site model of Warnow, Tabatabaee and Evans, with the gap in their Theorem 6, the ASTRAL
+    step, the corrected recovery and E7 in the model;
+  - Algorithm 1 under the multispecies coalescent, from lean4-adr11.
+- **Integration.** The main session merged the six branches, moved the definitions that the new
+  statements need into the shared block, restated the Challenge (15 theorems), retired the
+  accounting of Section 2.3 that the cost semantics supersedes, renumbered the findings in the
+  paper's order, updated the audit, and rewrote the report.
+- **Review.** Two sub-agents checked the round's statements against the paper and against Warnow,
+  Tabatabaee and Evans, and the report against its sources and the code. They found that the
+  counterexample in the site model lacked the outgroup that the paper assumes, and that the site
+  model was a special case of theirs; the sub-agent of the site model, resumed, fixed both, and the
+  main session applied the corrections to the report.
+
+Figures, from 10 October 2026, 10:28 CDT (the author's request), to the commit that completes the
+report of this round (`f08c4ba`, 13:16 CDT), taken from the session's transcript with the skill's
+`session_stats.py`:
+
+- **Elapsed time:** 2.81 hours (2 hours 49 minutes).
+- **Sub-agents:** 10: six workstreams, two reviewers, and two read-only helpers that a reviewer
+  started; at most 6 running at once; one resumed once; 7.1 hours of working time in all.
+- **Tool calls and tokens:** the sub-agents made 1,226 tool calls, with 6.21 million input tokens and
+  425 million cache reads; the main session made 194 tool calls, with 0.41 million output tokens,
+  0.71 million input tokens and 87 million cache reads. As in the second round, the sub-agents'
+  recorded 0.03 million output tokens is a lower bound.
+- **Model calls:** 1,380, all to Claude Opus 5.5 (193 by the main session, 1,187 by the sub-agents).
+
+The figures leave out the work after the report: the wrapping of long lines, the credits, and the
+final checks of the packaging.

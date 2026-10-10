@@ -136,7 +136,7 @@ From [`REPORT.md`](REPORT.md):
   Observation 2 (10 October 2026, 1.8 hours, 9 sub-agents); then extended by Claude Opus 5.5 to the
   parts that the second round left out: the cost semantics, backtracking and the stopping rule of
   Sections 2.3 and 2.4, Definition 1's class, the models of Sections 3.2 and 3.4, and the
-  counterexamples (10 October 2026, @@ROUND3@@).
+  counterexamples (10 October 2026, 2.8 hours, 10 sub-agents).
 - No person has reviewed the proofs yet; independent agents reviewed the statements, the proofs, the
   findings and the account of the literature. [`CREDITS.md`](CREDITS.md) gives the details.
 
