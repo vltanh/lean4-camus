@@ -20,7 +20,8 @@ threshold `t > 0`, almost surely, for all large numbers of genes, Algorithm 1 ke
 taxa exactly the copies of the quartet tree of the species tree. When the two least probable
 topologies have probabilities `p₂ > p₃` (as under a network with reticulations) and
 `t < (p₂ − p₃)/(p₂ + p₃)`, almost surely, for all large numbers of genes, it keeps the second
-topology too.
+topology too. The threshold must be positive in the first statement: for `t = 0` the test keeps
+`q₂` whenever `f₂ > f₃` (`retainSecond_zero`).
 
 The gene trees are random variables `G n : Ω → Finset (Finset L)`, unrooted trees on the taxa `L`
 in the representation of lean4-adr11 (`Camus/Pipelines/Coalescent/Quartets.lean`), independent
@@ -54,9 +55,9 @@ tree contributing one copy of each quartet tree it induces.
 * For large numbers of gene trees the relative frequencies approach these probabilities: almost
   surely `fᵢ → pᵢ`, by the strong law of large numbers applied to the indicator that a gene tree
   induces the quartet tree (`Coalescent.ae_tendsto_frequency`).
-* The gap between `f₂` and `f₃` approaches `0`, while `t (f₂ + f₃) → 2 t p₂ > 0`, so the test of
-  Algorithm 1 eventually fails, and the topology of the species tree is eventually the most
-  frequent (`Algorithm1.eventually_msc_pattern`).
+* The gap between `f₂` and `f₃` approaches `0`, while `t (f₂ + f₃) → 2 t p₂`, which is positive
+  since `t > 0` and `p₂ > 0`; so the test of Algorithm 1 eventually fails, and the topology of the
+  species tree is eventually the most frequent (`Algorithm1.eventually_msc_pattern`).
 * For the converse, the test holds for `p₂` against `p₃`, hence for `p₁`, and eventually for the
   frequencies (`Algorithm1.eventually_retain_pattern`).
 -/

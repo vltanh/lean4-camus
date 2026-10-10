@@ -3,7 +3,7 @@ module
 public import Camus.Pipelines.Coalescent.Quartets
 
 /-!
-# The species tree as a tree of CAMUS
+# Section 3.3: the species tree as a tree of CAMUS
 
 A species tree of lean4-adr11 (`ADR11.SpeciesTree L`) carries a rooted topology, its clusters,
 and edge lengths. A rooted binary tree of CAMUS (`PhyloTree`) carries a rooted topology, its
