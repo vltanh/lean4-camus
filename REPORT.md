@@ -7,7 +7,7 @@ TeX source is public. The audit was made against the publisher's JATS XML, as di
 [Europe PMC (PMC13340232)](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13340232/fullTextXML),
 whose identifiers serve as labels: Definition 1 is `mthst1`, Lemma 1 `mthst2`, Definition 2
 `mthst3`, Lemma 2 `mthst4`, Definitions 3–5 `mthst6`–`mthst8`, Theorem 1 `mthst9`, and Equations
-(1)–(5) `E1`–`E5` (these labels are written in code spans; the findings of this report are E1–E7).
+(1)–(5) `E1`–`E5` (these labels are written in code spans; the findings of this report are E1–E9).
 Section, result and equation numbers are the published version's. The earlier versions, bioRxiv
 [10.64898/2026.02.01.703143](https://doi.org/10.64898/2026.02.01.703143) v1 (4 February 2026) and
 v2 (5 February 2026), differ in places noted below (Section 10).
@@ -15,48 +15,72 @@ v2 (5 February 2026), differ in places noted below (Section 10).
 Status of the formalization:
 
 - **Proved:** Lemma 1 (both sentences, for every network built on the constraint tree), Lemma 2,
-  Theorem 1, the four properties of the networks of Section 2.4, the bound of `n − 1`
-  reticulations, the operation counts of Sections 2.3 and 2.4 in a unit-cost accounting, and
-  Algorithm 1's test, each by the paper's argument where the paper gives one. Two claims of the
-  paper are refuted (E5, E6), and the closest correct statements are proved.
-- **Cited results:** the paper's proofs use one result from the literature, Observation 2 of
-  Warnow, Tabatabaee and Evans (2025), which its source states without proof. It is proved here
-  ([`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186), Section 2). The formalization is unconditional: nothing is assumed.
-- **Build:** `lake build` succeeds; the only `sorry`s are the ten in [`Challenge.lean`](Challenge.lean), by
-  design. There is no `axiom`. [`scripts/Audit.lean`](scripts/Audit.lean) checks that every declaration of the library depends only
-  on [`propext`](https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#propext), [`Classical.choice`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Classical.choice) and [`Quot.sound`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Quot.sound).
-- **Challenge and Comparator:** [`Challenge.lean`](Challenge.lean) states Theorem 1, the claim of Section 2.4, the
-  refutations of E5 and E6, the corrected recovery of Section 3.2, and five theorems that tie the
-  definitions to known objects or show that the hypotheses can be met, in Lean and Mathlib with its
-  own copy of the definitions; Comparator accepts [`Solution.lean`](Solution.lean) against it, under Lean's kernel
-  and NanoDa.
+  Theorem 1 against every network built on `T` in the sense of Definition 1, the running time and
+  memory of Section 2.3 for CAMUS written as a program in a cost semantics, the four properties of
+  the networks of Section 2.4 for the networks returned by backtracking, and the running time of the
+  modified program, the bound of `n − 1` reticulations, Algorithm 1's test and its motivation from
+  the multispecies coalescent, and the steps of Section 3.2's consistency argument inside the site
+  model of Warnow et al. (2025), each by the paper's argument where the paper gives one. Four claims
+  of the paper are refuted (E5–E8), and the closest correct statements are proved.
+- **Cited results:** the paper's proofs use Observation 2 of Warnow, Tabatabaee and Evans (2025),
+  which its source states without proof, and Section 3.2 their site model and the convergence of
+  the observed quartets. Both are proved here ([`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186), [`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99),
+  Section 2), the second under a hypothesis that their model omits (Section 4). The quartet
+  probabilities under the multispecies coalescent come from the Lean formalization of Allman,
+  Degnan and Rhodes (2011). The formalization is unconditional: nothing is assumed.
+- **Build:** `lake build` succeeds; the only `sorry`s are the fifteen in [`Challenge.lean`](Challenge.lean), by
+  design. There is no `axiom`. [`scripts/Audit.lean`](scripts/Audit.lean) checks that every declaration of the library
+  depends only on [`propext`](https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#propext), [`Classical.choice`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Classical.choice) and [`Quot.sound`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Quot.sound).
+- **Challenge and Comparator:** [`Challenge.lean`](Challenge.lean) states Theorem 1, against Definition 1's class;
+  the reduction of that class to the networks obtained by adding edges to `T`; the claim of
+  Section 2.4, for the networks returned by backtracking; the refutations of E5, E6 and E7; the
+  corrected recovery of Section 3.2, and a counterexample showing its hypothesis necessary; and
+  theorems that tie the definitions to known objects or show that the hypotheses can be met. They
+  are written in Lean and Mathlib with the Challenge's own copy of the definitions, and Comparator
+  accepts [`Solution.lean`](Solution.lean) against it, under Lean's kernel and NanoDa. The cost semantics, the
+  probabilistic statements and Algorithm 1's motivation are in the library only.
 - **Statements:** Theorem 1 and the lemmas are stated as in the paper. Two definitions are read
   precisely (Equation (1) over distinct quartets, E3; `Pairs(v)` restricted to pairs that give a
-  network, E4), and two claims are corrected (E5, E6), with the author of the formalization.
-- **Proofs:** every proof follows the paper's, except one step: the uniqueness in Lemma 1, which
-  the paper derives from Observation 2 and which needs another argument (E1, Section 7).
+  network, E4), and four claims are refuted (E5–E8), with corrected statements chosen with the
+  author of the formalization.
+- **Proofs:** every proof follows the paper's, except at two steps (Section 7): the uniqueness in
+  Lemma 1, which the paper derives from Observation 2 and which needs another argument (E1); and,
+  for Theorem 1 over Definition 1's class, the networks whose root lies above the root of `T`, which
+  the paper's proof does not treat and which are reduced to the others first (E8).
 
 ## 1. Summary
 
-- **Errors.** Two claims are false. Section 2.4 says that the score "will never decrease as the
+- **Errors.** Four claims are false. Section 2.4 says that the score "will never decrease as the
   number of reticulations increases"; with exactly `k` reticulations, as the section computes the
-  networks, it can (E5). Section 3.2 says that the true network is the unique network satisfying
-  all its quartets, hence the unique optimum; a network with more reticulations that displays more
-  quartets ties it, and CAMUS itself can return it (E6). Neither affects Theorem 1.
+  networks, it can (E5). Its stopping rule, "until we no longer get an improvement in score", can
+  stop before a better score, also when the scores never decrease (E6). Section 3.2 says that the
+  true network is the unique network satisfying all its quartets, hence the unique optimum and
+  CAMUS's output. A network with more reticulations, or with as many and a deeper donor, ties it;
+  CAMUS itself can return it; and inside the site model of Warnow et al. this happens with
+  probability tending to 1, under every hypothesis of the section's argument (E7). Section 3.2 also
+  says that any tree of `N` can serve as a basis for `N`, which fails when the root of `N` lies on a
+  cycle (E8). None affects Theorem 1.
 - **Gaps.** The proof of Lemma 1 derives uniqueness from Observation 2, which gives only existence;
   uniqueness follows from the vertex-disjointness of the cycles (E1). Section 2.2 calls `M[r]` the
   score of the best network, which counts the quartets of `Q` displayed, while `M[r]` counts those
-  satisfied; they differ by a constant (E2).
+  satisfied; they differ by a constant (E2). The proof of Theorem 1 treats the networks obtained by
+  adding edges to `T`, not the networks of Definition 1 whose root lies above the root of `T`; these
+  display the quartets of networks of the first kind (E8).
 - **Definitions read precisely.** Summing `δ` over the multiset `Q`, as Equation (1) is written,
   makes a quartet's multiplicity enter twice (`m²` instead of `m`); Section 2.3's weighted-set reading is meant (E3).
   `Pairs(v)`, read literally, contains pairs that give no network and make the recurrence circular
   (E4).
 - **Missing hypotheses.** The corrected Section 3.2 needs the true network to be identifiable under
-  inclusion and ties to be broken toward the fewest reticulations (Section 4).
+  inclusion, which fails even when every cycle has at least five vertices, and ties to be broken
+  toward the fewest reticulations. The convergence of the observed quartets that Section 3.2 takes
+  from Warnow et al. needs the substitution probabilities `p(e, s, s)` to be positive, which their
+  model does not require. The motivation of Algorithm 1 needs a positive threshold (Section 4).
 - **Redundant hypotheses.** None.
 - **Use of cited results.** Observation 2 is used correctly for the existence half of Lemma 1, and
-  is proved here; it does not give the uniqueness half (E1).
-- **Typos.** A few, in Definition 3, Figure 1, Sections 2.2, 3.2 and 3.4, and the references (E7).
+  is proved here; it does not give the uniqueness half (E1). Warnow et al.'s convergence of the
+  observed quartets holds under the hypothesis above, and is proved here. The pattern of the quartet
+  probabilities under the multispecies coalescent that motivates Algorithm 1 is correct.
+- **Typos.** A few, in Definition 3, Figure 1, Sections 2.2, 3.2 and 3.4, and the references (E9).
 
 ## 2. Results from prior work and how the paper uses them
 
@@ -65,6 +89,7 @@ Status of the formalization:
 | Result | Where the paper uses it | Source | Theorem in `External/` |
 | --- | --- | --- | --- |
 | Observation 2: for every binary level-1 network `N`, `ab\|cd ∈ Q(N_r)` if and only if `a, b` is separated from `c, d` by deleting a cut edge of `N`, or two edges of a cycle one of which is incident with the cycle's bottom node | Proof of Lemma 1 (Section 2.1): "This lemma follows directly from Observation 2 in Warnow et al. (2025)" | T. Warnow, Y. Tabatabaee, S. N. Evans, *Advances in estimating level-1 phylogenetic networks from unrooted SNPs*, J. Comput. Biol. 32 (2025) 3–27, [doi:10.1089/cmb.2024.0710](https://doi.org/10.1089/cmb.2024.0710), Section 2.1: "The following observation is straightforward and the proof is omitted." | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186), with [`External.observation2_forward`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L79) and [`External.observation2_backward`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L155) ([`Camus/External/WarnowTabatabaeeEvans/`](Camus/External/WarnowTabatabaeeEvans)) |
+| The quartets of the SNPs converge to `Q(N_r)`: under the single site model of Warnow et al., every quartet displayed by `N` is a quartet of an SNP with positive probability (the step of the proof of their Theorem 6, for clades), and every quartet of an SNP is displayed | Section 3.2: "According to the theory given in Warnow et al. (2025), as the number of gene trees increases, this multiset will be identical to Q(N_r) (when considered as a set), with probability converging to 1" | The same article, Section 4.2 and the proof of Theorem 6 | [`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99), from [`External.SiteModel.exists_snp`](Camus/External/WarnowTabatabaeeEvans/SiteModel.lean#L1028) and [`External.SiteHistory.displays_of_mem_quartets`](Camus/External/WarnowTabatabaeeEvans/SiteModel.lean#L892) (the model: [`External.SiteModel`](Camus/External/WarnowTabatabaeeEvans/SiteModel.lean#L303)) |
 
 The Lean statement ([`External.WarnowTabatabaeeEvansObservation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L69)) is the source's: a switching
 of `N`, which keeps one incoming edge of every vertex other than the root, is a tree contained in
@@ -75,6 +100,23 @@ deleting the edge below it. The proof uses that a switching is a spanning tree t
 exactly one edge into each cycle's bottom, so that, the cycles being vertex-disjoint, deleting a
 cut edge, or an edge of a cycle together with the left-out one, leaves the same components in the
 network as in the switching ([`Camus/External/WarnowTabatabaeeEvans/README.md`](Camus/External/WarnowTabatabaeeEvans/README.md)).
+
+The site model ([`External.SiteParameters`](Camus/External/WarnowTabatabaeeEvans/SiteModel.lean#L282), [`External.SiteModel`](Camus/External/WarnowTabatabaeeEvans/SiteModel.lean#L303)) has the parameters and the
+constraints of Warnow et al.'s Section 4.2, and also requires `p(e, s, s) > 0` on the tree edges,
+which their argument needs and their list omits (Section 4). A site is a switching of `N` and a
+state at every vertex, with the product of the transmission, root and substitution probabilities;
+these sum to 1 ([`External.SiteParameters.weight_sum`](Camus/External/WarnowTabatabaeeEvans/SiteModel.lean#L583)), and sequences of independent sites with this
+law exist ([`External.SiteModel.sites`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L250)). The quartets of an SNP are those cut by the clade below the
+edge where its state changes, which are the quartets `ab|cd` with `a`, `b` in one state and `c`, `d`
+in the other that the pipeline adds to `Q` ([`External.SiteHistory.quartets_eq_pattern`](Camus/External/WarnowTabatabaeeEvans/SiteModel.lean#L850)). The
+convergence follows from the positivity by a union bound
+([`Camus/External/WarnowTabatabaeeEvans/README.md`](Camus/External/WarnowTabatabaeeEvans/README.md)).
+
+### Proved in another library
+
+| Result | Where the paper uses it | Source | In the formalization |
+| --- | --- | --- | --- |
+| Under the multispecies coalescent on a rooted binary species tree, the quartet gene tree that matches the species tree on four taxa has probability `1 − (2/3)e^{−x}`, and each of the other two `(1/3)e^{−x}`, where `x > 0` is the length of the internal edge of the species tree on those taxa | Section 3.4, Algorithm 1's motivation: "the multi-species coalescent (MSC) model (Takahata 1989) under which, for every four species, the most probable quartet tree matches the species tree and the other two quartet trees have the same lower probability" | E. S. Allman, J. H. Degnan, J. A. Rhodes, *Identifying the rooted species tree from the distribution of unrooted gene trees under the coalescent*, J. Math. Biol. 62 (2011) 833–862, [doi:10.1007/s00285-010-0355-7](https://doi.org/10.1007/s00285-010-0355-7), Section 4.1 and Lemma 5; the paper cites Takahata (1989) | The formalization <https://github.com/vltanh/lean4-adr11> (a dependency of this project): its four-taxon distributions (`ADR11.fourTaxa_balanced`, `ADR11.fourTaxa_caterpillar`) and its restriction of the coalescent to four taxa, applied in [`Coalescent.quartetProb_species`](Camus/Pipelines/Coalescent/Quartets.lean#L448), [`Coalescent.quartetProb_other`](Camus/Pipelines/Coalescent/Quartets.lean#L459) and [`Coalescent.msc_pattern`](Camus/Pipelines/Coalescent/Quartets.lean#L496) |
 
 ### Assumed
 
@@ -91,18 +133,24 @@ Nothing.
 | Adding edges above pairs whose cycles share no vertex gives a rooted binary level-1 network built on `T` | Proof of Theorem 1: "By design, the solution that CAMUS outputs is a level-1 phylogenetic network N that extends T" | [`Realization.levelOne`](Camus/Network/Realization/Construction.lean#L72), [`Realization.support`](Camus/Network/Realization/Construction.lean#L45) |
 | Every level-1 network built on `T` is obtained so, from the pairs of its non-tree edges | Sections 2.2 and the proof of Theorem 1, which treat a network as its set of added edges | [`SupportSubdivision.canonical_iso`](Camus/Network/Completeness/Main.lean#L114), [`SupportSubdivision.extracted_separated`](Camus/Network/Completeness/Main.lean#L67) |
 | A level-1 network on `n` leaves has at most `n − 1` reticulations | Section 2.4: "it is known that a level-1 phylogenetic network on n leaves will not have more than n−1 reticulations" | [`RootedNetwork.anchored_reticulation_bound`](Camus/Network/Reticulations.lean#L227), for networks built on `T`, which is the case the section needs |
+| In a rooted binary tree, every four taxa carry exactly one induced quartet | Section 3.2: "the quartet support score of t will be larger than the score of any other tree" | [`PhyloTree.induced_existsUnique`](Camus/Pipelines/Astral.lean#L296) |
+| The lowest common ancestors of all pairs of vertices and the depths of a tree can be tabulated in `O(n²)` time, and membership in a leaf set read off them | Section 2.3 | [`Complexity.preprocess_time`](Camus/Complexity/Tables.lean#L658), from the recurrence [`Complexity.lca_recurrence`](Camus/Complexity/Tables.lean#L169) |
+| The strong law of large numbers | Sections 3.2 and 3.4: "the most frequently observed quartet tree will be the most probable quartet tree with probability converging to 1"; "the gap between f2 and f3 will approach 0" | `ProbabilityTheory.strong_law_ae_real` (Mathlib) |
 
 ### Does the paper use each cited result correctly?
 
 | Cited result | Where | Verdict |
 | --- | --- | --- |
 | Observation 2 (Warnow, Tabatabaee and Evans 2025) | Proof of Lemma 1 | Applied correctly for existence; it does not give uniqueness, which needs the vertex-disjointness of the cycles (E1) |
+| The model and the proof of Theorem 6 of Warnow, Tabatabaee and Evans (2025) | Section 3.2, the convergence of the observed quartets | Correct once `p(e, s, s) > 0` on the tree edges is added to the model, as their Theorem 7 assumes; without it the step fails (Section 4). The conclusion that the paper draws, that CAMUS then returns the true network, is false (E7) |
+| Warnow et al. (2025) and Gambette et al. (2012): quartets "determined by the nodes they attach to in the cycle" | Section 2.3, `δ_T` in `O(1)` time | Correct: the quartets satisfied by an added edge are those of `Q` that `T` does not induce and that a clade of the tree `T'` displayed through the edge cuts ([`Realization.mem_novel_single_iff`](Camus/Network/SingleEdge.lean#L398)), which a constant number of table reads decides ([`Complexity.delta`](Camus/Complexity/Delta.lean#L732), at most 130 operations) |
+| Takahata (1989): the multispecies coalescent | Section 3.4 | Correct ([`Coalescent.msc_pattern`](Camus/Pipelines/Coalescent/Quartets.lean#L496), from Allman, Degnan and Rhodes) |
+| Mirarab et al. (2014): ASTRAL solves its problem exactly | Section 3.2 | Taken as the definition of ASTRAL's output: the formalization proves the section's claim about the exact maximizers of the quartet support score ([`astral_maximizer_tendsto`](Camus/Pipelines/Astral.lean#L543)) |
 
 The other citations give context, or support the pipelines and the experiments, which are not
-formalized: the statistical consistency of ASTRAL (Mirarab et al. 2014) in Sections 3.1 and 3.2 and of
-quartet-based methods under the model of Warnow et al. (2025) in Section 3.2, the constant-time computation of `δ` in
-Section 2.3 (Warnow et al. 2025; Gambette et al. 2012), ghost lineages (Tricou et al. 2025), and the
-methods, simulators and data of Sections 1, 3 and 4.
+formalized: the statistical consistency of ASTRAL under the multispecies coalescent (Mirarab et al.
+2014) in Section 3.1, ghost lineages (Tricou et al. 2025), and the methods, simulators and data of
+Sections 1, 3 and 4.
 
 ## 3. Errors and gaps in the paper
 
@@ -145,7 +193,7 @@ elements of the multiset, a quartet that appears `m` times contributes `m²`, no
 ([`Counterexamples.squared_multiplicity_counterexample`](Camus/Galled/Counterexamples.lean#L135)). Section 2.3 gives the intended reading: "Q
 can be equivalently represented as a weighted set, where the weight of an element is the number of
 times the element appears in Q". The formalization sums over the distinct quartets of `Q`
-([`DynamicProgramming.edgeWeight`](Challenge.lean#L665), [`Camus.equation1`](Camus/Score.lean#L50)). The algorithm and its results are unaffected.
+([`DynamicProgramming.edgeWeight`](Challenge.lean#L662), [`Camus.equation1`](Camus/Score.lean#L50)). The algorithm and its results are unaffected.
 
 **E4. Section 2.2: `Pairs(v)` contains pairs that give no network.** "[W]hen v≠r, we let Pairs(v)
 denote the set of all ordered pairs of nodes (u,w) in T such that lca_T(u,w)=v; note that this
@@ -158,7 +206,7 @@ description excludes them ("a set of ordered pair (u,w) of nodes in T so that th
 would be assigned to a non-tree edge we would add to T"), and at the root the paper's set already
 excludes `u = r` and `w = r`. The formalization takes `Pairs(v)` to be the pairs with target `v`,
 ends other than the root, and recipient `w` not an ancestor of (or equal to) the donor `u`
-([`EdgeAbove.Admissible`](Challenge.lean#L234), [`DynamicProgramming.pairsAt`](Challenge.lean#L575)); at the root this is the paper's set, and no
+([`EdgeAbove.Admissible`](Challenge.lean#L187), [`DynamicProgramming.pairsAt`](Challenge.lean#L572)); at the root this is the paper's set, and no
 pair that gives a network is lost. Ghost lineages (`u = v`) are kept. Theorem 1 holds with this
 reading.
 
@@ -176,11 +224,34 @@ change no displayed quartet: every such network displays only the quartet `AB|CD
 reticulations the claim holds, trivially, since the networks allowed only grow with `k`
 ([`Camus.atMostScore_mono`](Camus/Score.lean#L172), for an abstract finite family of networks). A drop requires every internal vertex of `T` to lie on a cycle of every
 optimal network with `k` reticulations, since otherwise a triangle at a free vertex gives `k + 1`
-reticulations and the same score; here it happens at `k = n − 1`, past the point where the stopping
-rule stops. The four properties of the networks `N_k` that the section asks for hold
-([`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61)).
+reticulations and the same score; here it happens at `k = n − 1`. The stopping rule can also stop
+too early without any drop (E6). The four properties of the networks `N_k` that the section asks for
+hold, for the networks returned by backtracking through the modified array
+([`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499), [`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61)).
 
-**E6. Section 3.2: the true network need not be the unique optimum, and CAMUS need not return
+**E6. Section 2.4: the stopping rule can stop before a better score.** The section computes the
+columns of `M[v, k]` "in order of increasing k, dynamically adding new columns to our matrix, until we
+no longer get an improvement in score", and calls `m` "the number of reticulations after which the
+score does not improve". The rule can stop where a larger number of reticulations gives a better
+score, with exactly `k` reticulations and with at most `k`. Take the caterpillar
+`T = (A,(B,(C,(D,(E,(F,(G,H)))))))` and `Q = {AF|CG, AF|CG, AC|BD, AE|DF, AH|FG}`. The best numbers
+of quartets of `Q` displayed by a network built on `T` with exactly, or at most, 0, 1, 2 and 3
+reticulations are 0, 2, 2 and 3 ([`Counterexamples.caterpillar_scores`](Camus/Restriction/StoppingRule.lean#L344)). One edge, above `(A, F)`,
+satisfies both copies of `AF|CG`. Two edges with vertex-disjoint cycles satisfy at most two quartets
+of `Q`: the cycle of every edge that satisfies a quartet of `Q` passes through one of three vertices
+of `T`, and the cycle of an edge that satisfies two passes through all three. Three edges, above
+`(A, C)`, `((D,(E,(F,(G,H)))), E)` and `((F,(G,H)), H)`, satisfy `AC|BD`, `AE|DF` and `AH|FG`. So the
+rule stops at `m = 1`, with score 2, while three reticulations give 3, the best score of any network
+built on `T` ([`not_exactStoppingRule`](Camus/Restriction/StoppingRule.lean#L461), [`not_atMostStoppingRule`](Camus/Restriction/StoppingRule.lean#L480)); every array of the recurrence has
+the root rows `{0}`, `{2}`, `{2}`, `{3}`, and the rule applied to them stops at `m = 1`
+([`Counterexamples.caterpillar_root_rows`](Camus/Restriction/StoppingRule.lean#L421), [`Counterexamples.caterpillar_array_stops`](Camus/Restriction/StoppingRule.lean#L443)). Unlike E5, the
+scores do not decrease here. Eight leaves are needed for this pattern: an argument (an optimal family
+of `k + 2` edges has only edges of positive weight, whose cycles have at least two vertices of `T`)
+and an exhaustive search on seven leaves show it, without a formal proof. The section uses the rule
+to choose the number of reticulations ("where the score stops improving substantially"), so the
+point is that the networks it computes need not include an optimal one.
+
+**E7. Section 3.2: the true network need not be the unique optimum, and CAMUS need not return
 it.** "When Q is a multi-set version of Q(N_r), then CAMUS will add the correct reticulations and
 return N, since this is the unique network that can satisfy all the quartets in Q(N_r), and hence N
 will be the unique solution to CAMUS' optimization problem." The objective counts the quartets of
@@ -195,12 +266,59 @@ same failure, and
 excluding small cycles does not help, since the cycle here has five vertices. The claim holds under
 two more hypotheses (Section 4): the true network is identifiable under inclusion, and ties are
 broken toward the fewest reticulations ([`recovery`](Camus/Pipelines/Uniqueness.lean#L151)); a tree is identifiable under inclusion
-([`tree_identifiable`](Camus/Pipelines/Uniqueness.lean#L190)). The statistical consistency argued in the rest of the section rests on this
-step and on the models of Warnow et al. (2025), which are not formalized. The bioRxiv versions already claimed the
-consistency of this pipeline; the uniqueness sentence, its justification, appears only in the
-published version.
+([`tree_identifiable`](Camus/Pipelines/Uniqueness.lean#L190)). The tie-break toward the fewest reticulations does not restore uniqueness, and excluding small
+cycles does not help either. Take `t = ((A,B),(C,(F,(D,E))))` and for `N` the network obtained by
+adding an edge from above the cherry `(D,E)` to above `A`; its cycle has six vertices. Moving the
+donor down, to above `D`, gives a network `P` built on `t`, with one reticulation and a seven-vertex
+cycle, that displays the 22 quartets of `N` and three more, `AD|BE`, `AD|CE` and `AD|EF`
+([`Counterexamples.shallow_subset_deep`](Camus/Pipelines/Inclusion.lean#L133), [`Counterexamples.mem_shallowQuartets`](Camus/Pipelines/Inclusion.lean#L275),
+[`Counterexamples.mem_deepQuartets`](Camus/Pipelines/Inclusion.lean#L298)). If `Q` is a multiset version of `Q(N_r)`, then `P` is optimal
+with the fewest reticulations among the optimal networks, and is not isomorphic to `N`
+([`Counterexamples.deepNet_optimal_fewest`](Camus/Pipelines/Inclusion.lean#L168), [`Counterexamples.deep_not_iso_shallow`](Camus/Pipelines/Inclusion.lean#L150)); a backtracking
+trace of the dynamic program returns it ([`Counterexamples.camus_may_return_deep`](Camus/Pipelines/Inclusion.lean#L373)); and `N` is not
+identifiable under inclusion ([`Counterexamples.shallow_not_identifiable`](Camus/Pipelines/Inclusion.lean#L218); in the Challenge,
+[`Challenge.recovery_needs_identifiable`](Challenge.lean#L980)). The example is an instance of a general fact. If the donor `u` of an
+added edge is not an ancestor of its recipient `w`, moving the donor to any vertex below `u` keeps
+every quartet that the edge satisfies ([`Realization.deeper_donor_displays`](Camus/Network/SingleEdge/Deeper.lean#L49)): every clade of the
+tree that the edge displays is a clade of the tree displayed after the move, or a clade of `t`. So a
+network with one such edge, whose donor is not a leaf, is identifiable under inclusion only if the
+move adds no quartet ([`Realization.deeper_donor_not_identifiable`](Camus/Network/SingleEdge/Deeper.lean#L131)). For a ghost donor, an ancestor of
+the recipient, the move can lose quartets ([`Counterexamples.ghost_deeper_donor`](Camus/Pipelines/Inclusion.lean#L242)).
 
-**E7. Typos.**
+The failure persists inside the model of Warnow et al. (2025) on which the section's argument rests
+(Section 2). For every site model on `N` with at least two states, the probability that `P` is
+optimal for the observed quartets, with the fewest reticulations among the optimal networks built
+on `t`, tends to 1 as the number of sites grows ([`snp_deeperDonor_tendsto`](Camus/Pipelines/SNP.lean#L167)), since the observed
+quartets have support `Q(N_r)` with probability tending to 1. Some site model on `N` also meets the
+condition of the section's ASTRAL step, that `t` induces the most probable quartet on every four
+taxa ([`Counterexamples.deeperDonor_meets_hypotheses`](Camus/Pipelines/SNPCondition.lean#L316)), so the counterexample meets every hypothesis
+of the argument. The section's conclusion, that CAMUS returns `N`, then holds only if CAMUS happens to
+break the tie between `N` and `P` in favour of `N`. With identifiability under inclusion and the
+tie-break, the conclusion holds in probability ([`snp_recovery_tendsto`](Camus/Pipelines/SNP.lean#L79),
+[`snp_correctedStatisticalConsistency`](Camus/Pipelines/SNP.lean#L137)). The bioRxiv versions already claimed the consistency of this
+pipeline; the uniqueness sentence, its justification, appears only in the published version.
+
+**E8. Sections 2.1 and 3.2: a tree of `N` need not be a basis for `N`.** Section 2.1 says that `N`
+"can be constructed by taking one of the trees t∈T and adding reticulations (edges) to t", and
+that `N` is then built on `t`; Section 3.2 says that "any tree t∈Q(N_r) can be used as the basis for
+N (i.e. N can be obtained by adding reticulate edges to t)". The first holds, the second fails when
+the root of `N` lies on a cycle. If the root of `N` has the root of `t` and a reticulation as
+children, deleting the edge into the reticulation leaves a root with one child, which the clean-up
+of Definition 1 suppresses, so `t` is a tree of `N`; but adding edges to `t` (Definition 3) never
+creates a vertex above its root. For `t = ((A,B),C)` and the network whose root has as children the
+root of `t` and a reticulation above `A`, no network obtained by adding edges to `t`, and so no
+output of CAMUS on `t`, is isomorphic to it ([`Counterexamples.camus_output_not_rootAboveNet`](Camus/Network/RootAbove/Example.lean#L414),
+[`Counterexamples.builtOn_not_anchored`](Camus/Network/RootAbove/Example.lean#L389)). The proof of Theorem 1, which compares the output with "any
+level-1 phylogenetic network that extends T", treats a network as `T` with added edges, each with a
+target in `T`, and so leaves these networks out. The gap is harmless: moving the tail of the edge
+from the root below the root of `t` gives a network obtained by adding edges to `t`, with the same
+reticulations and the same displayed quartets ([`RootedNetwork.BuiltOn.exists_anchored`](Camus/Network/RootAbove/Main.lean#L64)), so
+Theorem 1 and the optimality of the networks of Section 2.4 hold over Definition 1's class
+([`theorem1_builtOn`](Camus/DP/Definition1.lean#L76), [`BudgetDP.exact_graph_optimal_builtOn`](Camus/DP/Definition1.lean#L114); in the Challenge, [`Challenge.theorem1`](Challenge.lean#L852) and
+[`Challenge.reticulation_restriction`](Challenge.lean#L903)). In Section 3.2 the tree is rooted at an outgroup, a child of the root
+of `N`, and then the root lies on no cycle ([`DisplayedSubdivision.root_above`](Camus/Network/RootAbove/RootWire.lean#L226)).
+
+**E9. Typos.**
 
 - Definition 3: "let T be a rooted tree and u and w be nodes in N" should be "nodes in T".
 - Figure 1, caption: "it is satisfied by the added edge from u′ to v′" should be "from u′ to w′".
@@ -218,46 +336,55 @@ published version.
 
 | Where | Missing hypothesis | Counterexample without it | In the formalization |
 | --- | --- | --- | --- |
-| Section 3.2: "N will be the unique solution to CAMUS' optimization problem" | The true network `N` is identifiable under inclusion: every network built on `t` that displays all the quartets of `N`, with no more reticulations, is isomorphic to `N`; and ties are broken toward the fewest reticulations | E6: the tree `(O,((B,A),(D,C)))` and the network with one added edge above `(A, C)` both display all five quartets | Hypotheses `identifiable` and `fewest` of [`recovery`](Camus/Pipelines/Uniqueness.lean#L151); [`tree_identifiable`](Camus/Pipelines/Uniqueness.lean#L190) shows that every tree satisfies the first |
+| Section 3.2: "N will be the unique solution to CAMUS' optimization problem" | The true network `N` is identifiable under inclusion: every network built on `t` that displays all the quartets of `N`, with no more reticulations, is isomorphic to `N`; and ties are broken toward the fewest reticulations | E7: the tree `(O,((B,A),(D,C)))` and the network with one added edge above `(A, C)` both display all five quartets; with the tie-break, the networks of the deeper donor, whose cycles have six and seven vertices ([`Challenge.recovery_needs_identifiable`](Challenge.lean#L980)) | Hypotheses `identifiable` and `fewest` of [`recovery`](Camus/Pipelines/Uniqueness.lean#L151), and of [`snp_recovery_tendsto`](Camus/Pipelines/SNP.lean#L79) in the site model; [`tree_identifiable`](Camus/Pipelines/Uniqueness.lean#L190) shows that every tree satisfies the first |
+| Section 3.2: "According to the theory given in Warnow et al. (2025), as the number of gene trees increases, this multiset will be identical to Q(N_r)" | The substitution probabilities `p(e, s, s)` are positive on the tree edges, which Warnow et al.'s Section 4.2 does not require (their Theorem 7 assumes it, as `p_on`) | The tree `(((A,B),C),D)`, with the state always changing on the edge above `((A,B),C)`: no SNP of positive probability has the clade `{A, B}`, and the quartet `AB\|CD` is never observed ([`External.theorem6_step_needs_stay`](Camus/External/WarnowTabatabaeeEvans/Theorem6.lean#L183)) | Field `stay_pos` of [`External.SiteModel`](Camus/External/WarnowTabatabaeeEvans/SiteModel.lean#L303) |
 | Section 3.4: "for t small enough (specifically, t<(f2−f3)/(f2+f3)), then we will include q2" | `f2 + f3 > 0` | For `f2 = f3 = 0` the ratio is undefined (the test `f2 − f3 > t·(f2+f3)` then keeps no second quartet) | Hypothesis `0 < f₂ + f₃` of [`retainSecond_iff_ratio`](Camus/Pipelines/Filtering.lean#L34) |
+| Section 3.4: under the multispecies coalescent "the gap between f2 and f3 will approach 0", so that Quartet Filtering keeps only the most frequent quartet | The threshold `t` is positive (the algorithm allows `t ∈ [0, 1]`) | For `t = 0`, the second quartet is kept whenever `f2 > f3` ([`retainSecond_zero`](Camus/Pipelines/Filtering.lean#L61)), which the convergence of the frequencies does not exclude | Hypothesis `0 < t` of [`Coalescent.msc_filterBlock`](Camus/Pipelines/Coalescent.lean#L221) and [`Coalescent.msc_filterQuartets`](Camus/Pipelines/Coalescent.lean#L250) |
 
 No other statement of the paper needs a hypothesis that it leaves unstated. The trees are
 phylogenetic trees, with distinct leaf labels, which the statements assume
-([`PhyloTree.WellLabelled`](Challenge.lean#L138)). The restriction of `Pairs(v)` (E4) is part of a definition.
+([`PhyloTree.WellLabelled`](Challenge.lean#L91)). The restriction of `Pairs(v)` (E4) is part of a definition. Section
+3.2's "the most probable quartet tree" is read as strictly more probable than the other two, which
+the definite article says (Section 6).
 
 ## 5. Redundant hypotheses
 
 None. Every hypothesis of the formal statements of Lemmas 1 and 2, Theorem 1 and Section 2.4 is used
-by its proof.
+by its proof, and the hypotheses added in Section 4 are needed.
 
 ## 6. How the formalization reads the paper
 
-- **Trees, quartets and display.** A tree is a full binary tree with labelled leaves ([`PhyloTree`](Challenge.lean#L125));
+- **Trees, quartets and display.** A tree is a full binary tree with labelled leaves ([`PhyloTree`](Challenge.lean#L78));
   its vertices are addressed by their paths from the root. A quartet is written with its four taxa
-  in increasing order and one of three splits ([`Quartet`](Challenge.lean#L158)). Definition 1's trees of a network are its
+  in increasing order and one of three splits ([`Quartet`](Challenge.lean#L111)). Definition 1's trees of a network are its
   switchings: one incoming edge kept at every vertex other than the root
-  ([`RootedNetwork.Switching`](Challenge.lean#L342)), which in a binary network is one incoming edge kept at each
+  ([`RootedNetwork.Switching`](Challenge.lean#L295)), which in a binary network is one incoming edge kept at each
   reticulation. A quartet is displayed, `q ∈ Q(N_r)`, when some switching has an edge whose removal
-  separates its two pairs ([`RootedNetwork.DisplaysQuartet`](Challenge.lean#L358)). This is the paper's notion: in a tree,
+  separates its two pairs ([`RootedNetwork.DisplaysQuartet`](Challenge.lean#L311)). This is the paper's notion: in a tree,
   a quartet is induced exactly when an edge separates its pairs, whatever unary vertices and
   unlabelled leaves remain. For the constraint tree it agrees with the clades of `T`
-  ([`Realization.baseline_displays_iff`](Camus/Network/Baseline/Main.lean#L38), in the Challenge as [`Challenge.tree_displays_iff`](Challenge.lean#L789)).
+  ([`Realization.baseline_displays_iff`](Camus/Network/Baseline/Main.lean#L38), in the Challenge as [`Challenge.tree_displays_iff`](Challenge.lean#L870)).
 - **Networks.** A rooted binary level-1 phylogenetic network is a finite directed graph with the laws
-  of [`RootedNetwork.RootedBinaryLevelOne`](Challenge.lean#L317): acyclic, every vertex reachable from the root, the root
+  of [`RootedNetwork.RootedBinaryLevelOne`](Challenge.lean#L270): acyclic, every vertex reachable from the root, the root
   of indegree 0 and outdegree 0 or 2, the other vertices leaves (1, 0), tree vertices (1, 2) or
   reticulations (2, 1), the leaves labelled bijectively, and any two distinct cycles of the
   underlying undirected graph vertex-disjoint ("level-1", as in the paper). Triangles are allowed, as
   in CAMUS.
-- **Built on `T`.** "N is built on T" is read as: `T`, with its edges subdivided, is a switching of `N`
-  with the same root and the same labelled leaves ([`RootedNetwork.AnchoredExtension`](Challenge.lean#L417),
-  [`SupportSubdivision`](Challenge.lean#L390)). These are the networks obtained by adding edges to `T`, as CAMUS does: an
-  added edge never starts above the root ("we cannot add an edge to T that begins above the root of
-  T"), and cannot end above it (it would close a directed cycle). Definition 1's "built on t" also
-  allows a network whose root is the tail of an edge into a reticulation, with `t` the displayed tree
-  left after suppressing the root. Such networks are not in the formal class. They do not change the
-  optimum, since moving that edge's tail onto the edge from the root of `T` to its child on the other
-  side of the cycle gives a network built on `T` that displays the same quartets; this is not formalized, and Theorem 1 is stated for the
-  root-preserving class, over which the paper's dynamic program optimizes.
+- **Built on `T`.** Definition 1's "N is built on t", `t` one of the trees of `N`, is
+  [`RootedNetwork.BuiltOn`](Challenge.lean#L414): some switching of `N` is `T` with its edges subdivided, below a directed
+  path from the root of `N` to the root of `T` ([`DisplayedSubdivision`](Challenge.lean#L382)). A switching of a rooted
+  binary level-1 network leaves no unlabelled leaf ([`RootedNetwork.switching_leaf_of_childless`](Camus/Network/RootAbove/Defs.lean#L44)), so
+  the clean-up of Definition 1 only suppresses vertices with one child, a root with one child
+  included. The networks obtained by adding edges to `T`, as CAMUS does, are those whose root is the
+  root of `T` ([`RootedNetwork.AnchoredExtension`](Challenge.lean#L370), [`SupportSubdivision`](Challenge.lean#L343)): an added edge never starts
+  above the root ("we cannot add an edge to T that begins above the root of T"), and cannot end
+  above it (it would close a directed cycle). Definition 1's class is larger
+  ([`Counterexamples.builtOn_not_anchored`](Camus/Network/RootAbove/Example.lean#L389)): the root of `N` may have the root of `T` and a
+  reticulation as children ([`DisplayedSubdivision.root_above`](Camus/Network/RootAbove/RootWire.lean#L226)). Each such network displays the
+  quartets of a network obtained by adding edges to `T`, with as many reticulations
+  ([`RootedNetwork.BuiltOn.exists_anchored`](Camus/Network/RootAbove/Main.lean#L64), E8). Theorem 1 and the optimality of Section 2.4's
+  networks are stated against Definition 1's class; the other statements of Sections 2.4 and 3.2
+  concern the networks obtained by adding edges to `T`, the class over which CAMUS optimizes.
 - **Added edges and `T + e`.** An added edge is a pair `(u, w)` of vertices of `T`; the network
   obtained by adding the edges of a family `E` is `Realization.graph t E`. Every network built on `T`
   is isomorphic to `Realization.graph t E` for the family of pairs of its non-tree edges
@@ -265,69 +392,130 @@ by its proof.
   the canonical network of the single pair of `e` ([`SupportSubdivision.single_edge_reduction`](Camus/Network/Completeness/Main.lean#L127)), so
   that `T + e` (Section 2.1: delete the other non-tree edges and suppress) is that canonical network,
   with the same displayed quartets ([`GraphSubdivision.displays_iff`](Camus/Network/Subdivision/Invariance.lean#L48)). On an edge of `T` that carries ends of two added edges, the end
-  of the outer cycle comes before a ghost donor ([`Realization.outerEndpoints`](Challenge.lean#L481),
-  [`Realization.ghostEndpoints`](Challenge.lean#L488)); in every network built on `T` this order is forced
+  of the outer cycle comes before a ghost donor ([`Realization.outerEndpoints`](Challenge.lean#L478),
+  [`Realization.ghostEndpoints`](Challenge.lean#L485)); in every network built on `T` this order is forced
   ([`SupportSubdivision.no_ghost_before_endpoint`](Camus/Network/Completeness/Order.lean#L33)).
+  The quartets that `T + e` displays are those of `T` and those cut by a clade of the tree `T'`,
+  `T` with the subtree at `w` pruned and regrafted above `u` ([`Realization.single_displays_iff`](Camus/Network/SingleEdge.lean#L333),
+  [`EdgeAbove.switchedClades`](Camus/Network/SingleEdge.lean#L127); in general, a network displays `q` exactly when some switching has an
+  edge whose clade below cuts `q`, [`RootedNetwork.displays_iff_cladeBelow`](Camus/Network/Clades.lean#L186)). So `δ_T` of
+  Definition 4 and the weights of Equation (1) are computable ([`EdgeAbove.satisfies`](Camus/Network/SingleEdge.lean#L134),
+  [`DynamicProgramming.edgeWeight_eq_satisfies`](Camus/Network/SingleEdge.lean#L414)), and the counterexamples about networks with one
+  added edge are checked by `decide`.
 - **The recurrence.** Definition 5's children are children in the network `T + e`, as the
   definition says: at the parent of `u` (or of `w`), whose edge to `u` carries an end of `e`, the
-  child on the cycle is the new vertex ([`Realization.child`](Challenge.lean#L535), [`Realization.offChild`](Challenge.lean#L543)). With the
+  child on the cycle is the new vertex ([`Realization.child`](Challenge.lean#L532), [`Realization.offChild`](Challenge.lean#L540)). With the
   children in `T`, Equations (4) and (5) would count `M[u]` (or `M[w]`) twice, and drop the subtree of
   its sibling, whenever `u` (or `w`) is the left child of a vertex of the cycle other than the target. The equations'
   condition is `l(x) ∉ γ(u,w)`; in the JATS source the membership symbol is struck through, which a
   plain-text extraction loses. Equation (1) is read over the distinct quartets of `Q` (E3), and
-  `Pairs(v)` with the restriction of E4. [`DynamicProgramming.Array`](Challenge.lean#L618) states the recurrence; it
+  `Pairs(v)` with the restriction of E4. [`DynamicProgramming.Array`](Challenge.lean#L615) states the recurrence; it
   determines `M` on the vertices of `T`, and a solution and a backtracking trace exist
-  ([`DynamicProgramming.exists_array_trace`](Camus/DP/Correctness.lean#L401)). [`DynamicProgramming.Trace`](Challenge.lean#L631) allows any maximizing branch,
+  ([`DynamicProgramming.exists_array_trace`](Camus/DP/Correctness.lean#L401)). [`DynamicProgramming.Trace`](Challenge.lean#L628) allows any maximizing branch,
   so Theorem 1 covers every way of breaking ties.
 - **Theorem 1.** It is stated for every array satisfying the recurrence and every backtracking
-  trace, against every network built on `T`. Its score is the number of quartets of `Q` satisfied,
+  trace, against every network built on `T` in the sense of Definition 1. Its score is the number of quartets of `Q` satisfied,
   counted with multiplicity, and it also states the optimality of the number displayed (E2). The
   paper's induction on the number of leaves below a vertex is an induction on the measure
   [`DynamicProgramming.remainingDepth`](Camus/DP/Packing.lean#L121) (the height of `T` minus the depth of the vertex), which also
   decreases from a vertex to its descendants: the same induction over subtrees.
 - **Section 2.4.** The paper describes the modified dynamic program by the meaning of its entries
   `M[v, k]` ("the solution found for subtree T_v of the network limited to allowing k non-tree
-  edges") and gives no recurrence. The formalization's recurrence ([`BudgetDP.Array`](Challenge.lean#L722)) has that
+  edges") and gives no recurrence. The formalization's recurrence ([`BudgetDP.Array`](Challenge.lean#L719)) has that
   meaning: a row `M v k` is empty when no family of `k` added edges below `v` is feasible, and
   otherwise holds the best value; the fork case convolves the children's rows, and the case of an
   edge with target `v` distributes the remaining budget over the subtrees hanging off its cycle, by
-  a knapsack that keeps the maximum after each convolution. The networks `N_k` are given by
-  existence: the value of each nonempty row is attained by a network with exactly `k` reticulations,
-  not computed by backtracking. The number of reticulations is the number of vertices of indegree 2
-  ([`RootedNetwork.reticulationCount`](Challenge.lean#L676)), which for a network built on `T` is its number of non-tree
-  edges. The stopping rule is not formalized.
-- **Section 2.3.** The formalization does not model an implementation. It defines counts of the
-  operations that the paper's analysis lists ([`Complexity.scalarOperations`](Camus/Complexity/Operations.lean#L146),
-  [`Complexity.budgetOperations`](Camus/Complexity/Operations.lean#L158), [`Complexity.scalarSpace`](Camus/Complexity/Operations.lean#L264): the tables of lowest common ancestors,
-  leaf sets and depths, one quartet test per candidate pair and distinct quartet, one read per
-  subtree hanging off each candidate cycle, the comparisons) and bounds them by `32 n² (|Q| + n)`,
-  `100 n² (|Q| + m³ n)` for `m ≥ 1`, and `32 n⁴` when the quartets of `Q` are on taxa of `T`, with
-  `|Q|` the number of distinct quartets, as in the paper. The quartet test is a unit-cost oracle
-  ([`Complexity.DeltaOracle`](Camus/Complexity/Operations.lean#L80)) whose answers give Equation (1)'s weights; its constant-time
-  implementation after an `O(n²)` preprocessing, which the paper takes from Warnow et al. (2025) and
-  Gambette et al. (2012), is assumed by the cost model, not proved.
+  a knapsack that keeps the maximum after each convolution. The networks `N_k` are those returned by
+  backtracking through the array ([`BudgetDP.Trace`](Challenge.lean#L748), with a trace through the knapsack,
+  [`BudgetDP.Knapsack`](Challenge.lean#L727)): the network of every trace from the root with budget `k` is built on `T`,
+  has exactly `k` non-tree edges and as many reticulations ([`RootedNetwork.nonTree_card_eq`](Camus/Restriction/Backtracking.lean#L78)),
+  satisfies the value of the row, and is optimal ([`BudgetDP.trace_graph_optimal`](Camus/Restriction/Backtracking.lean#L352),
+  [`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499)); a trace exists for every nonempty row ([`BudgetDP.exists_trace`](Camus/Restriction/Backtracking.lean#L285)),
+  and the row of `k` at the root is nonempty if and only if `k ≤ n − 1`
+  ([`BudgetDP.root_row_nonempty_iff_le`](Camus/Restriction/Backtracking.lean#L442)). The number of reticulations is the number of vertices of
+  indegree 2 ([`RootedNetwork.reticulationCount`](Challenge.lean#L673)). The stopping rule is read as the claim that the
+  score does not improve after the column where the rule stops, for exact numbers of reticulations
+  and for at most `k` ([`StopsAt`](Challenge.lean#L816), [`ExactStoppingRule`](Challenge.lean#L826), [`AtMostStoppingRule`](Challenge.lean#L834)), and refuted (E6).
+- **Section 2.3.** CAMUS is written as a program in a cost monad ([`Complexity.Timed`](Camus/Complexity/Timed.lean#L53)): a result
+  with the number of elementary operations performed, one per read or write of a table entry, per
+  arithmetic operation or comparison on integers, per comparison of vertex names and per loop
+  iteration, as in the paper's unit-cost model ("we consider integers to require O(1) memory"). Vertices
+  are named by their addresses, used only as names: parents, depths and lowest common ancestors are
+  read from tables. The program ([`Complexity.camus`](Camus/Complexity/Program.lean#L950)) builds the tables of the preprocessing
+  ([`Complexity.preprocess`](Camus/Complexity/Tables.lean#L315), in at most `20 |V(T)|²` operations, [`Complexity.preprocess_time`](Camus/Complexity/Tables.lean#L658)),
+  enumerates the candidate pairs once into buckets by target with their weights, computed by one
+  scan of the distinct quartets of `Q` with the test [`Complexity.delta`](Camus/Complexity/Delta.lean#L732), which returns `δ_T`
+  ([`Complexity.val_delta`](Camus/Complexity/Delta.lean#L761)) in at most 130 operations ([`Complexity.time_delta`](Camus/Complexity/Delta.lean#L746)), and fills `M` from
+  the leaves up, reading `s_dp` off the subtrees hanging off each cycle, which it lists by walking
+  from `u` and `w` up to the target. It computes the array of the recurrence
+  ([`Complexity.camus_array`](Camus/Complexity/Program.lean#L1090), so Theorem 1 applies, [`Complexity.camus_optimal`](Camus/Complexity/Program.lean#L1102)), in at most
+  `600 n² (|Q| + n)` operations ([`Complexity.camus_time`](Camus/Complexity/Program.lean#L1193)), with `n` the number of taxa and `|Q|` the
+  number of distinct quartets. With backtracking the bound is `700 n² (|Q| + n)`
+  ([`Complexity.camusNetwork_time`](Camus/Complexity/Backtracking.lean#L529)). The program of Section 2.4 with `m ≥ 1` columns computes the rows
+  of the recurrence for `k ≤ m` ([`Complexity.camusBudget_rows`](Camus/Complexity/BudgetProgram.lean#L560), [`Complexity.camusBudget_agrees`](Camus/Complexity/BudgetProgram.lean#L544)) in
+  at most `1000 n² (|Q| + m³ n)` operations ([`Complexity.camusBudget_time`](Camus/Complexity/BudgetProgram.lean#L679)); the paper's "O(m²) time
+  to find the correct DP look-ups to solve each problem" gives its total when it is read per pair,
+  per hanging subtree and per column. Memory: the integers that the program writes are at most three
+  times [`Complexity.scalarSpace`](Camus/Complexity/Counts.lean#L134) ([`Complexity.storedIntegers_le`](Camus/Complexity/Memory.lean#L161)), so at most `96 n⁴` when the
+  quartets of `Q` are on taxa of `T` ([`Complexity.storedIntegers_bound`](Camus/Complexity/Memory.lean#L177)), as in the paper's `O(n⁴)`;
+  this counts the final tables, not the peak memory of a run. `Q` is read as the weighted set of its
+  distinct quartets with their multiplicities, as Section 2.3 says.
+- **Section 3.2.** The SNP pipeline is studied inside the site model of Warnow et al. (Section 2):
+  sites are independent with the law of the model, and `Q_m` is the multiset of the quartets of the
+  SNPs among the first `m` sites ([`External.sampleQuartets`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L67)). ASTRAL's output is an exact maximizer
+  of the quartet support score of Section 3.1 ([`quartetSupport`](Camus/Pipelines/Astral.lean#L66)) over the well-labelled trees on
+  the taxa of `t`, compared through their sets of quartets, the trees standing for their unrooted
+  forms. "The most probable quartet tree is induced by t" is read as: on every four taxa, the
+  quartet that `t` induces is strictly more probable, for one site, than the other two
+  ([`MostProbableQuartets`](Camus/Pipelines/Astral.lean#L463)). Under it, with probability tending to 1 every exact maximizer has the
+  quartets of `t` ([`astral_maximizer_tendsto`](Camus/Pipelines/Astral.lean#L543)), by the paper's argument: the most frequent quartet
+  on four taxa is eventually the most probable (the strong law), and a tree with other quartets
+  scores less on some four taxa and no more on the others ([`quartetSupport_lt`](Camus/Pipelines/Astral.lean#L419)). The section's last
+  step, CAMUS on `t` and `Q_m`, is proved in probability under identifiability under inclusion and
+  the tie-break ([`snp_recovery_tendsto`](Camus/Pipelines/SNP.lean#L79), [`snp_output_tendsto`](Camus/Pipelines/SNP.lean#L109)), and refuted without the first (E7).
+  Two steps are not formalized (Section 9): that a tree with the quartets of `t`, rooted at the
+  outgroup, is `t`, and the composition of the section's probabilistic steps into one statement.
 - **Section 3.4.** Algorithm 1 is applied to the numbers of copies of the three topologies rather
   than to their relative frequencies, which gives the same test, since its inequality is
   homogeneous; ties are broken by a fixed order of the three topologies, where the paper's "without
-  loss of generality" leaves them open ([`Algorithm1.rank`](Camus/Pipelines/Algorithm1.lean#L78)).
+  loss of generality" leaves them open ([`Algorithm1.rank`](Camus/Pipelines/Algorithm1.lean#L78)). Its motivation from the multispecies
+  coalescent is stated for gene trees drawn independently from the coalescent distribution of
+  lean4-adr11 (`ADR11.SpeciesTree.unrootedDist`), with a bridge from its split sets to the quartets
+  of CAMUS ([`Coalescent.quartetProb_eq`](Camus/Pipelines/Coalescent/Quartets.lean#L386)) and from its species trees to the trees of CAMUS
+  ([`Coalescent.HasTopology`](Camus/Pipelines/Coalescent/Topology.lean#L36), [`Coalescent.msc_pattern_induced`](Camus/Pipelines/Coalescent/Topology.lean#L195)). For every four taxa, the quartet of
+  the species tree is strictly the most probable and the other two have the same probability
+  ([`Coalescent.msc_pattern`](Camus/Pipelines/Coalescent/Quartets.lean#L496)); for every threshold `t > 0`, almost surely, for all large numbers of
+  gene trees, Quartet Filtering keeps exactly the copies of the quartets of the species tree
+  ([`Coalescent.msc_filterBlock`](Camus/Pipelines/Coalescent.lean#L221), [`Coalescent.msc_filterQuartets`](Camus/Pipelines/Coalescent.lean#L250)). Conversely, for any law of gene
+  trees whose two minor probabilities differ, `p2 > p3`, and `t < (p2 − p3)/(p2 + p3)`, Quartet
+  Filtering eventually keeps the second quartet too ([`Coalescent.filterBlock_keeps_second`](Camus/Pipelines/Coalescent.lean#L334)): the
+  signal the paper attributes to gene flow. The network multispecies coalescent itself is not
+  formalized.
 
-**Corrections.** Two claims of the paper are false (E5, E6). The formalization proves the closest
+**Corrections.** Four claims of the paper are false (E5–E8). The formalization proves the closest
 correct statements, chosen with the author of the formalization:
 
 - Section 2.4's monotonicity, for "at most `k`" reticulations: immediate for networks built on `T`,
   since a network with at most `j ≤ k` reticulations has at most `k`, and proved for an abstract
   finite family of networks ([`Camus.atMostScore_mono`](Camus/Score.lean#L172)); the section's four properties of the networks
-  `N_k` hold for exact numbers ([`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61)).
+  `N_k` hold for exact numbers, for the networks returned by backtracking
+  ([`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61), [`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499)).
+- Section 2.4's stopping rule: computing all `n − 1` columns, which the running time
+  `O(n²(|Q| + m³n))` allows with `m = n − 1`, gives every `N_k` ([`BudgetDP.exists_backtracking_networks`](Camus/Restriction/Backtracking.lean#L528)).
 - Section 3.2's recovery, under identifiability under inclusion and the tie-break toward the fewest
-  reticulations ([`recovery`](Camus/Pipelines/Uniqueness.lean#L151)); for an abstract finite family of candidate networks, also along a
-  sequence of inputs and in probability ([`correctedConsistency`](Camus/Pipelines/Recovery.lean#L68), [`correctedEventualConsistency`](Camus/Pipelines/Recovery.lean#L99),
-  [`correctedStatisticalConsistency`](Camus/Pipelines/Statistical.lean#L43)).
+  reticulations ([`recovery`](Camus/Pipelines/Uniqueness.lean#L151)), also in probability inside the site model of Warnow et al.
+  ([`snp_recovery_tendsto`](Camus/Pipelines/SNP.lean#L79), [`snp_correctedStatisticalConsistency`](Camus/Pipelines/SNP.lean#L137)), and for an abstract finite family
+  of candidate networks ([`correctedConsistency`](Camus/Pipelines/Recovery.lean#L68), [`correctedEventualConsistency`](Camus/Pipelines/Recovery.lean#L99)).
+- Section 3.2's basis: a network built on `T` in the sense of Definition 1 has the reticulations and
+  the displayed quartets of a network obtained by adding edges to `T`
+  ([`RootedNetwork.BuiltOn.exists_anchored`](Camus/Network/RootAbove/Main.lean#L64)).
 
 ## 7. Departures from the paper's proofs
 
 | Result | The paper's argument | The formalization's | Why it is necessary | E-item |
 | --- | --- | --- | --- | --- |
 | Lemma 1, uniqueness | "This lemma follows directly from Observation 2" | Existence from Observation 2 ([`RootedNetwork.novel_edge_exists`](Camus/Preliminaries/Lemma1/Cuts.lean#L95)); uniqueness from the vertex-disjointness of the cycles: the paths of `T` joining the two pairs of `q` meet, and their meeting vertex lies on the cycle of every edge that satisfies `q` ([`RootedNetwork.novel_edge_unique`](Camus/Preliminaries/Lemma1/Unique.lean#L202)) | Observation 2 gives existence, not uniqueness: the paper's step has a gap that cannot be filled from Observation 2 alone | E1 |
+| Theorem 1 and Section 2.4, against Definition 1's class | The proof of Theorem 1 treats a network that extends `T` as `T` with added edges, each with a target in `T` | The paper's argument for the networks whose root is the root of `T`, after a reduction of the others: an outgroup is added above the root, the network is reduced to its canonical form, the tail of the edge from the root is moved below the root of `T`, and Lemma 1 with the quartets displayed by `T + e` shows that the quartets do not change ([`RootedNetwork.BuiltOn.exists_anchored`](Camus/Network/RootAbove/Main.lean#L64), [`theorem1_builtOn`](Camus/DP/Definition1.lean#L76)) | The edge from the root of a network whose root lies above the root of `T` has no target in `T`, so the paper's argument does not apply to it | E8 |
 
 Every other proof follows the paper's: Lemma 2 by the two cycles through the target; Theorem 1 by
 the paper's induction, with its two cases, Lemma 2 for the edge with target `y`, the subtrees hanging
@@ -335,8 +523,14 @@ off its cycle as the subproblems of Equations (4) and (5), Equation (2), and Lem
 additivity of the score. The formal proof of Theorem 1 applies Lemma 1 outside the induction, to the output and to the family
 of each competing network, to equate the number of satisfied quartets with the total weight of the
 added edges, where the paper invokes it inside the induction; and it reduces every competing network to its family of added edges, which the paper
-identifies with the network. The recurrence of Section 2.4 and Observation 2 have no proof in the
-paper to follow.
+identifies with the network. The running time of Section 2.3 follows the paper's four steps: the
+preprocessing in `O(n²)`, `δ_T` in `O(1)`, `s(v)` in `O(|Pairs(v)| (|Q| + n))`, and each pair
+considered at one target only ([`Complexity.candidate_visits`](Camus/Complexity/Counts.lean#L74)); that of Section 2.4 follows its count
+of look-ups. The steps of Section 3.2 follow the paper's arguments: the strong law for the most
+frequent quartets, and the argument of Warnow et al. for the support of the observed quartets, with
+the hypothesis of Section 4; the motivation of Algorithm 1 follows Section 3.4's sentence on the gap
+between `f2` and `f3`. The recurrence and the backtracking of Section 2.4, Observation 2 and the
+counterexamples have no proof in the paper to follow.
 
 ## 8. What each result depends on
 
@@ -345,18 +539,25 @@ on Lean's three standard axioms.
 
 | Result | Lean | Results from prior work used |
 | --- | --- | --- |
+| Definition 1, networks built on `T` | [`RootedNetwork.BuiltOn.exists_anchored`](Camus/Network/RootAbove/Main.lean#L64) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186) |
 | Lemma 1 | [`Camus.lemma1`](Camus/Preliminaries/Lemmas.lean#L138), [`Camus.lemma1_union`](Camus/Preliminaries/Lemmas.lean#L289) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186) |
 | Lemma 2 | [`Camus.lemma2`](Camus/Preliminaries/Lemmas.lean#L160), [`EdgeAbove.target_unique`](Camus/Tree/Geometry.lean#L161) | – |
-| Equations (1)–(5) | [`Camus.equation1`](Camus/Score.lean#L50), [`DynamicProgramming.Array`](Challenge.lean#L618), [`DynamicProgramming.s`](Challenge.lean#L610), [`DynamicProgramming.equation4`](Camus/DP/Correctness.lean#L77), [`DynamicProgramming.equation5`](Camus/DP/Correctness.lean#L87) | – |
-| Theorem 1 | [`Camus.theorem1`](Camus/DP/Theorem1.lean#L109) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186) |
-| Section 2.3 | [`Complexity.scalarOperations_bound`](Camus/Complexity/Operations.lean#L167), [`Complexity.scalarSpace_bound`](Camus/Complexity/Operations.lean#L270) | – |
-| Section 2.4, the networks `N_k` | [`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186) |
+| Definition 4, the quartets satisfied by `T + e` | [`Realization.mem_novel_single_iff`](Camus/Network/SingleEdge.lean#L398) | – |
+| Equations (1)–(5) | [`Camus.equation1`](Camus/Score.lean#L50), [`DynamicProgramming.Array`](Challenge.lean#L615), [`DynamicProgramming.s`](Challenge.lean#L607), [`DynamicProgramming.equation4`](Camus/DP/Correctness.lean#L77), [`DynamicProgramming.equation5`](Camus/DP/Correctness.lean#L87) | – |
+| Theorem 1 | [`Camus.theorem1`](Camus/DP/Theorem1.lean#L109), [`Camus.theorem1_builtOn`](Camus/DP/Definition1.lean#L76) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186) |
+| Section 2.3, the program and its running time | [`Complexity.camus_array`](Camus/Complexity/Program.lean#L1090), [`Complexity.camus_time`](Camus/Complexity/Program.lean#L1193), with [`Complexity.preprocess_time`](Camus/Complexity/Tables.lean#L658), [`Complexity.val_delta`](Camus/Complexity/Delta.lean#L761), [`Complexity.time_delta`](Camus/Complexity/Delta.lean#L746) | – |
+| Section 2.3, memory | [`Complexity.storedIntegers_bound`](Camus/Complexity/Memory.lean#L177) | – |
+| Section 2.4, the networks `N_k` | [`BudgetDP.reticulation_restriction`](Camus/Restriction/Main.lean#L61), [`BudgetDP.trace_graph_optimal`](Camus/Restriction/Backtracking.lean#L352), [`BudgetDP.backtracking_networks`](Camus/Restriction/Backtracking.lean#L499), [`BudgetDP.exact_graph_optimal_builtOn`](Camus/DP/Definition1.lean#L114) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186) |
 | Section 2.4, `m ≤ n − 1` | [`RootedNetwork.anchored_reticulation_bound`](Camus/Network/Reticulations.lean#L227) | – |
-| Section 2.4, the operations | [`Complexity.budgetOperations_bound`](Camus/Complexity/Operations.lean#L187) | – |
+| Section 2.4, the program and its running time | [`Complexity.camusBudget_agrees`](Camus/Complexity/BudgetProgram.lean#L544), [`Complexity.camusBudget_time`](Camus/Complexity/BudgetProgram.lean#L679) | – |
 | Section 2.4, monotonicity (E5) | [`not_exactCountMonotone`](Camus/Restriction/Monotonicity.lean#L37); [`Camus.atMostScore_mono`](Camus/Score.lean#L172) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186); – |
-| Section 3.2, uniqueness (E6) | [`not_uniqueOptimum`](Camus/Pipelines/Uniqueness.lean#L49), [`camus_may_add_edge`](Camus/Pipelines/Uniqueness.lean#L134) | – |
-| Section 3.2, corrected | [`Camus.recovery`](Camus/Pipelines/Uniqueness.lean#L151), [`Camus.tree_identifiable`](Camus/Pipelines/Uniqueness.lean#L190), [`correctedStatisticalConsistency`](Camus/Pipelines/Statistical.lean#L43) | – |
-| Section 3.4 | [`retainSecond_iff_ratio`](Camus/Pipelines/Filtering.lean#L34), [`Algorithm1.filterQuartets_mono`](Camus/Pipelines/Algorithm1.lean#L191) | – |
+| Section 2.4, the stopping rule (E6) | [`not_exactStoppingRule`](Camus/Restriction/StoppingRule.lean#L461), [`not_atMostStoppingRule`](Camus/Restriction/StoppingRule.lean#L480) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186) |
+| Section 3.2, uniqueness (E7) | [`not_uniqueOptimum`](Camus/Pipelines/Uniqueness.lean#L49), [`camus_may_add_edge`](Camus/Pipelines/Uniqueness.lean#L134), [`Counterexamples.shallow_not_identifiable`](Camus/Pipelines/Inclusion.lean#L218), [`Realization.deeper_donor_displays`](Camus/Network/SingleEdge/Deeper.lean#L49), [`Counterexamples.camus_may_return_deep`](Camus/Pipelines/Inclusion.lean#L373) | – |
+| Section 3.2, E7 in the site model | [`Counterexamples.deeperDonor_meets_hypotheses`](Camus/Pipelines/SNPCondition.lean#L316) | [`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99) |
+| Section 3.2, corrected | [`Camus.recovery`](Camus/Pipelines/Uniqueness.lean#L151), [`Camus.tree_identifiable`](Camus/Pipelines/Uniqueness.lean#L190), [`snp_recovery_tendsto`](Camus/Pipelines/SNP.lean#L79), [`snp_correctedStatisticalConsistency`](Camus/Pipelines/SNP.lean#L137) | –; [`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99) |
+| Section 3.2, the ASTRAL step | [`astral_maximizer_tendsto`](Camus/Pipelines/Astral.lean#L543) | – |
+| Section 3.2, the basis (E8) | [`Counterexamples.camus_output_not_rootAboveNet`](Camus/Network/RootAbove/Example.lean#L414) | [`External.observation2`](Camus/External/WarnowTabatabaeeEvans/Observation2.lean#L186) |
+| Section 3.4 | [`retainSecond_iff_ratio`](Camus/Pipelines/Filtering.lean#L34), [`Algorithm1.filterQuartets_mono`](Camus/Pipelines/Algorithm1.lean#L191), [`Coalescent.msc_pattern`](Camus/Pipelines/Coalescent/Quartets.lean#L496), [`Coalescent.msc_filterQuartets`](Camus/Pipelines/Coalescent.lean#L250), [`Coalescent.filterBlock_keeps_second`](Camus/Pipelines/Coalescent.lean#L334) | – (the quartet probabilities of lean4-adr11) |
 
 The route check ([`scripts/route_check.py`](scripts/route_check.py), run in CI) compares the results that each formal proof uses
 with those that the paper's proof cites ([`docs/paper_routes.tsv`](docs/paper_routes.tsv), written by hand from the published version).
@@ -367,14 +568,18 @@ without citing Equations (1) and (3).
 
 ## 9. Not formalized
 
-- The pipelines' statistics (Section 3): the models of Warnow et al. (2025) and of the network
-  multispecies coalescent, the statistical consistency of ASTRAL and of the SNP pipeline beyond its
-  deterministic step (E6), and Algorithm 1's motivation from the multispecies coalescent.
-- The stopping rule of Section 2.4 ("until we no longer get an improvement in score"), and
-  backtracking in the modified dynamic program.
-- The running time and memory of an implementation (Section 2.3), beyond the accounting described in
-  Section 6, and the constant-time computation of `δ`.
-- Definition 1's networks whose root lies above the root of `T` (Section 6).
+- That a tree with the quartets of `t`, rooted at the outgroup, is `t` itself: the classical fact
+  that the quartets of a binary tree determine it, which Section 3.2 uses when it concludes that
+  ASTRAL "will return t". The formalization proves that every exact maximizer of the quartet support
+  score has the quartets of `t` ([`astral_maximizer_tendsto`](Camus/Pipelines/Astral.lean#L543)), and runs CAMUS on `t`. The composition
+  of the section's two probabilistic steps into one statement about the pipeline is not formalized
+  either; each step is.
+- Section 3.3's pipeline under the network multispecies coalescent, for which the paper claims no
+  guarantee: no model of the network coalescent is formalized here. Algorithm 1's motivation is
+  proved under the multispecies coalescent, and its converse for any law of gene trees whose two
+  minor probabilities differ (Section 6).
+- The peak memory of a run of the program: the memory of Section 2.3 is bounded for the tables
+  that it writes ([`Complexity.storedIntegers_bound`](Camus/Complexity/Memory.lean#L177)).
 - The experiments (Sections 4 and 5), the software, and the supplement, which contains no
   mathematics.
 
@@ -391,13 +596,13 @@ date, a typo and layout. The published version (7 July 2026) keeps Lemma 2, Theo
 Equations (1)–(5), `Pairs(v)` and Section 2.4. It changes Lemma 1's proof (E1), and adds Definition
 1's sentences on networks built on a tree, the definition of the score and the sentence on `M[r]`
 (E2), the weighted-set reading of `Q` and the memory bound in Section 2.3 (E3), the uniqueness
-sentence of Section 3.2 (E6), a section on ASTRAL and the avian experiment. No erratum or later version was found. The software's release 1.0.2 (15 September 2026,
+sentence of Section 3.2 (E7), a section on ASTRAL and the avian experiment. No erratum or later version was found. The software's release 1.0.2 (15 September 2026,
 <https://github.com/jsdoublel/camus/releases>) fixes "issue #28 that could cause some output networks
 to fail to be level-1 (due improper placement of branches attaching to the same edge in the
 constraint tree)" and a non-optimality "in some cases with high values of k" (the exact-`k` code omitted the
 subtree off the cycle at `v` in the case `u = v`, which Equation (5) includes). These concern the
 implementation, not the paper; both points are explicit in the formalization (Section 6, and
-[`DynamicProgramming.sdpGhost`](Challenge.lean#L599)).
+[`DynamicProgramming.sdpGhost`](Challenge.lean#L596)).
 
 ### Before the paper
 
@@ -421,8 +626,8 @@ implementation, not the paper; both points are explicit in the formalization (Se
   [doi](https://doi.org/10.1089/cmb.2024.0710)) estimate level-1 networks from unrooted SNPs; they
   state Observation 2 without proof (Section 2), and their Theorem 5 shows that `Q(N_r)` determines
   the unrooted topology of a level-1 network all of whose cycles have length at least five, and the
-  bottom node of each cycle. This is identifiability by equality of quartet sets; E6 concerns
-  inclusion.
+  bottom node of each cycle. This is identifiability by equality of quartet sets; E7 concerns
+  inclusion, which fails for such networks.
 - **Other level-1 methods.** NANUQ (Allman, Baños and Rhodes, *Algorithms Mol. Biol.* 14 (2019) 24,
   [doi](https://doi.org/10.1186/s13015-019-0159-2)) and NANUQ+ (2025,
   [doi](https://doi.org/10.1186/s13015-025-00274-w)) work from quartet concordance factors under the
@@ -467,7 +672,8 @@ nearby phylogenetics exist in Lean: Allman, Degnan and Rhodes's identifiability 
 Palomar), trees, splits, quartets, consensus and the consistency of quartet-based species-tree methods
 (<https://github.com/chaoszhang/lean4phylo>, October 2026), and partial modules on rooted networks for
 NANUQ in an AI-agent research repository (<https://github.com/Sodelin/Research-Commons>); none treats
-CAMUS. This work consulted none of them.
+CAMUS. This work depends on lean4-adr11, for the quartet probabilities under the multispecies
+coalescent (Section 2), and consulted none of the others.
 
 ## 11. What's next
 
@@ -475,22 +681,26 @@ CAMUS. This work consulted none of them.
 
 - **Identifiability under inclusion.** The corrected Section 3.2 ([`recovery`](Camus/Pipelines/Uniqueness.lean#L151)) needs the true network
   to be identifiable under inclusion among the networks built on `t` with no more reticulations. A
-  tree is ([`tree_identifiable`](Camus/Pipelines/Uniqueness.lean#L190)), and a network of triangles is not. The natural conjecture, after
-  Warnow et al.'s Theorem 5, is that a level-1 network whose cycles have length at least five is:
-  a network built on `t` that displays all its quartets, with no more reticulations, is isomorphic to
-  it. Proving it would give the deterministic step of Section 3.2 for such networks, and with the
-  convergence of the observed quartets (Warnow et al. 2025) the statistical consistency of the SNP
-  pipeline under the tie-break.
-- **The tie-break and the stopping rule.** The tie-break toward the fewest reticulations is
-  computable with the paper's own tools: run the dynamic program of Section 2.4 and keep the least `k`
-  whose row attains the unrestricted optimum `M[r]`. For the selection of `k` in Section 2.4, E5 shows
-  that the exact scores need not increase; the running maxima of the rows do, and the drop needs every
-  internal vertex of `T` to be covered by the cycles of every optimal network with `k` reticulations.
-  A characterization of when the exact scores are monotone, or a stopping rule with a guarantee, is
-  open.
-- **Definition 1's class.** Theorem 1 is stated for networks whose root is the root of `T`; extending
-  it to every network of which `T` is a displayed tree, by the argument of Section 6, would match
-  Definition 1 exactly.
+  tree is ([`tree_identifiable`](Camus/Pipelines/Uniqueness.lean#L190)), and a network of triangles is not. Networks whose cycles have at
+  least five vertices need not be either, against the conjecture of the previous version of this
+  report: moving the donor of an added edge down keeps every quartet that the edge satisfies (E7,
+  [`Realization.deeper_donor_displays`](Camus/Network/SingleEdge/Deeper.lean#L49)). Warnow et al.'s Theorem 5 identifies such networks from
+  `Q(N_r)` by equality, not by inclusion. A second tie-break, toward the fewest displayed quartets
+  among the optimal networks with the fewest reticulations, selects the true network in E7's
+  example (22 quartets against 25). Whether it recovers every network whose cycles have at least five
+  vertices, and whether a dynamic program can compute it, is open; with Warnow et al.'s Theorem 5 and
+  the convergence of the observed quartets ([`External.support_tendsto`](Camus/External/WarnowTabatabaeeEvans/Sampling.lean#L99)) it would give a consistent
+  pipeline for SNPs.
+- **The stopping rule.** E6 shows that the rule can stop before a better score, also when the scores
+  never decrease. Computing all `n − 1` columns costs `O(n²(|Q| + n⁴))` time by Section 2.4's bound.
+  A rule with a guarantee, or a characterization of the inputs whose best scores are concave in the
+  number of reticulations, is open. The tie-break toward the fewest reticulations is computable with
+  the same program: keep the least `k` whose row attains the unrestricted optimum `M[r]`.
+- **The pipelines.** A single statement for the SNP pipeline needs the classical fact that the
+  quartets of a binary tree determine it. For Section 3.3's pipeline under the network
+  multispecies coalescent, which the paper leaves without guarantees, the quartet concordance factors
+  of level-1 networks would be the place to start; NetCS (Section 10) reaches consistency under that
+  model by other means.
 
 ### Simpler proofs
 
@@ -502,10 +712,16 @@ CAMUS. This work consulted none of them.
   involves no quartet and no double counting. The paper's proof instead invokes Lemma 1 inside the
   induction. The formal proof is organized this way ([`DynamicProgramming.trace_correct`](Camus/DP/Correctness.lean#L123) and
   [`DynamicProgramming.array_upper`](Camus/DP/Correctness.lean#L164) work with abstract weights), checked in Lean.
+- **Display by clades.** A network displays a quartet if and only if some switching has an edge
+  whose clade below cuts it ([`RootedNetwork.displays_iff_cladeBelow`](Camus/Network/Clades.lean#L186)). For `T + e` the clades are
+  explicit, those of `T` and of `T'` ([`EdgeAbove.switchedClades`](Camus/Network/SingleEdge.lean#L127)), which makes every question about
+  a network with one added edge a finite computation. The deeper-donor inclusion is then a comparison
+  of clades ([`Realization.deeper_donor_displays`](Camus/Network/SingleEdge/Deeper.lean#L49)), and the constant-time test of Section 2.3 reads
+  two lowest common ancestors in `T'` off the tables of `T` ([`Complexity.switched_cut_iff`](Camus/Complexity/Delta.lean#L525)).
 
 ### The formalization
 
-The items of Section 9 are what remains: the statistical models of Section 3, the stopping rule and
-backtracking of Section 2.4, a cost semantics for Section 2.3, and Definition 1's wider class of
-networks. The general facts proved here about directed graphs, switchings, subdivisions and cycle
-cuts ([`Camus/Network/`](Camus/Network)) could serve other formalizations of phylogenetic networks.
+The items of Section 9 are what remains. The general facts proved here about directed graphs,
+switchings, subdivisions, cycle cuts and the clades of switchings
+([`Camus/Network/`](Camus/Network)), and the cost monad of Section 2.3 ([`Camus/Complexity/Timed.lean`](Camus/Complexity/Timed.lean)), could serve
+other formalizations of phylogenetic networks and of their algorithms.
