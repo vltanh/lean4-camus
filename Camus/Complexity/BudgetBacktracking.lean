@@ -49,7 +49,8 @@ is `O(n³m³)`, within the bound of the matrix.
 * `Complexity.camusBudgetNetworks_trace`: for every `k ≤ m` with a nonempty row at the root, the
   family returned for `k` is a backtracking trace from the root with budget `k`.
 * `Complexity.camusBudgetNetworks_optimal`, `Complexity.camusBudgetNetworks_networks`: its network
-  is the network `N_k` of Section 2.4.
+  is the network `N_k` of Section 2.4; `Complexity.camusBudgetNetworks_networks_le`: for
+  `m ≤ n − 1`, for every `k ≤ m`.
 * `Complexity.camusBudgetNetworks_time`: at most `2100 n² (|Q| + m³ n)` operations for `m ≥ 1`,
   the matrix and the backtracking for every `k ≤ m` together.
 
@@ -1220,6 +1221,28 @@ theorem camusBudgetNetworks_networks {t : PhyloTree} (ht : t.WellLabelled)
     fun j hj => camusBudget_agrees ht Q m hA [] t.root_mem_nodes j hj
   exact backtracking_networks t ht Q A hA m E
     (fun j hj hjrow => camusBudgetNetworks_trace ht Q m hA hj hjrow) hk ((hag k hk) ▸ hrow)
+
+/-- **Section 2.4: the networks `N_1, …, N_m`, computed, for `m ≤ n − 1`** ("m ≤ n−1 is
+guaranteed"). For a well-labelled tree `T` with `n` leaves, a multiset `Q` and `m ≤ n − 1`, every
+row at the root of a budget `k ≤ m` is nonempty (`BudgetDP.root_row_nonempty_iff_le`), so for
+every `k ≤ m` the network `N_k = Realization.graph t (E k)` of the pairs returned by
+`camusBudgetNetworks` for `k` has the four properties of Section 2.4
+(`Complexity.camusBudgetNetworks_networks`). -/
+theorem camusBudgetNetworks_networks_le {t : PhyloTree} (ht : t.WellLabelled)
+    (Q : Multiset Quartet) {m : ℕ} (hm : m ≤ t.labels.length - 1) {k : ℕ} (hk : k ≤ m) :
+    let E := fun k => ((camusBudgetNetworks t Q m).val k).toFinset
+    (Realization.graph t (E k)).RootedBinaryLevelOne ∧
+      Nonempty (SupportSubdivision t (Realization.graph t (E k))
+        (Realization.supportEdges t (E k))) ∧
+      ((Realization.graph t (E k)).edges \ Realization.supportEdges t (E k)).card = k ∧
+      ∀ (N : RootedNetwork) (S : Finset (ℕ × ℕ)), N.RootedBinaryLevelOne →
+        Nonempty (SupportSubdivision t N S) → (N.edges \ S).card = k →
+        score Q (repertoire Q N) ≤ score Q (repertoire Q (Realization.graph t (E k))) := by
+  obtain ⟨A, hA⟩ := exists_array t (edgeWeight t Q)
+  have hrow : ((camusBudget t Q m).val [] k).Nonempty := by
+    rw [camusBudget_agrees ht Q m hA [] t.root_mem_nodes k hk]
+    exact (root_row_nonempty_iff_le t (edgeWeight t Q) A hA k).mpr (hk.trans hm)
+  exact camusBudgetNetworks_networks ht Q m hk hrow
 
 /-- The arithmetic of `camusBudgetNetworks_time`: with `N ≤ 2n` vertices, `C ≤ 4n²` candidate
 pairs and `m ≥ 1`, the matrix and `m + 1` backtrackings from the root take at most
