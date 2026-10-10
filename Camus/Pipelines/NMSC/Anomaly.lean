@@ -1,7 +1,6 @@
 module
 
-public import Camus.Pipelines.NMSC.Quartets
-public import Camus.Pipelines.Astral
+public import Camus.Pipelines.NMSC.Filtering
 
 /-!
 # Section 3.3: Quartet Filtering and ASTRAL on an anomalous network
@@ -27,6 +26,8 @@ the network (`NMSC.anomaly_astral`).
 
 * `NMSC.anomalyNet`, `NMSC.anomalyNet_displaysQuartet`, `NMSC.anomalyNet_quartetProb`: the network,
   its displayed quartet trees on `0, 1, 2, 3`, and their probabilities.
+* `NMSC.anomalyNet_not_regularOn`: the four taxa do not have the CF pattern that Quartet Filtering
+  presumes (`NMSC.RegularOn`).
 * `NMSC.anomaly_filterQuartets`, `NMSC.anomaly_filterQuartets_genes`: for every threshold, almost
   surely, for all large numbers of genes, Algorithm 1 returns a quartet tree not in Q(N_r) and no
   copy of the one in Q(N_r).
@@ -120,6 +121,21 @@ private def an_tree : PhyloTree := .fork (.fork (.leaf 0) (.leaf 2)) (.fork (.le
 private theorem an_tree_facts : an_tree.WellLabelled ∧ an_tree.taxa = taxa4 ∧
     (key4.quartet 1).induced an_tree = true := by
   refine ⟨by decide, by decide, by decide⟩
+
+/-- The four taxa `0, 1, 2, 3` of the network do not have the CF pattern that Quartet Filtering
+presumes (`RegularOn`): the quartet tree it displays is not the most probable. -/
+theorem anomalyNet_not_regularOn : ¬ RegularOn anomalyNet key4 := by
+  obtain ⟨h01, -⟩ := anomalyNet_quartetProb
+  rintro (⟨s₁, h₁, -, hmax, -, -⟩ | ⟨s₃, h₃, hdisp, -⟩)
+  · obtain rfl := (anomalyNet_displaysQuartet s₁).1 h₁
+    exact absurd (hmax 1 (by decide)) (not_lt.2 h01.le)
+  · -- two quartet trees would be displayed, but only `01|23` is
+    have h1 := (anomalyNet_displaysQuartet 1).1
+    have h2 := (anomalyNet_displaysQuartet 2).1
+    fin_cases s₃
+    · exact absurd (h1 (hdisp 1 (by decide))) (by decide)
+    · exact absurd (h2 (hdisp 2 (by decide))) (by decide)
+    · exact absurd (h1 (hdisp 1 (by decide))) (by decide)
 
 section Genes
 

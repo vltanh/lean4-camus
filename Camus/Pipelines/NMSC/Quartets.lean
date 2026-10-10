@@ -40,6 +40,10 @@ variable {L : Finset ℕ}
 def DisplaysQuartet (N : Brooqs.Net L) (q : Quartet) : Prop :=
   ∃ K ∈ N.displayed, Induces K q
 
+instance (N : Brooqs.Net L) (q : Quartet) : Decidable (DisplaysQuartet N q) := by
+  unfold DisplaysQuartet
+  infer_instance
+
 /-- The tree `T` of CAMUS is a displayed tree of `N`, as an unrooted tree (`T ∈ T(N)`): some
 displayed tree of `N` induces exactly the quartet trees that `T` induces. -/
 def DisplaysTree (N : Brooqs.Net L) (T : PhyloTree) : Prop :=
