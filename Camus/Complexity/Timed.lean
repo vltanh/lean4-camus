@@ -3,6 +3,7 @@ module
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 public import Mathlib.Data.Finset.Lattice.Fold
+public import Mathlib.Tactic.Ring
 
 /-!
 # A cost monad for Section 2.3
@@ -138,6 +139,11 @@ theorem time_forList_eq (f : σ → α → Timed σ) (l : List α) (s : σ) (c :
     have ha := h s a (by simp)
     have hl := ih (f s a).val (fun s b hb => h s b (by simp [hb]))
     omega
+
+@[simp] theorem sum_map_const_nat (l : List α) (c : ℕ) : (l.map fun _ => c).sum = l.length * c := by
+  induction l with
+  | nil => simp
+  | cons a l ih => simp only [List.map_cons, List.sum_cons, ih, List.length_cons]; ring
 
 /-- `mapList f l` applies `f` to the elements of `l` in order and lists the results, with one
 operation per element. -/
