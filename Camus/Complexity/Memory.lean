@@ -13,9 +13,12 @@ program `Complexity.camus` keeps: each of its tables is a function that differs 
 value only on a set of keys determined by `T` (`Complexity.SupportedIn`): the vertices of `T` for
 the parents, depths, kinds and `M`, the taxa for the leaves, the pairs of vertices for the lowest
 common ancestors, the targets for the buckets (which hold `|candidates|` pairs in all), and the
-candidate pairs for the weights. Counting the integers stored at these keys
-(`Complexity.storedIntegers`) gives at most three times the count `Complexity.scalarSpace` of
-`Camus/Complexity/Counts.lean`, hence `O(n⁴)` by `Complexity.scalarSpace_bound`.
+candidate pairs for the weights. `Complexity.storedIntegers` counts the integers
+stored at these keys, one table entry per key and six integers per distinct quartet of `Q`; that
+the program writes nowhere else is `Complexity.preprocess_support`, `Complexity.enumerate_support`
+and `Complexity.fill_support`. The count is at most three times `Complexity.scalarSpace` of
+`Camus/Complexity/Counts.lean`, hence `O(n⁴)` by `Complexity.scalarSpace_bound`. It counts the
+final tables, not the peak memory of a run.
 
 ## Main results
 

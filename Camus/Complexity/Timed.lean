@@ -28,10 +28,15 @@ One unit of time is charged for each of the following elementary operations:
 Vertices are named by their addresses (`Address`). A program uses an address only as a name, as an
 implementation would use an index or a pointer: it compares two names, uses them as keys of tables,
 and creates the names of the two children of a vertex once, during the traversal of `T`. It never
-inspects the list structure of an address: parents, children, depths and lowest common ancestors
-are read from tables. A table is a function updated one entry at a time (`Function.update`), and
-every read and write is charged. Everything a program computes between two charged operations is a
-constant amount of work in this model.
+inspects the list structure of an address: parents, children, depths and lowest common ancestors are
+read from tables. A table is a function updated one entry at a time (`Function.update`), and every
+read and write is charged. Everything a program computes between two charged operations is a
+constant amount of work in this model. The input `Q` is given, as Section 2.3 allows, as the
+weighted set of its distinct quartets: a program iterates over the distinct quartets, charged per
+iteration, and reads the multiplicity stored with a quartet in one operation; converting a multiset
+into this form is not part of the program. The table of the leaves is indexed by the taxa, as an
+array is when the taxa are the numbers `0, …, n − 1`; for other labels, a lookup in constant time
+needs hashing.
 
 ## Main results
 
