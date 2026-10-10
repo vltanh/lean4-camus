@@ -35,8 +35,9 @@ level-1 network (`RootedNetwork.reticulationCount_le`).
 The tree of `S` below a vertex `v` is built by strong induction on the number of vertices below `v`
 in `S` (`RootedNetwork.below`), with the part of `N` below `v` as the network
 (`RootedNetwork.branch`):
-1. `v` has no child in `S`: it is the leaf of a taxon `a` (`RootedNetwork.switching_leaf_of_childless`),
-   and the tree is `leaf a` (`DisplayedSubdivision.single`);
+1. `v` has no child in `S`: it is the leaf of a taxon `a`
+   (`RootedNetwork.switching_leaf_of_childless`), and the tree is `leaf a`
+   (`DisplayedSubdivision.single`);
 2. `v` has one child `c`: the tree below `c`, whose root wire is preceded by `v`
    (`DisplayedSubdivision.extendRoot`); the vertex `v` is suppressed;
 3. `v` has two children `c₁` and `c₂`: the parts below them are disjoint

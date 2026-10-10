@@ -18,9 +18,10 @@ The figure itself is not in the text of the paper, and the caption does not dete
 its restriction to A, D, E, G. This file checks the caption's claims on the smallest tree that fits
 them: `T = ((A,D),(E,G))` (`Figure1.tree`, with `A = 0`, `D = 3`, `E = 4`, `G = 6`), and the edge
 added above `(u, w) = (E, D)` (`Figure1.pair`). On this tree it is the only pair whose second
-tree is (A,((D,E),G)) (`Figure1.pair_unique`). Its target v = lca(E, D) is the root of `T`. The network `N = T + e`
-(`Figure1.net`) is built on `T` and has one reticulation; on A, D, E, G it displays exactly AD|EG
-and DE|AG; `T` induces AD|EG and not DE|AG; and DE|AG is the quartet satisfied by the added edge.
+tree is (A,((D,E),G)) (`Figure1.pair_unique`). Its target v = lca(E, D) is the root of `T`. The
+network `N = T + e` (`Figure1.net`) is built on `T` and has one reticulation; on A, D, E, G it
+displays exactly AD|EG and DE|AG; `T` induces AD|EG and not DE|AG; and DE|AG is the quartet
+satisfied by the added edge.
 The two rooted trees are compared through their clades: the clades of the tree displayed through
 the added edge (`EdgeAbove.switchedClades`) are those of (A,((D,E),G)).
 
