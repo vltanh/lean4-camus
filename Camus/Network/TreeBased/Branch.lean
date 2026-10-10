@@ -12,14 +12,18 @@ build the tree of a switching `S` vertex by vertex, this file cuts `S` at each v
 part of `N` below `v` in `S` (`RootedNetwork.branch`) has the vertices reached from `v` along
 edges of `S` (`RootedNetwork.below`), the edges of `S` out of them, the root `v` and the taxa whose
 leaves lie below `v` (`RootedNetwork.cladeBelow`). It proves the facts on these parts that the
-construction of `Camus/Network/TreeBased/Subdivision.lean` uses: the vertices below the children
-of `v` in `S` are disjoint, `v` is not below its children, and the edges of `S` below `v` form a
+construction of `Camus/Network/TreeBased/Main.lean` uses: a vertex has zero, one or two children in
+`S`, the part below it is made of the vertex and the parts below its children, the parts below two
+children are disjoint, a vertex is not below its children, and the edges of `S` below `v` form a
 switching of the part below `v`.
 
 ## Main results
 
 * `RootedNetwork.below`, `RootedNetwork.belowEdges`, `RootedNetwork.branch`: the part of `N`
   below a vertex of `S`.
+* `RootedNetwork.children_cases`: a vertex has no child, one child or two children in `S`.
+* `RootedNetwork.below_eq_of_children`, `RootedNetwork.belowEdges_eq_of_children`,
+  `RootedNetwork.cladeBelow_eq_of_children`: the part below a vertex with children.
 * `RootedNetwork.below_disjoint`: the parts below two children of a vertex are disjoint.
 * `RootedNetwork.not_mem_below_of_edge`: a vertex is not below its children.
 * `RootedNetwork.branch_switching`: the edges of `S` below `v` form a switching of the part
@@ -156,7 +160,8 @@ theorem belowEdges_eq_empty_of_childless {v : ℕ} (hv : v ∈ N.vertices)
   intro he h
   exact hchild e.2 (by rw [← h]; exact he)
 
-/-- The part below a vertex `v` has fewer vertices than the part below its parent. -/
+/-- The part below a child `c` of `v` that does not contain `v` has fewer vertices than the part
+below `v`. -/
 theorem below_card_lt {v c : ℕ} (hv : v ∈ N.vertices) (hvc : (v, c) ∈ S)
     (hc : v ∉ N.below S c) : (N.below S c).card < (N.below S v).card :=
   Finset.card_lt_card ((Finset.ssubset_iff_of_subset (below_subset_of_edge hvc)).mpr
@@ -166,13 +171,6 @@ section Switching
 
 variable (hN : N.RootedBinaryLevelOne) (hS : N.Switching S)
 include hN hS
-
-/-- A vertex reached from a vertex of `N` along edges of `S` is a vertex of `N`. -/
-theorem mem_vertices_of_reach {v x : ℕ} (hv : v ∈ N.vertices)
-    (h : Relation.ReflTransGen (fun a b => (a, b) ∈ S) v x) : x ∈ N.vertices := by
-  induction h with
-  | refl => exact hv
-  | tail _ hyx _ => exact (hN.2.1 _ (hS.1 hyx)).2
 
 /-- A vertex is not below its children in `S`: `N` has no directed cycle. -/
 theorem not_mem_below_of_edge {v c : ℕ} (hvc : (v, c) ∈ S) : v ∉ N.below S c := by
@@ -214,7 +212,7 @@ theorem below_disjoint {v c₁ c₂ : ℕ} (h₁ : (v, c₁) ∈ S) (h₂ : (v, 
   · exact key h₁ h₂ hne h
   · exact key h₂ h₁ hne.symm h
 
-/-- The leaf of a taxon has no child in `S`. -/
+/-- A vertex with a child in `S` is not the leaf of a taxon: leaves have no child in `N`. -/
 theorem leaf_ne_of_edge {v c : ℕ} (hvc : (v, c) ∈ S) {a : ℕ} (ha : a ∈ N.taxa) :
     N.leaf a ≠ v := by
   intro h

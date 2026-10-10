@@ -12,7 +12,7 @@ always return an output rooted level-1 phylogenetic network, since (i) ASTRAL al
 tree, (ii) we have an outgroup and hence can root the tree returned by ASTRAL, and (iii) CAMUS
 always returns a level-1 network building on the given input tree." This file proves the three
 steps and the conclusion, for every multiset `Q` and every finite set `X` of taxa that contains the
-outgroup `z` and another taxon.
+outgroup `z`.
 
 The library's trees are rooted (`PhyloTree`) and stand for their unrooted forms through the
 quartets they induce (`Quartet.induced`), so ASTRAL's problem is the maximization of the quartet
@@ -23,7 +23,8 @@ replaces a tree by a tree with the same induced quartets whose root has the leaf
 ## Main results
 
 * `astral_total`: (i) some well-labelled tree on `X` has the maximum quartet support score.
-* `astral_rooted`: (ii) rooted at the outgroup, a tree keeps its taxa, its quartets and its score.
+* `astral_rooted`: (ii) rooted at the outgroup, a tree keeps its taxa, its quartets and its score,
+  and its root has the outgroup leaf as a child.
 * `camus_total`: (iii) CAMUS has an output on every well-labelled tree, and every output is a
   rooted binary level-1 network built on it.
 * `snpPipeline_total`: the pipeline returns a rooted binary level-1 network built on the rooted
@@ -71,17 +72,18 @@ theorem astral_total (Q : Multiset Quartet) {X : Finset ℕ} (hX : X.Nonempty) :
   exact ⟨T, hT, hTX, fun T' hT' hT'X => hTs ▸ V.le_max' _ (hmem T' hT' hT'X)⟩
 
 /-- Section 3.2, (ii): "we have an outgroup and hence can root the tree returned by ASTRAL". A
-well-labelled tree `T` with the outgroup `z` among its taxa and another taxon, rooted on the edge
-leading to `z` (`PhyloTree.reroot`), is a well-labelled tree whose root has the leaf `z` as a
-child, with the taxa, the induced quartets and the quartet support score of `T`. -/
+well-labelled tree `T` with the outgroup `z` among its taxa, rooted on the edge leading to `z`
+(`PhyloTree.reroot`), is a well-labelled tree with the taxa, the induced quartets and the quartet
+support score of `T`; if `T` has a taxon other than `z`, the root of the rooted tree has the leaf
+`z` as a child. -/
 theorem astral_rooted (Q : Multiset Quartet) {T : PhyloTree} (hT : T.WellLabelled) {z : ℕ}
-    (hz : z ∈ T.taxa) (h2 : ∃ a ∈ T.taxa, a ≠ z) :
-    (∃ R, PhyloTree.reroot z T = .fork (.leaf z) R) ∧ (PhyloTree.reroot z T).WellLabelled ∧
-      (PhyloTree.reroot z T).taxa = T.taxa ∧
+    (hz : z ∈ T.taxa) :
+    (PhyloTree.reroot z T).WellLabelled ∧ (PhyloTree.reroot z T).taxa = T.taxa ∧
       (∀ q : Quartet, q.induced (PhyloTree.reroot z T) = q.induced T) ∧
-      quartetSupport Q (PhyloTree.reroot z T) = quartetSupport Q T := by
+      quartetSupport Q (PhyloTree.reroot z T) = quartetSupport Q T ∧
+      ((∃ a ∈ T.taxa, a ≠ z) → ∃ R, PhyloTree.reroot z T = .fork (.leaf z) R) := by
   obtain ⟨hwl, htaxa, hq⟩ := PhyloTree.reroot_spec hT hz
-  refine ⟨?_, hwl, htaxa, hq, PhyloTree.quartetSupport_reroot Q hT hz⟩
+  refine ⟨hwl, htaxa, hq, PhyloTree.quartetSupport_reroot Q hT hz, fun h2 => ?_⟩
   cases T with
   -- a single leaf has one taxon
   | leaf b =>
@@ -105,24 +107,24 @@ theorem camus_total (T : PhyloTree) (hT : T.WellLabelled) (Q : Multiset Quartet)
 
 /-- Section 3.2: "for all inputs, this pipeline will always return an output rooted level-1
 phylogenetic network". Let `Q` be a multiset of quartets (the quartets of the SNPs) and `X` a
-finite set of taxa that contains the outgroup `z` and another taxon. Then ASTRAL has an output, a
-well-labelled tree on `X` of maximum quartet support score; every such tree `T`, rooted at the
-outgroup, is a well-labelled tree on `X` whose root has the leaf `z` as a child and which also has
-the maximum score; and CAMUS, on that rooted tree and `Q`, has an output, and every output is a
-rooted binary level-1 network built on the rooted tree, with its root at the root of the
-network. -/
-theorem snpPipeline_total (Q : Multiset Quartet) {X : Finset ℕ} {z : ℕ} (hz : z ∈ X)
-    (h2 : ∃ a ∈ X, a ≠ z) :
+finite set of taxa that contains the outgroup `z`. Then ASTRAL has an output, a well-labelled tree
+on `X` of maximum quartet support score. Every such tree `T`, rooted at the outgroup, is a
+well-labelled tree on `X` with the quartets of `T` and the maximum score, whose root has the leaf
+`z` as a child if `X` has another taxon. CAMUS, on that rooted tree and `Q`, has an output, and
+every output is a rooted binary level-1 network built on the rooted tree, with the root of the tree
+at the root of the network. -/
+theorem snpPipeline_total (Q : Multiset Quartet) {X : Finset ℕ} {z : ℕ} (hz : z ∈ X) :
     (∃ T : PhyloTree, T.WellLabelled ∧ T.taxa = X ∧
       ∀ T' : PhyloTree, T'.WellLabelled → T'.taxa = X →
         quartetSupport Q T' ≤ quartetSupport Q T) ∧
     ∀ T : PhyloTree, T.WellLabelled → T.taxa = X →
       (∀ T' : PhyloTree, T'.WellLabelled → T'.taxa = X →
         quartetSupport Q T' ≤ quartetSupport Q T) →
-      (∃ R, PhyloTree.reroot z T = .fork (.leaf z) R) ∧ (PhyloTree.reroot z T).WellLabelled ∧
-        (PhyloTree.reroot z T).taxa = X ∧
+      (PhyloTree.reroot z T).WellLabelled ∧ (PhyloTree.reroot z T).taxa = X ∧
+        (∀ q : Quartet, q.induced (PhyloTree.reroot z T) = q.induced T) ∧
         (∀ T' : PhyloTree, T'.WellLabelled → T'.taxa = X →
           quartetSupport Q T' ≤ quartetSupport Q (PhyloTree.reroot z T)) ∧
+        ((∃ a ∈ X, a ≠ z) → ∃ R, PhyloTree.reroot z T = .fork (.leaf z) R) ∧
         (∃ M E, Array (PhyloTree.reroot z T) (edgeWeight (PhyloTree.reroot z T) Q) M ∧
           Trace (PhyloTree.reroot z T) (edgeWeight (PhyloTree.reroot z T) Q) M [] E) ∧
         ∀ M E, Array (PhyloTree.reroot z T) (edgeWeight (PhyloTree.reroot z T) Q) M →
@@ -132,9 +134,10 @@ theorem snpPipeline_total (Q : Multiset Quartet) {X : Finset ℕ} {z : ℕ} (hz 
   -- (i) ASTRAL returns a tree
   refine ⟨astral_total Q ⟨z, hz⟩, fun T hT hTX hmax => ?_⟩
   -- (ii) the tree is rooted at the outgroup
-  obtain ⟨hfork, hwl, htaxa, -, hscore⟩ := astral_rooted Q hT (hTX ▸ hz) (hTX ▸ h2)
+  obtain ⟨hwl, htaxa, hq, hscore, hfork⟩ := astral_rooted Q hT (hTX ▸ hz)
   -- (iii) CAMUS returns a network built on the rooted tree
   obtain ⟨hex, hall⟩ := camus_total _ hwl Q
-  exact ⟨hfork, hwl, htaxa.trans hTX, fun T' hT' hT'X => hscore ▸ hmax T' hT' hT'X, hex, hall⟩
+  exact ⟨hwl, htaxa.trans hTX, hq, fun T' hT' hT'X => hscore ▸ hmax T' hT' hT'X,
+    fun h2 => hfork (hTX ▸ h2), hex, hall⟩
 
 end Camus

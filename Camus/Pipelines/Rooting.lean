@@ -124,7 +124,7 @@ theorem disjoint_toFinset_of_nodup {l₁ l₂ : List ℕ} (h : (l₁ ++ l₂).No
     List.disjoint_of_nodup_append h (List.mem_toFinset.mp ha) (List.mem_toFinset.mp hb)
 
 /-- A leaf label `z` of `t` gives the clade `{z}`. -/
-theorem singleton_mem_clades {t : PhyloTree} {z : ℕ} (hz : z ∈ t.labels) : {z} ∈ t.clades := by
+theorem leaf_clade_mem {t : PhyloTree} {z : ℕ} (hz : z ∈ t.labels) : {z} ∈ t.clades := by
   induction t with
   | leaf a =>
     simp only [labels, List.mem_singleton] at hz
@@ -313,7 +313,7 @@ theorem induced_fork_hang {z : ℕ} {s : PhyloTree} (hz : z ∈ s.labels) {A : P
     -- the root clade contains all the taxa and cuts no quartet
     · rw [← taxa_fork, htaxa] at hcut
       exact absurd hcut (by simp [q.cutBy_false_of_taxa_subset hq])
-    · exact ⟨{z}, List.mem_cons_of_mem _ (List.mem_append_left _ (singleton_mem_clades hz)),
+    · exact ⟨{z}, List.mem_cons_of_mem _ (List.mem_append_left _ (leaf_clade_mem hz)),
         hcut⟩
     · rcases clades_hang hz hnd C hC with h | h | ⟨D, hD, _, rfl⟩
       · exact ⟨C, List.mem_cons_of_mem _ (List.mem_append_right _ h), hcut⟩
