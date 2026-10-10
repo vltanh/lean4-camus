@@ -24,6 +24,24 @@ import all Camus.DP.Frontier
 import all Camus.DP.Packing
 import all Camus.DP.Theorem1
 import all Camus.Defs
+import all Camus.External.NMSC.Arms
+import all Camus.External.NMSC.Basic
+import all Camus.External.NMSC.Consistency
+import all Camus.External.NMSC.Context
+import all Camus.External.NMSC.Cycle
+import all Camus.External.NMSC.Displayed
+import all Camus.External.NMSC.Displays
+import all Camus.External.NMSC.FourComponents
+import all Camus.External.NMSC.GeneLaw
+import all Camus.External.NMSC.Instance
+import all Camus.External.NMSC.Model
+import all Camus.External.NMSC.Pairs
+import all Camus.External.NMSC.Pattern
+import all Camus.External.NMSC.Process
+import all Camus.External.NMSC.Sampling
+import all Camus.External.NMSC.Splits
+import all Camus.External.NMSC.Symmetry
+import all Camus.External.NMSC.ThreeCycle
 import all Camus.External.WarnowTabatabaeeEvans.Observation2
 import all Camus.External.WarnowTabatabaeeEvans.Sampling
 import all Camus.External.WarnowTabatabaeeEvans.SiteModel
@@ -114,6 +132,13 @@ import all Camus.Pipelines.Counterexample
 import all Camus.Pipelines.Filtering
 import all Camus.Pipelines.Inclusion
 import all Camus.Pipelines.InclusionOutgroup
+import all Camus.Pipelines.NMSC.Anomaly
+import all Camus.Pipelines.NMSC.BaseTree
+import all Camus.Pipelines.NMSC.Bridge
+import all Camus.Pipelines.NMSC.Filtering
+import all Camus.Pipelines.NMSC.Quartets
+import all Camus.Pipelines.NMSC.Recovery
+import all Camus.Pipelines.NMSC.Uniqueness
 import all Camus.Pipelines.Pipeline
 import all Camus.Pipelines.Recovery
 import all Camus.Pipelines.SNP
@@ -182,7 +207,11 @@ there. The traversal stops at them. -/
 meta def externalResults : List (String × Name) :=
   [("Observation 2 (Warnow, Tabatabaee, Evans 2025)", ``Camus.External.observation2),
    ("Support of the SNP quartets (Warnow, Tabatabaee, Evans 2025, Theorem 6)",
-    ``Camus.External.support_tendsto)]
+    ``Camus.External.support_tendsto),
+   ("Quartet CFs of the components of a cycle under the NMSC (Banos 2019)",
+    ``Brooqs.nmsc_quartetCF),
+   ("The anomalous 3-cycle under the NMSC (Ane, Fogg, Allman, Banos, Rhodes 2024)",
+    ``Brooqs.net32_anomaly)]
 
 /-- The numbered results of the paper, and its unnumbered claims, in the order of the paper. -/
 meta def paperResults : List (String × Name) :=
@@ -246,6 +275,13 @@ meta def paperResults : List (String × Name) :=
     ``Camus.RootedNetwork.BuiltOn.anchored_of_outgroup),
    ("Sec 3.2, a tree of N need not be a basis (E8)",
     ``Camus.Counterexamples.camus_output_not_rootAboveNet),
+   ("Sec 3.3, quartet CFs of every four taxa under the NMSC", ``Brooqs.Net.weakPattern),
+   ("Sec 3.3, the filter returns Q(N_r) under the NMSC, without the anomaly",
+    ``Camus.NMSC.nmsc_filterQuartets_support),
+   ("Sec 3.3, the filter in the anomalous configuration (E9)", ``Camus.NMSC.anomaly_filterQuartets),
+   ("Sec 3.3, ASTRAL's tree need not be displayed", ``Camus.NMSC.anomaly_astral),
+   ("Sec 3.3, recovery under the NMSC", ``Camus.NMSC.nmsc_recovery_graph),
+   ("Sec 3.3, uniqueness fails under the NMSC (E7)", ``Camus.NMSC.nmsc_uniqueness_counterexample),
    ("Sec 3.4, Algorithm 1", ``Camus.Algorithm1.filterQuartets_mono),
    ("Sec 3.4, threshold as a ratio", ``Camus.retainSecond_iff_ratio),
    ("Sec 3.3, the MSC pattern", ``Camus.Coalescent.msc_pattern),
