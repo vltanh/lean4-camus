@@ -306,13 +306,6 @@ end Realization
 
 namespace Counterexamples
 
-/-- The family `{shallowPair}` is feasible. -/
-theorem shallowPair_separated : EdgeAbove.CycleSeparated donorTree {shallowPair} := by
-  constructor
-  · simpa only [Finset.singleton_subset_iff] using
-      (show shallowPair ∈ EdgeAbove.candidates donorTree by decide)
-  · simp
-
 /-- Section 3.2, E6 under every hypothesis of the paper's consistency argument. Take for the true
 network `shallowNet`, built on the tree `donorTree`, and a site model on it with two states under
 which `donorTree` induces the most probable quartet on every four taxa (it exists by
