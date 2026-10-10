@@ -153,7 +153,8 @@ From [`REPORT.md`](REPORT.md):
   the SNP pipeline as one statement, backtracking time and peak memory, and Quartet Filtering under
   the network coalescent (10 October 2026, 3.2 hours, 5 sub-agents, then a review by 4 more); then,
   in a fifth round, three items left under the network coalescent: recovery through every tree, the
-  exchange of the sides of a cycle, and the region of the anomaly (10 October 2026, @@R5@@).
+  exchange of the sides of a cycle, and the region of the anomaly (10 October 2026, 1.1 hours, 3
+  sub-agents).
 - No person has reviewed the proofs yet; independent agents reviewed the statements, the proofs, the
   findings and the account of the literature. [`CREDITS.md`](CREDITS.md) gives the details.
 

@@ -176,7 +176,7 @@ automation:
         2 at once): two in separate git worktrees on recovery through every tree with the exchange
         of the sides of a cycle, and on the region of the anomaly, and one read-only reviewer.
       cost:
-        wall_time: "@@WALL5@@"
+        wall_time: "1.07 hours to the audited report; 1.4 hours of sub-agent working time"
         spend_usd: "not tracked"
         hardware: "local machine (Lean builds); model API"
       prompting_notes: "With the network-coalescent items of the report's Section 9 selected, the maintainer asked: \"Why don't you formalize this\"."

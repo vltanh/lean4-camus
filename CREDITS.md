@@ -6,21 +6,22 @@ How this formalization was made, from the run logs and the session transcripts.
 
 - **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose its scope (the
   directed-graph model of networks, the corrected statements of Sections 2.4 and 3.2), asked for
-  the second, third and fourth rounds, and approved copying the network multispecies coalescent
+  the second to fifth rounds, and approved copying the network multispecies coalescent
   from their formalization of BROOQS.
-- **Formalization:** two AI systems, in four rounds. The first formalization was made by OpenAI's
+- **Formalization:** two AI systems, in five rounds. The first formalization was made by OpenAI's
   `gpt-6.1-sol` in Codex CLI 0.162.0-alpha.2, from an empty project, with three sub-agents. The
-  second round, a restyle with a new audit, and the third and fourth, which formalized what the
+  second round, a restyle with a new audit, and the third to fifth, which formalized what the
   second had left out, were made by Claude Opus 5.5 (`claude-opus-5-5`, Anthropic) in Claude Code
   2.1.296 (VS Code extension), in one session with sub-agents.
 - **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill,
-  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in all four rounds.
+  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in all five rounds.
 - **Review:** no person has reviewed the proofs. In the first three rounds, agents other than the
   provers reviewed the statements against the paper and compared the proofs with the paper's; in
   the second and third rounds, other agents also checked the report's findings and its account of
   the literature against their sources. In the fourth round, an agent other than the prover
   reviewed the files of the SNP pipeline during the round, and four more reviewed the round's other
-  files after the report, at the author's request.
+  files after the report, at the author's request; in the fifth, one agent reviewed the round's
+  statements and the report's account of them.
 
 ## The first formalization (8 October 2026)
 
@@ -227,3 +228,45 @@ Figures, from 17:06 CDT (the author's request) to that commit (17:32 CDT), from 
 0.43 hours elapsed; 4 sub-agents, at most 4 at once, for 0.7 hours of working time and 191 tool
 calls; the main session made 59 tool calls; 224 model calls, all to Claude Opus 5.5 (55 by the main
 session, 169 by the sub-agents).
+
+## The fifth round (10 October 2026)
+
+With the report's list of what remained under the network coalescent selected (Section 9: recovery
+through displayed trees other than the base tree, the symmetry of the model under the exchange of
+the two sides of a cycle, and the parameters for which the anomalous configuration defeats Quartet
+Filtering), the author asked: "Why don't you formalize this".
+
+How it was made:
+
+- **The work.** The main session started two sub-agents at once, each in its own git worktree, with
+  a time box. The first proved recovery through every tree of the graph of `N` when its root has an
+  outgroup, and the symmetry of the model under the exchange of the two sides of a cycle; resumed
+  for the identification of every displayed tree of the model with a tree of the graph, it reduced
+  that to the switchings of a graph with several added edges, estimated the rest at several hundred
+  lines, and stopped, as the main session had asked. The second proved the region of parameters in
+  which the 3-cycle above two taxa is anomalous, Quartet Filtering on each side of it, and the two
+  other rootings of the same quarnet.
+- **Integration.** The main session merged the two branches, added the modules to the audit, and
+  updated the report, the README and the metadata.
+- **Review.** A read-only sub-agent checked the round's statements, recomputed the region
+  numerically, and compared it with Ané et al. (2024). It found no false statement, and found that
+  the documents said "exactly" where the boundary of the region is open, omitted the hypotheses of
+  the recovery through every tree, and gave the formalization more credit for the region than it
+  is due: Ané et al. give the probability in closed form, from which the region follows. The main
+  session applied its findings.
+
+Figures, from 10 October 2026, 17:40 CDT (the author's request), to the commit that completes the
+report of this round (`e9267c2`, 18:44 CDT), taken from the session's transcript with the skill's
+`session_stats.py`:
+
+- **Elapsed time:** 1.07 hours (1 hour 4 minutes).
+- **Sub-agents:** 3: two workstreams and a reviewer; at most 2 running at once; two resumed once
+  (the first workstream, and the reviewer to deliver its report); 1.4 hours of working time in all.
+- **Tool calls and tokens:** the sub-agents made 243 tool calls, with 1.06 million input tokens and
+  53 million cache reads; the main session made 54 tool calls, with 0.10 million output tokens,
+  0.16 million input tokens and 27 million cache reads. As in the earlier rounds, the sub-agents'
+  recorded 0.06 million output tokens is a lower bound.
+- **Model calls:** 301, all to Claude Opus 5.5 (57 by the main session, 244 by the sub-agents).
+
+The figures leave out the work after the report: the credits, and the final checks of the
+packaging.
