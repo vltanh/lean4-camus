@@ -120,51 +120,6 @@ namespace Camus.BudgetDP
 
 open DynamicProgramming
 
-/-- Backtracking through the knapsack `forest M rs` (Section 2.4). `Knapsack M b s rs k z` says
-that the budgets `b r` and the row values `s r ∈ M[r][b r]` of the subtrees `r ∈ rs` distribute the
-budget `k` with total value `z`, and that the knapsack keeps each partial total: for
-`rs = r :: rs'`, if the budgets of `rs'` add up to `k'` with total value `z'`, then `s r + z'` is
-the value kept in row `b r + k'` of `forest M rs`. -/
-inductive Knapsack (M : Address → ℕ → Finset ℕ) (b s : Address → ℕ) :
-    List Address → ℕ → ℕ → Prop
-  | nil : Knapsack M b s [] 0 0
-  | cons (r : Address) (rs : List Address) (k z : ℕ)
-      (row : s r ∈ M r (b r))
-      (tail : Knapsack M b s rs k z)
-      (chosen : s r + z ∈ forest M (r :: rs) (b r + k)) :
-      Knapsack M b s (r :: rs) (b r + k) (s r + z)
-
-/-- Section 2.4: the backtracking through the array `M` of the recurrence `BudgetDP.Array`, for
-edge weights `w`. `Trace t w M v k E` says that the family `E` of pairs is a result of backtracking
-from the vertex `v` with budget `k`.
-* `leaf`: at a leaf, the budget is `0` and `E` is empty.
-* `fork`: at an internal vertex, no added edge has target `v`. The budget is split as `i + j`
-  between the two children, and `E` is the union of results there, whose row values `x` and `y`
-  add up to the value kept in `M[v][i + j]`.
-* `gall`: an edge `e ∈ Pairs(v)` is added, using one unit of budget. The remaining `k` units are
-  distributed over the subtrees `r` hanging off the cycle of `e`, with budgets `b r` and values
-  `s r` chosen by backtracking through the knapsack (`Knapsack`), and `E` consists of `e` and
-  results at the hanging subtrees with these budgets; `w e` plus the knapsack value `z` is the value
-  kept in `M[v][k + 1]`. -/
-inductive Trace (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ) :
-    Address → ℕ → Finset Pair → Prop
-  | leaf (v : Address) (a : ℕ) (node : t.nodeAt v = some (.leaf a)) :
-      Trace t w M v 0 ∅
-  | fork (v : Address) (l r : PhyloTree) (i j x y : ℕ) (L R : Finset Pair)
-      (node : t.nodeAt v = some (.fork l r))
-      (left : Trace t w M (v ++ [false]) i L)
-      (right : Trace t w M (v ++ [true]) j R)
-      (leftRow : x ∈ M (v ++ [false]) i)
-      (rightRow : y ∈ M (v ++ [true]) j)
-      (chosen : x + y ∈ M v (i + j)) :
-      Trace t w M v (i + j) (L ∪ R)
-  | gall (v : Address) (e : Pair) (k z : ℕ) (b s : Address → ℕ) (F : Address → Finset Pair)
-      (edge : e ∈ pairsAt t v)
-      (knapsack : Knapsack M b s (hanging t e).toList k z)
-      (branches : ∀ r ∈ hanging t e, Trace t w M r (b r) (F r))
-      (chosen : w e + z ∈ M v (k + 1)) :
-      Trace t w M v (k + 1) (insert e ((hanging t e).biUnion F))
-
 namespace Knapsack
 
 variable {M : Address → ℕ → Finset ℕ} {b s : Address → ℕ}

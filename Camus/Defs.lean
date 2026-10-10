@@ -13,6 +13,7 @@ public import Mathlib.Data.Multiset.Filter
 public import Mathlib.Data.Nat.Find
 public import Mathlib.Logic.Relation
 public import Mathlib.Tactic.SplitIfs
+public import Mathlib.Order.Lattice.Nat
 
 /-!
 # Shared definitions
@@ -34,14 +35,11 @@ with the same definitions. Their properties are proved in the rest of the librar
   finite directed graphs.
 * `RootedNetwork.Switching`, `RootedNetwork.DisplaysQuartet`: the displayed trees and the set
   Q(N_r) of Definition 1.
-* `RootedNetwork.CutEdgeSeparates`, `RootedNetwork.CycleSeparates`: the two alternatives of
-  Observation 2 of Warnow, Tabatabaee and Evans.
 * `SupportSubdivision`, `RootedNetwork.AnchoredExtension`: the network `N` is built on `T`, with
   the root of `T` at the root of `N`.
-* `EdgeAbove.Admissible`, `EdgeAbove.target`, `EdgeAbove.footprint`, `EdgeAbove.CycleSeparated`:
-  the pairs `(u, w)` above which an edge can be added, their targets lca(u, w) (Definition 2),
-  the vertices of `T` on their cycles γ(u, w), and the families of pairs with vertex-disjoint
-  cycles.
+* `EdgeAbove.Admissible`, `EdgeAbove.target`, `EdgeAbove.footprint`: the pairs `(u, w)` above
+  which an edge can be added, their targets lca(u, w) (Definition 2), and the vertices of `T` on
+  their cycles γ(u, w).
 * `Realization.graph`: the network obtained from `T` by adding an edge above each pair of a
   family (Definition 3); `Realization.child`: the children of Definition 5.
 * `DynamicProgramming.edgeWeight`, `DynamicProgramming.Array`, `DynamicProgramming.s`,
@@ -49,6 +47,12 @@ with the same definitions. Their properties are proved in the rest of the librar
   `DynamicProgramming.Trace`: the backtracking.
 * `DynamicProgramming.repertoire`, `DynamicProgramming.novel`: the quartets of `Q` displayed,
   or satisfied, by a network; `score`: their number, counted with multiplicity in `Q`.
+* `RootedNetwork.reticulationCount`: the number of reticulations.
+* `BudgetDP.cases`, `BudgetDP.Array`, `BudgetDP.Knapsack`, `BudgetDP.Trace`: the dynamic program
+  of Section 2.4, for exact numbers of added edges, and its backtracking.
+* `ExactCountMonotone`, `UniqueOptimum`, `ExactStoppingRule`, `AtMostStoppingRule`: claims of
+  Sections 2.4 and 3.2, refuted in the library; `bestExact`, `bestAtMost` and `StopsAt` state the
+  stopping rule.
 
 ## Conventions
 
@@ -680,6 +684,51 @@ row `M v k` is `best (cases t w M v k)`. Such an `M` exists (`exists_array`). -/
 def Array (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ) : Prop :=
   ∀ v ∈ t.nodes, ∀ k, M v k = best (cases t w M v k)
 
+/-- Backtracking through the knapsack `forest M rs` (Section 2.4). `Knapsack M b s rs k z` says
+that the budgets `b r` and the row values `s r ∈ M[r][b r]` of the subtrees `r ∈ rs` distribute the
+budget `k` with total value `z`, and that the knapsack keeps each partial total: for
+`rs = r :: rs'`, if the budgets of `rs'` add up to `k'` with total value `z'`, then `s r + z'` is
+the value kept in row `b r + k'` of `forest M rs`. -/
+inductive Knapsack (M : Address → ℕ → Finset ℕ) (b s : Address → ℕ) :
+    List Address → ℕ → ℕ → Prop
+  | nil : Knapsack M b s [] 0 0
+  | cons (r : Address) (rs : List Address) (k z : ℕ)
+      (row : s r ∈ M r (b r))
+      (tail : Knapsack M b s rs k z)
+      (chosen : s r + z ∈ forest M (r :: rs) (b r + k)) :
+      Knapsack M b s (r :: rs) (b r + k) (s r + z)
+
+/-- Section 2.4: the backtracking through the array `M` of the recurrence `BudgetDP.Array`, for
+edge weights `w`. `Trace t w M v k E` says that the family `E` of pairs is a result of backtracking
+from the vertex `v` with budget `k`.
+* `leaf`: at a leaf, the budget is `0` and `E` is empty.
+* `fork`: at an internal vertex, no added edge has target `v`. The budget is split as `i + j`
+  between the two children, and `E` is the union of results there, whose row values `x` and `y`
+  add up to the value kept in `M[v][i + j]`.
+* `gall`: an edge `e ∈ Pairs(v)` is added, using one unit of budget. The remaining `k` units are
+  distributed over the subtrees `r` hanging off the cycle of `e`, with budgets `b r` and values
+  `s r` chosen by backtracking through the knapsack (`Knapsack`), and `E` consists of `e` and
+  results at the hanging subtrees with these budgets; `w e` plus the knapsack value `z` is the value
+  kept in `M[v][k + 1]`. -/
+inductive Trace (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ) :
+    Address → ℕ → Finset Pair → Prop
+  | leaf (v : Address) (a : ℕ) (node : t.nodeAt v = some (.leaf a)) :
+      Trace t w M v 0 ∅
+  | fork (v : Address) (l r : PhyloTree) (i j x y : ℕ) (L R : Finset Pair)
+      (node : t.nodeAt v = some (.fork l r))
+      (left : Trace t w M (v ++ [false]) i L)
+      (right : Trace t w M (v ++ [true]) j R)
+      (leftRow : x ∈ M (v ++ [false]) i)
+      (rightRow : y ∈ M (v ++ [true]) j)
+      (chosen : x + y ∈ M v (i + j)) :
+      Trace t w M v (i + j) (L ∪ R)
+  | gall (v : Address) (e : Pair) (k z : ℕ) (b s : Address → ℕ) (F : Address → Finset Pair)
+      (edge : e ∈ pairsAt t v)
+      (knapsack : Knapsack M b s (hanging t e).toList k z)
+      (branches : ∀ r ∈ hanging t e, Trace t w M r (b r) (F r))
+      (chosen : w e + z ∈ M v (k + 1)) :
+      Trace t w M v (k + 1) (insert e ((hanging t e).biUnion F))
+
 end Camus.BudgetDP
 
 namespace Camus
@@ -712,6 +761,44 @@ def UniqueOptimum : Prop :=
         (∀ R : RootedNetwork, R.AnchoredExtension t →
           score Q (repertoire Q R) ≤ score Q (repertoire Q P)) →
         Nonempty (P.Iso N)
+
+/-- The best number of quartets of `Q`, counted with multiplicity, displayed by a network built on
+`T` with exactly `k` reticulations, and `0` if there is no such network. -/
+noncomputable def bestExact (t : PhyloTree) (Q : Multiset Quartet) (k : ℕ) : ℕ :=
+  sSup {s | ∃ N : RootedNetwork, N.AnchoredExtension t ∧ N.reticulationCount = k ∧
+    score Q (repertoire Q N) = s}
+
+/-- The best number of quartets of `Q`, counted with multiplicity, displayed by a network built on
+`T` with at most `k` reticulations. -/
+noncomputable def bestAtMost (t : PhyloTree) (Q : Multiset Quartet) (k : ℕ) : ℕ :=
+  sSup {s | ∃ N : RootedNetwork, N.AnchoredExtension t ∧ N.reticulationCount ≤ k ∧
+    score Q (repertoire Q N) = s}
+
+/-- Section 2.4's stopping rule on the scores `s 0, s 1, …` of the columns: columns are added "until
+we no longer get an improvement in score", and `m` is "the number of reticulations after which the
+score does not improve". The rule stops at `m` if the score improves at each column before `m`, and
+does not improve from `m` to `m + 1`. -/
+def StopsAt (s : ℕ → ℕ) (m : ℕ) : Prop :=
+  (∀ j < m, s j < s (j + 1)) ∧ s (m + 1) ≤ s m
+
+/-- Section 2.4's stopping rule, for exact numbers of reticulations, as the array of Section 2.4
+computes them: for every well-labelled tree `T` and multiset `Q`, if the rule stops at `m` on the
+best scores with exactly `k` reticulations, then the score does not improve after `m`: no network
+built on `T` with `j ≥ m` reticulations displays more quartets of `Q` than the best network with
+exactly `m`. For a fixed `T` the number of quartets of `Q` displayed and the number satisfied
+differ by the number of quartets of `Q` that `T` induces, so the claim reads the same for
+either. -/
+def ExactStoppingRule : Prop :=
+  ∀ t : PhyloTree, t.WellLabelled → ∀ (Q : Multiset Quartet) (m : ℕ),
+    StopsAt (bestExact t Q) m → ∀ j, m ≤ j → bestExact t Q j ≤ bestExact t Q m
+
+/-- Section 2.4's stopping rule, for "at most k" reticulations: for every well-labelled tree `T`
+and multiset `Q`, if the rule stops at `m` on the best scores with at most `k` reticulations, then
+no network built on `T` displays more quartets of `Q` than the best network with at most `m`
+reticulations. -/
+def AtMostStoppingRule : Prop :=
+  ∀ t : PhyloTree, t.WellLabelled → ∀ (Q : Multiset Quartet) (m : ℕ),
+    StopsAt (bestAtMost t Q) m → ∀ j, bestAtMost t Q j ≤ bestAtMost t Q m
 
 end Camus
 

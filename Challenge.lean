@@ -13,6 +13,7 @@ public import Mathlib.Data.Multiset.Filter
 public import Mathlib.Data.Nat.Find
 public import Mathlib.Logic.Relation
 public import Mathlib.Tactic.SplitIfs
+public import Mathlib.Order.Lattice.Nat
 
 /-!
 # CAMUS: the statements of record
@@ -722,6 +723,51 @@ row `M v k` is `best (cases t w M v k)`. Such an `M` exists (`exists_array`). -/
 def Array (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ) : Prop :=
   ∀ v ∈ t.nodes, ∀ k, M v k = best (cases t w M v k)
 
+/-- Backtracking through the knapsack `forest M rs` (Section 2.4). `Knapsack M b s rs k z` says
+that the budgets `b r` and the row values `s r ∈ M[r][b r]` of the subtrees `r ∈ rs` distribute the
+budget `k` with total value `z`, and that the knapsack keeps each partial total: for
+`rs = r :: rs'`, if the budgets of `rs'` add up to `k'` with total value `z'`, then `s r + z'` is
+the value kept in row `b r + k'` of `forest M rs`. -/
+inductive Knapsack (M : Address → ℕ → Finset ℕ) (b s : Address → ℕ) :
+    List Address → ℕ → ℕ → Prop
+  | nil : Knapsack M b s [] 0 0
+  | cons (r : Address) (rs : List Address) (k z : ℕ)
+      (row : s r ∈ M r (b r))
+      (tail : Knapsack M b s rs k z)
+      (chosen : s r + z ∈ forest M (r :: rs) (b r + k)) :
+      Knapsack M b s (r :: rs) (b r + k) (s r + z)
+
+/-- Section 2.4: the backtracking through the array `M` of the recurrence `BudgetDP.Array`, for
+edge weights `w`. `Trace t w M v k E` says that the family `E` of pairs is a result of backtracking
+from the vertex `v` with budget `k`.
+* `leaf`: at a leaf, the budget is `0` and `E` is empty.
+* `fork`: at an internal vertex, no added edge has target `v`. The budget is split as `i + j`
+  between the two children, and `E` is the union of results there, whose row values `x` and `y`
+  add up to the value kept in `M[v][i + j]`.
+* `gall`: an edge `e ∈ Pairs(v)` is added, using one unit of budget. The remaining `k` units are
+  distributed over the subtrees `r` hanging off the cycle of `e`, with budgets `b r` and values
+  `s r` chosen by backtracking through the knapsack (`Knapsack`), and `E` consists of `e` and
+  results at the hanging subtrees with these budgets; `w e` plus the knapsack value `z` is the value
+  kept in `M[v][k + 1]`. -/
+inductive Trace (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ) :
+    Address → ℕ → Finset Pair → Prop
+  | leaf (v : Address) (a : ℕ) (node : t.nodeAt v = some (.leaf a)) :
+      Trace t w M v 0 ∅
+  | fork (v : Address) (l r : PhyloTree) (i j x y : ℕ) (L R : Finset Pair)
+      (node : t.nodeAt v = some (.fork l r))
+      (left : Trace t w M (v ++ [false]) i L)
+      (right : Trace t w M (v ++ [true]) j R)
+      (leftRow : x ∈ M (v ++ [false]) i)
+      (rightRow : y ∈ M (v ++ [true]) j)
+      (chosen : x + y ∈ M v (i + j)) :
+      Trace t w M v (i + j) (L ∪ R)
+  | gall (v : Address) (e : Pair) (k z : ℕ) (b s : Address → ℕ) (F : Address → Finset Pair)
+      (edge : e ∈ pairsAt t v)
+      (knapsack : Knapsack M b s (hanging t e).toList k z)
+      (branches : ∀ r ∈ hanging t e, Trace t w M r (b r) (F r))
+      (chosen : w e + z ∈ M v (k + 1)) :
+      Trace t w M v (k + 1) (insert e ((hanging t e).biUnion F))
+
 end Camus.BudgetDP
 
 namespace Camus
@@ -754,6 +800,44 @@ def UniqueOptimum : Prop :=
         (∀ R : RootedNetwork, R.AnchoredExtension t →
           score Q (repertoire Q R) ≤ score Q (repertoire Q P)) →
         Nonempty (P.Iso N)
+
+/-- The best number of quartets of `Q`, counted with multiplicity, displayed by a network built on
+`T` with exactly `k` reticulations, and `0` if there is no such network. -/
+noncomputable def bestExact (t : PhyloTree) (Q : Multiset Quartet) (k : ℕ) : ℕ :=
+  sSup {s | ∃ N : RootedNetwork, N.AnchoredExtension t ∧ N.reticulationCount = k ∧
+    score Q (repertoire Q N) = s}
+
+/-- The best number of quartets of `Q`, counted with multiplicity, displayed by a network built on
+`T` with at most `k` reticulations. -/
+noncomputable def bestAtMost (t : PhyloTree) (Q : Multiset Quartet) (k : ℕ) : ℕ :=
+  sSup {s | ∃ N : RootedNetwork, N.AnchoredExtension t ∧ N.reticulationCount ≤ k ∧
+    score Q (repertoire Q N) = s}
+
+/-- Section 2.4's stopping rule on the scores `s 0, s 1, …` of the columns: columns are added "until
+we no longer get an improvement in score", and `m` is "the number of reticulations after which the
+score does not improve". The rule stops at `m` if the score improves at each column before `m`, and
+does not improve from `m` to `m + 1`. -/
+def StopsAt (s : ℕ → ℕ) (m : ℕ) : Prop :=
+  (∀ j < m, s j < s (j + 1)) ∧ s (m + 1) ≤ s m
+
+/-- Section 2.4's stopping rule, for exact numbers of reticulations, as the array of Section 2.4
+computes them: for every well-labelled tree `T` and multiset `Q`, if the rule stops at `m` on the
+best scores with exactly `k` reticulations, then the score does not improve after `m`: no network
+built on `T` with `j ≥ m` reticulations displays more quartets of `Q` than the best network with
+exactly `m`. For a fixed `T` the number of quartets of `Q` displayed and the number satisfied
+differ by the number of quartets of `Q` that `T` induces, so the claim reads the same for
+either. -/
+def ExactStoppingRule : Prop :=
+  ∀ t : PhyloTree, t.WellLabelled → ∀ (Q : Multiset Quartet) (m : ℕ),
+    StopsAt (bestExact t Q) m → ∀ j, m ≤ j → bestExact t Q j ≤ bestExact t Q m
+
+/-- Section 2.4's stopping rule, for "at most k" reticulations: for every well-labelled tree `T`
+and multiset `Q`, if the rule stops at `m` on the best scores with at most `k` reticulations, then
+no network built on `T` displays more quartets of `Q` than the best network with at most `m`
+reticulations. -/
+def AtMostStoppingRule : Prop :=
+  ∀ t : PhyloTree, t.WellLabelled → ∀ (Q : Multiset Quartet) (m : ℕ),
+    StopsAt (bestAtMost t Q) m → ∀ j, bestAtMost t Q j ≤ bestAtMost t Q m
 
 end Camus
 
@@ -798,30 +882,46 @@ theorem edgeWeight_eq (t : PhyloTree) (Q : Multiset Quartet) (e : Pair) :
 
 /-- **Section 2.4.** Let `M` satisfy the modified recurrence with the weights of Equation (1). For
 every `k`, the row `k` at the root is nonempty if and only if some network built on `T` has exactly
-`k` reticulations; and each value `z` in it is the number of quartets of `Q` satisfied by a network
-built on `T` with exactly `k` reticulations, which satisfies at least as many quartets of `Q`, and
-displays at least as many, as every network built on `T` with exactly `k` reticulations. -/
+`k` reticulations; and every family `E` obtained by backtracking through `M` from the root with
+budget `k` gives the network `N_k` of Section 2.4: it is built on `T`, has exactly `k`
+reticulations, satisfies the number of quartets of `Q` kept in the row, and satisfies, and
+displays, at least as many quartets of `Q` as every network built on `T` with exactly `k`
+reticulations. -/
 theorem reticulation_restriction (t : PhyloTree) (ht : t.WellLabelled) (Q : Multiset Quartet)
     (M : Address → ℕ → Finset ℕ) (hM : BudgetDP.Array t (edgeWeight t Q) M) (k : ℕ) :
     ((M [] k).Nonempty ↔
         ∃ N : RootedNetwork, N.AnchoredExtension t ∧ N.reticulationCount = k) ∧
-      ∀ z ∈ M [] k, ∃ E : Finset Pair,
+      ∀ E : Finset Pair, BudgetDP.Trace t (edgeWeight t Q) M [] k E →
         (Realization.graph t E).AnchoredExtension t ∧
         (Realization.graph t E).reticulationCount = k ∧
-        score Q (novel t Q (Realization.graph t E)) = z ∧
+        score Q (novel t Q (Realization.graph t E)) ∈ M [] k ∧
         (∀ N : RootedNetwork, N.AnchoredExtension t → N.reticulationCount = k →
-          score Q (novel t Q N) ≤ z) ∧
+          score Q (novel t Q N) ≤ score Q (novel t Q (Realization.graph t E))) ∧
         (∀ N : RootedNetwork, N.AnchoredExtension t → N.reticulationCount = k →
           score Q (repertoire Q N) ≤ score Q (repertoire Q (Realization.graph t E))) := by
   sorry
 
-/-- The modified recurrence of Section 2.4 has a solution, for every tree and all weights. -/
-theorem exists_budgetArray (t : PhyloTree) (w : Pair → ℕ) : ∃ M, BudgetDP.Array t w M := by
+/-- The hypotheses of `reticulation_restriction` can be met: for every tree and all weights, the
+modified recurrence has a solution, and backtracking from the root succeeds with every budget whose
+row is nonempty. -/
+theorem exists_budget_traces (t : PhyloTree) (w : Pair → ℕ) :
+    ∃ M, BudgetDP.Array t w M ∧ ∀ k, (M [] k).Nonempty → ∃ E, BudgetDP.Trace t w M [] k E := by
   sorry
 
 /-- **Section 2.4.** The claim that the score "will never decrease as the number of reticulations
 increases" is false for exact numbers of reticulations. -/
 theorem not_exactCountMonotone : ¬ ExactCountMonotone := by
+  sorry
+
+/-- **Section 2.4.** The stopping rule ("until we no longer get an improvement in score") can stop
+before a better score: the claim that, where the rule stops on the best scores with exactly `k`
+reticulations, no larger number of reticulations gives a better score, is false. -/
+theorem not_exactStoppingRule : ¬ ExactStoppingRule := by
+  sorry
+
+/-- **Section 2.4.** The same for "at most `k`" reticulations, whose best scores never decrease: the
+rule can stop at a score that a network with more reticulations exceeds. -/
+theorem not_atMostStoppingRule : ¬ AtMostStoppingRule := by
   sorry
 
 /-- **Section 3.2.** The claim that the true network is the unique optimal network built on the
@@ -856,6 +956,26 @@ theorem tree_identifiable (t : PhyloTree) (ht : t.WellLabelled) :
       (∀ q, (Realization.graph t ∅).DisplaysQuartet q → P.DisplaysQuartet q) →
       P.reticulationCount ≤ (Realization.graph t ∅).reticulationCount →
       Nonempty (P.Iso (Realization.graph t ∅)) := by
+  sorry
+
+/-- **Section 3.2.** The hypothesis `identifiable` of `recovery` cannot be dropped, even with the
+tie-break toward the fewest reticulations: there are a tree `t`, a network `N` built on `t`, a
+multiset `Q` whose quartets are those that `N` displays, and a family `E` obtained by backtracking
+through a solution of the recurrence, such that the network obtained by adding `E` displays as many
+quartets of `Q` as any network built on `t`, has the fewest reticulations among such networks, and
+is not isomorphic to `N`. -/
+theorem recovery_needs_identifiable :
+    ∃ t : PhyloTree, t.WellLabelled ∧ ∃ N : RootedNetwork, N.AnchoredExtension t ∧
+      ∃ Q : Multiset Quartet, (∀ q, q ∈ Q ↔ N.DisplaysQuartet q) ∧
+      ∃ M, DynamicProgramming.Array t (edgeWeight t Q) M ∧
+      ∃ E, Trace t (edgeWeight t Q) M [] E ∧
+        (∀ R : RootedNetwork, R.AnchoredExtension t →
+          score Q (repertoire Q R) ≤ score Q (repertoire Q (Realization.graph t E))) ∧
+        (∀ R : RootedNetwork, R.AnchoredExtension t →
+          (∀ R' : RootedNetwork, R'.AnchoredExtension t →
+            score Q (repertoire Q R') ≤ score Q (repertoire Q R)) →
+          (Realization.graph t E).reticulationCount ≤ R.reticulationCount) ∧
+        IsEmpty ((Realization.graph t E).Iso N) := by
   sorry
 
 end Camus.Challenge

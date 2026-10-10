@@ -7,11 +7,14 @@
     "Camus.Challenge.tree_displays_iff",
     "Camus.Challenge.edgeWeight_eq",
     "Camus.Challenge.reticulation_restriction",
-    "Camus.Challenge.exists_budgetArray",
+    "Camus.Challenge.exists_budget_traces",
     "Camus.Challenge.not_exactCountMonotone",
+    "Camus.Challenge.not_exactStoppingRule",
+    "Camus.Challenge.not_atMostStoppingRule",
     "Camus.Challenge.not_uniqueOptimum",
     "Camus.Challenge.recovery",
-    "Camus.Challenge.tree_identifiable"
+    "Camus.Challenge.tree_identifiable",
+    "Camus.Challenge.recovery_needs_identifiable"
   ],
   "definition_names": [],
   "permitted_axioms": [

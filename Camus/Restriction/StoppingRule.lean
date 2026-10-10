@@ -66,44 +66,6 @@ namespace Camus
 
 open DynamicProgramming
 
-/-- The best number of quartets of `Q`, counted with multiplicity, displayed by a network built on
-`T` with exactly `k` reticulations, and `0` if there is no such network. -/
-noncomputable def bestExact (t : PhyloTree) (Q : Multiset Quartet) (k : ℕ) : ℕ :=
-  sSup {s | ∃ N : RootedNetwork, N.AnchoredExtension t ∧ N.reticulationCount = k ∧
-    score Q (repertoire Q N) = s}
-
-/-- The best number of quartets of `Q`, counted with multiplicity, displayed by a network built on
-`T` with at most `k` reticulations. -/
-noncomputable def bestAtMost (t : PhyloTree) (Q : Multiset Quartet) (k : ℕ) : ℕ :=
-  sSup {s | ∃ N : RootedNetwork, N.AnchoredExtension t ∧ N.reticulationCount ≤ k ∧
-    score Q (repertoire Q N) = s}
-
-/-- Section 2.4's stopping rule on the scores `s 0, s 1, …` of the columns: columns are added "until
-we no longer get an improvement in score", and `m` is "the number of reticulations after which the
-score does not improve". The rule stops at `m` if the score improves at each column before `m`, and
-does not improve from `m` to `m + 1`. -/
-def StopsAt (s : ℕ → ℕ) (m : ℕ) : Prop :=
-  (∀ j < m, s j < s (j + 1)) ∧ s (m + 1) ≤ s m
-
-/-- Section 2.4's stopping rule, for exact numbers of reticulations, as the array of Section 2.4
-computes them: for every well-labelled tree `T` and multiset `Q`, if the rule stops at `m` on the
-best scores with exactly `k` reticulations, then the score does not improve after `m`: no network
-built on `T` with `j ≥ m` reticulations displays more quartets of `Q` than the best network with
-exactly `m`. For a fixed `T` the number of quartets of `Q` displayed and the number satisfied
-differ by the number of quartets of `Q` that `T` induces, so the claim reads the same for
-either. -/
-def ExactStoppingRule : Prop :=
-  ∀ t : PhyloTree, t.WellLabelled → ∀ (Q : Multiset Quartet) (m : ℕ),
-    StopsAt (bestExact t Q) m → ∀ j, m ≤ j → bestExact t Q j ≤ bestExact t Q m
-
-/-- Section 2.4's stopping rule, for "at most k" reticulations: for every well-labelled tree `T`
-and multiset `Q`, if the rule stops at `m` on the best scores with at most `k` reticulations, then
-no network built on `T` displays more quartets of `Q` than the best network with at most `m`
-reticulations. -/
-def AtMostStoppingRule : Prop :=
-  ∀ t : PhyloTree, t.WellLabelled → ∀ (Q : Multiset Quartet) (m : ℕ),
-    StopsAt (bestAtMost t Q) m → ∀ j, bestAtMost t Q j ≤ bestAtMost t Q m
-
 /-- A family of admissible pairs whose cycles meet `T` in pairwise disjoint sets is
 cycle-separated. -/
 theorem EdgeAbove.separated_of_pairwise {t : PhyloTree} {E : Finset Pair}
