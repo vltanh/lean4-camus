@@ -10,10 +10,10 @@ sense of Definition 1 with a network built on `T` with the root kept.
 
 * The outgroup does not change the displayed quartets on the taxa of `N`
   (`RootedNetwork.withOutgroup_displays_iff`). The switchings of `N⁺` are those of `N` with the
-  two edges out of the new root, and an edge of a switching of `N` has the same clade below it in
-  `N⁺`; the two new edges have the clades `N.taxa` and `{z}` below them, which cut no quartet on
-  the taxa of `N`. The proof reads Definition 1 by clades of switchings
-  (`RootedNetwork.displays_iff_cladeBelow`).
+  two edges out of the new root. The new vertices hang off the root of `N`, so deleting an edge
+  of a switching of `N` separates the leaves of `N` in the same way in `N⁺`
+  (`RootedNetwork.withOutgroup_reachable_iff`), and deleting a new edge separates no two leaves
+  of `N`.
 * The quartets displayed by the canonical network of a cycle-separated family `E`: those induced
   by `T`, and those cut by a clade of the tree displayed through one added edge
   (`Realization.displays_iff_cuts`). This is Lemma 1 (`lemma1`) with the quartets displayed by
@@ -22,6 +22,7 @@ sense of Definition 1 with a network built on `T` with the root kept.
 ## Main results
 
 * `RootedNetwork.withOutgroup_displays_iff`: `N⁺` and `N` display the same quartets avoiding `z`.
+* `RootedNetwork.withOutgroup_reachable_iff`: the outgroup does not connect vertices of `N`.
 * `Realization.displays_iff_cuts`: the quartets displayed by `Realization.graph t E`.
 * `Quartet.induced_outgroup`: `T⁺` and `T` induce the same quartets on the taxa of `T`.
 -/
@@ -95,55 +96,80 @@ namespace RootedNetwork
 
 variable {N : RootedNetwork} {z ρ ℓ : ℕ}
 
-/-- The clade below `y` in `S`: the taxa whose leaves `S` reaches from `y`. -/
-theorem mem_cladeBelow {S : Finset (ℕ × ℕ)} {y a : ℕ} :
-    a ∈ N.cladeBelow S y ↔
-      a ∈ N.taxa ∧ Relation.ReflTransGen (fun u v => (u, v) ∈ S) y (N.leaf a) := by
+/-- In the switching `S` of `N` with the two edges out of the new root, two vertices of `N` are
+connected after deleting a set `B` of edges if and only if they are connected in `S` after deleting
+`B`: the new vertices hang off the root of `N`. Collapsing them onto the root of `N` maps a walk
+in the first graph to a walk in the second. -/
+theorem withOutgroup_reachable_iff (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vertices)
+    (hℓ : ℓ ∉ N.vertices) {S : Finset (ℕ × ℕ)} (hS : S ⊆ N.edges) (B : Set (Sym2 ℕ))
+    {u v : ℕ} (hu : u ∈ N.vertices) (hv : v ∈ N.vertices) :
+    (({N.withOutgroup z ρ ℓ with edges := insert (ρ, N.root) (insert (ρ, ℓ) S)} :
+        RootedNetwork).underlying.deleteEdges B).Reachable u v ↔
+      (({N with edges := S} : RootedNetwork).underlying.deleteEdges B).Reachable u v := by
   classical
-  unfold cladeBelow
-  exact Finset.mem_filter
-
-/-- The clade below a vertex `y` of `N` in the switching `S` of `N` with the two edges out of the
-new root is the clade below `y` in `S`: no directed path from `y` reaches the new vertices. -/
-theorem withOutgroup_cladeBelow (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vertices)
-    (hℓ : ℓ ∉ N.vertices) (hz : z ∉ N.taxa) {S : Finset (ℕ × ℕ)} (hS : S ⊆ N.edges) {y : ℕ}
-    (hy : y ∈ N.vertices) :
-    (N.withOutgroup z ρ ℓ).cladeBelow (insert (ρ, N.root) (insert (ρ, ℓ) S)) y =
-      N.cladeBelow S y := by
-  ext a
-  rw [mem_cladeBelow, mem_cladeBelow]
-  change a ∈ insert z N.taxa ∧ Relation.ReflTransGen
-      (fun u v => (u, v) ∈ insert (ρ, N.root) (insert (ρ, ℓ) S)) y
-      (if a = z then ℓ else N.leaf a) ↔ _
-  rw [Finset.mem_insert]
   constructor
-  · rintro ⟨ha, hr⟩
-    by_cases haz : a = z
-    · rw [ite_eq_left haz] at hr
-      have hr' := withOutgroup_reach hN hρ hS hy hr
-      rcases Relation.ReflTransGen.cases_tail hr' with h | ⟨b, _, hb⟩
-      · exact absurd (h ▸ hy) hℓ
-      · exact absurd (hN.2.1 _ (hS hb)).2 hℓ
-    · rw [ite_eq_right haz] at hr
-      exact ⟨ha.resolve_left haz, withOutgroup_reach hN hρ hS hy hr⟩
-  · rintro ⟨ha, hr⟩
-    have haz : a ≠ z := fun h => hz (h ▸ ha)
-    refine ⟨Or.inr ha, ?_⟩
-    rw [ite_eq_right haz]
-    exact Relation.ReflTransGen.mono (fun _ _ h =>
-      Finset.mem_insert_of_mem (Finset.mem_insert_of_mem h)) _ _ hr
+  · intro h
+    rw [SimpleGraph.reachable_iff_reflTransGen] at h ⊢
+    -- collapse the new vertices onto the root of `N`
+    let f : ℕ → ℕ := fun x => if x = ρ ∨ x = ℓ then N.root else x
+    have hf : ∀ x ∈ N.vertices, f x = x := by
+      intro x hx
+      refine ite_eq_right ?_
+      rintro (rfl | rfl)
+      · exact hρ hx
+      · exact hℓ hx
+    have hfρ : f ρ = N.root := ite_eq_left (Or.inl rfl)
+    have hfℓ : f ℓ = N.root := ite_eq_left (Or.inr rfl)
+    -- an edge of `S` joins two vertices of `N`; a new edge is collapsed to the root of `N`
+    have hedge : ∀ a b, (a, b) ∈ insert (ρ, N.root) (insert (ρ, ℓ) S) →
+        f a = f b ∨ ((a, b) ∈ S ∧ f a = a ∧ f b = b) := by
+      intro a b hab
+      rcases Finset.mem_insert.mp hab with h | h
+      · simp only [Prod.mk.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        exact Or.inl (hfρ.trans (hf _ hN.1).symm)
+      rcases Finset.mem_insert.mp h with h | h
+      · simp only [Prod.mk.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        exact Or.inl (hfρ.trans hfℓ.symm)
+      · exact Or.inr ⟨h, hf a (hN.2.1 _ (hS h)).1, hf b (hN.2.1 _ (hS h)).2⟩
+    have hstep : ∀ a b,
+        (({N.withOutgroup z ρ ℓ with edges := insert (ρ, N.root) (insert (ρ, ℓ) S)} :
+          RootedNetwork).underlying.deleteEdges B).Adj a b →
+        Relation.ReflTransGen
+          (({N with edges := S} : RootedNetwork).underlying.deleteEdges B).Adj (f a) (f b) := by
+      intro a b hab
+      rw [SimpleGraph.deleteEdges_adj] at hab
+      obtain ⟨⟨hne, hab⟩, hB⟩ := hab
+      rcases hab with h | h
+      · rcases hedge a b h with h' | ⟨h', ha, hb⟩
+        · rw [h']
+        · rw [ha, hb]
+          exact Relation.ReflTransGen.single
+            (SimpleGraph.deleteEdges_adj.mpr ⟨⟨hne, Or.inl h'⟩, hB⟩)
+      · rcases hedge b a h with h' | ⟨h', hb, ha⟩
+        · rw [h']
+        · rw [ha, hb]
+          exact Relation.ReflTransGen.single
+            (SimpleGraph.deleteEdges_adj.mpr ⟨⟨hne, Or.inr h'⟩, hB⟩)
+    have hlift := Relation.ReflTransGen.lift' f hstep u v h
+    rwa [Function.onFun, hf u hu, hf v hv] at hlift
+  · apply SimpleGraph.Reachable.mono
+    apply SimpleGraph.deleteEdges_mono
+    intro a b hab
+    exact ⟨hab.1, hab.2.imp (fun h => Finset.mem_insert_of_mem (Finset.mem_insert_of_mem h))
+      (fun h => Finset.mem_insert_of_mem (Finset.mem_insert_of_mem h))⟩
 
 /-- Adding an outgroup does not change the displayed quartets avoiding the new taxon `z`: `N⁺` and
-`N` display the same such quartets. A switching of `N⁺` is a switching of `N` with the two edges
-out of the new root (`RootedNetwork.withOutgroup_switching_cases`); the edges of `N` have the same
-clades below them, and the two new edges have the clades `N.taxa` and `{z}`, which cut no quartet
-on the taxa of `N`. -/
+`N` display the same such quartets. A switching of `N⁺` is a switching `S` of `N` with the two
+edges out of the new root (`RootedNetwork.withOutgroup_switching_cases`). Deleting an edge of `S`
+separates the leaves of `N` in the same way in both switchings, since the new vertices hang off the
+root of `N` (`RootedNetwork.withOutgroup_reachable_iff`); deleting a new edge leaves `S`, which
+connects all the vertices of `N`, and separates no quartet on the taxa of `N`. -/
 theorem withOutgroup_displays_iff (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.vertices)
-    (hℓ : ℓ ∉ N.vertices) (hρℓ : ρ ≠ ℓ) (hz : z ∉ N.taxa) {q : Quartet} (hqz : z ∉ q.taxa) :
+    (hℓ : ℓ ∉ N.vertices) (hρℓ : ρ ≠ ℓ) {q : Quartet} (hqz : z ∉ q.taxa) :
     (N.withOutgroup z ρ ℓ).DisplaysQuartet q ↔ N.DisplaysQuartet q := by
   classical
-  have hP := withOutgroup_levelOne hN hρ hℓ hρℓ hz
-  rw [displays_iff_cladeBelow hP, displays_iff_cladeBelow hN]
   have htaxa : q.taxa ⊆ (N.withOutgroup z ρ ℓ).taxa ↔ q.taxa ⊆ N.taxa := by
     change q.taxa ⊆ insert z N.taxa ↔ _
     constructor
@@ -151,58 +177,80 @@ theorem withOutgroup_displays_iff (hN : N.RootedBinaryLevelOne) (hρ : ρ ∉ N.
       exact (Finset.mem_insert.mp (h hx)).resolve_left (fun hxz => hqz (hxz ▸ hx))
     · intro h
       exact h.trans (Finset.subset_insert _ _)
-  rw [htaxa]
-  apply and_congr_right
-  intro hqN
+  -- the taxa of `q` label the same leaves in `N⁺` and in `N`
+  have hleaf : ∀ a ∈ q.taxa, (N.withOutgroup z ρ ℓ).leaf a = N.leaf a :=
+    fun a ha => ite_eq_right (fun h : a = z => hqz (h ▸ ha))
+  have h1 : ∀ a ∈ q.sides.1, (N.withOutgroup z ρ ℓ).leaf a = N.leaf a :=
+    fun a ha => hleaf a (q.sides_subset_taxa.1 ha)
+  have h2 : ∀ a ∈ q.sides.2, (N.withOutgroup z ρ ℓ).leaf a = N.leaf a :=
+    fun a ha => hleaf a (q.sides_subset_taxa.2 ha)
+  -- separating the two sides of `q` in a switching of `N` and in the switching of `N⁺` above it
+  have hsep : ∀ (S : Finset (ℕ × ℕ)), N.Switching S → q.taxa ⊆ N.taxa →
+      ∀ e : Sym2 ℕ,
+        ((N.withOutgroup z ρ ℓ).Separates
+          (({N.withOutgroup z ρ ℓ with edges := insert (ρ, N.root) (insert (ρ, ℓ) S)} :
+            RootedNetwork).underlying.deleteEdges {e}) q ↔
+        N.Separates (({N with edges := S} : RootedNetwork).underlying.deleteEdges {e}) q) := by
+    intro S hS hqN e
+    have hmem : ∀ a ∈ q.taxa, N.leaf a ∈ N.vertices :=
+      fun a ha => (hN.2.2.2.2.2.2.2.1 a (hqN ha)).1
+    have hR : ∀ a ∈ q.taxa, ∀ b ∈ q.taxa, _ :=
+      fun a ha b hb => withOutgroup_reachable_iff (z := z) hN hρ hℓ hS.1 {e} (hmem a ha) (hmem b hb)
+    have s1 := q.sides_subset_taxa.1
+    have s2 := q.sides_subset_taxa.2
+    constructor
+    · rintro ⟨hA, hB, hAB⟩
+      refine ⟨fun a ha b hb => ?_, fun a ha b hb => ?_, fun a ha b hb hab => ?_⟩
+      · have := hA a ha b hb
+        rw [h1 a ha, h1 b hb] at this
+        exact (hR a (s1 ha) b (s1 hb)).mp this
+      · have := hB a ha b hb
+        rw [h2 a ha, h2 b hb] at this
+        exact (hR a (s2 ha) b (s2 hb)).mp this
+      · apply hAB a ha b hb
+        rw [h1 a ha, h2 b hb]
+        exact (hR a (s1 ha) b (s2 hb)).mpr hab
+    · rintro ⟨hA, hB, hAB⟩
+      refine ⟨fun a ha b hb => ?_, fun a ha b hb => ?_, fun a ha b hb hab => ?_⟩
+      · rw [h1 a ha, h1 b hb]
+        exact (hR a (s1 ha) b (s1 hb)).mpr (hA a ha b hb)
+      · rw [h2 a ha, h2 b hb]
+        exact (hR a (s2 ha) b (s2 hb)).mpr (hB a ha b hb)
+      · rw [h1 a ha, h2 b hb] at hab
+        exact hAB a ha b hb ((hR a (s1 ha) b (s2 hb)).mp hab)
+  -- the undirected graph of `S` lies in that of the switching of `N⁺` above it
+  have hle : ∀ (S : Finset (ℕ × ℕ)), ({N with edges := S} : RootedNetwork).underlying ≤
+      ({N.withOutgroup z ρ ℓ with edges := insert (ρ, N.root) (insert (ρ, ℓ) S)} :
+        RootedNetwork).underlying := by
+    intro S a b hab
+    exact ⟨hab.1, hab.2.imp (fun h => Finset.mem_insert_of_mem (Finset.mem_insert_of_mem h))
+      (fun h => Finset.mem_insert_of_mem (Finset.mem_insert_of_mem h))⟩
   constructor
-  · rintro ⟨S', hS', x, y, hxy, hcut⟩
+  · rintro ⟨hqt, S', hS', e, he, hsepP⟩
+    have hqN := htaxa.mp hqt
     obtain ⟨S, hS, rfl⟩ := withOutgroup_switching_cases hN hρ hℓ hρℓ hS'
-    rcases Finset.mem_insert.mp hxy with h | h
-    -- the edge into the root of `N`: all taxa of `N` lie below it
-    · exfalso
-      have hy : y = N.root := (Prod.ext_iff.mp h).2
-      subst hy
-      rw [withOutgroup_cladeBelow hN hρ hℓ hz hS.1 hN.1] at hcut
-      have hall : q.taxa ⊆ N.cladeBelow S N.root := by
-        intro a ha
-        have haN := hqN ha
-        exact mem_cladeBelow.mpr ⟨haN, switching_reachable hN hS (hN.2.2.2.2.2.2.2.1 a haN).1⟩
-      rw [q.cutBy_eq_false_of_superset hall] at hcut
-      exact absurd hcut (by simp)
-    rcases Finset.mem_insert.mp h with h | h
-    -- the edge into the new leaf: only `z` lies below it
-    · exfalso
-      have hy : y = ℓ := (Prod.ext_iff.mp h).2
-      subst hy
-      have hsub : (N.withOutgroup z ρ y).cladeBelow
-          (insert (ρ, N.root) (insert (ρ, y) S)) y ⊆ {z} := by
-        intro a ha
-        obtain ⟨ha, hr⟩ := mem_cladeBelow.mp ha
-        change a ∈ insert z N.taxa at ha
-        change Relation.ReflTransGen _ y (if a = z then y else N.leaf a) at hr
-        rcases Relation.ReflTransGen.cases_head hr with h | ⟨c, hc, _⟩
-        · by_cases haz : a = z
-          · exact Finset.mem_singleton.mpr haz
-          · rw [ite_eq_right haz] at h
-            have haN : a ∈ N.taxa := (Finset.mem_insert.mp ha).resolve_left haz
-            exact absurd (h ▸ (hN.2.2.2.2.2.2.2.1 a haN).1) hℓ
-        · rcases Finset.mem_insert.mp hc with h' | h'
-          · exact absurd (Prod.ext_iff.mp h').1 hρℓ.symm
-          rcases Finset.mem_insert.mp h' with h' | h'
-          · exact absurd (Prod.ext_iff.mp h').1 hρℓ.symm
-          · exact absurd (hN.2.1 _ (hS.1 h')).1 hℓ
-      have hdis : Disjoint q.taxa ((N.withOutgroup z ρ y).cladeBelow
-          (insert (ρ, N.root) (insert (ρ, y) S)) y) :=
-        Finset.disjoint_of_subset_right hsub (Finset.disjoint_singleton_right.mpr hqz)
-      rw [q.cutBy_eq_false_of_disjoint hdis] at hcut
-      exact absurd hcut (by simp)
+    by_cases heS : e ∈ ({N with edges := S} : RootedNetwork).underlying.edgeSet
     -- an edge of `S`
-    · refine ⟨S, hS, x, y, h, ?_⟩
-      rwa [withOutgroup_cladeBelow hN hρ hℓ hz hS.1 (hN.2.1 _ (hS.1 h)).2] at hcut
-  · rintro ⟨S, hS, x, y, hxy, hcut⟩
-    refine ⟨_, withOutgroup_switching hN hρ hℓ hS, x, y,
-      Finset.mem_insert_of_mem (Finset.mem_insert_of_mem hxy), ?_⟩
-    rwa [withOutgroup_cladeBelow hN hρ hℓ hz hS.1 (hN.2.1 _ (hS.1 hxy)).2]
+    · exact ⟨hqN, S, hS, e, heS, (hsep S hS hqN e).mp hsepP⟩
+    -- a new edge: `S` still connects the leaves of `N`
+    · exfalso
+      obtain ⟨_, _, hAB⟩ := hsepP
+      obtain ⟨a, ha⟩ := q.sides_nonempty.1
+      obtain ⟨b, hb⟩ := q.sides_nonempty.2
+      apply hAB a ha b hb
+      rw [h1 a ha, h2 b hb]
+      have hconn := switching_connected_vertices hN hS
+        (hN.2.2.2.2.2.2.2.1 a (hqN (q.sides_subset_taxa.1 ha))).1
+        (hN.2.2.2.2.2.2.2.1 b (hqN (q.sides_subset_taxa.2 hb))).1
+      apply hconn.mono
+      intro x y hxy
+      refine SimpleGraph.deleteEdges_adj.mpr ⟨hle S hxy, fun hx => heS ?_⟩
+      rw [Set.mem_singleton_iff] at hx
+      rw [← hx]
+      exact hxy
+  · rintro ⟨hqN, S, hS, e, he, hsepN⟩
+    exact ⟨htaxa.mpr hqN, _, withOutgroup_switching hN hρ hℓ hS, e,
+      SimpleGraph.edgeSet_mono (hle S) he, (hsep S hS hqN e).mpr hsepN⟩
 
 end RootedNetwork
 

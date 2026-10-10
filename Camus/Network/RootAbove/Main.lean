@@ -137,12 +137,12 @@ theorem RootedNetwork.BuiltOn.exists_anchored {t : PhyloTree} (ht : t.WellLabell
     · intro hq
       have hqt : q.taxa ⊆ t.taxa := H.taxa_preserved ▸ hq.1
       have hqz : z ∉ q.taxa := fun h => hz (hqt h)
-      have h1 := (RootedNetwork.withOutgroup_displays_iff hbin hρ hℓ hρℓ hzN hqz).mpr hq
+      have h1 := (RootedNetwork.withOutgroup_displays_iff hbin hρ hℓ hρℓ hqz).mpr hq
       exact (hiff hqt).mp ((i.displays_iff hP hG q).mp h1)
     · intro hq
       have hqt : q.taxa ⊆ t.taxa := hq.1
       have hqz : z ∉ q.taxa := fun h => hz (hqt h)
       have h1 := (i.displays_iff hP hG q).mpr ((hiff hqt).mpr hq)
-      exact (RootedNetwork.withOutgroup_displays_iff hbin hρ hℓ hρℓ hzN hqz).mp h1
+      exact (RootedNetwork.withOutgroup_displays_iff hbin hρ hℓ hρℓ hqz).mp h1
 
 end Camus
