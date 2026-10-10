@@ -5,14 +5,25 @@ public meta import Lean.DocString
 -- One `import all` line per module of the library, so that proofs are visible to the dependency
 -- traversal (the module system hides them from a plain `import`). Generate the lines with
 --   find Camus -name '*.lean' | sort | sed 's/\.lean$//; s#/#.#g; s/^/import all /'
-import all Camus.Complexity.Operations
-import all Camus.Complexity.Oracle
+import all Camus.Complexity.Backtracking
+import all Camus.Complexity.BudgetProgram
+import all Camus.Complexity.Counts
+import all Camus.Complexity.Delta
+import all Camus.Complexity.Memory
+import all Camus.Complexity.Program
+import all Camus.Complexity.Tables
+import all Camus.Complexity.Timed
+import all Camus.DP.Computable
 import all Camus.DP.Correctness
+import all Camus.DP.Definition1
 import all Camus.DP.Frontier
 import all Camus.DP.Packing
 import all Camus.DP.Theorem1
 import all Camus.Defs
 import all Camus.External.WarnowTabatabaeeEvans.Observation2
+import all Camus.External.WarnowTabatabaeeEvans.Sampling
+import all Camus.External.WarnowTabatabaeeEvans.SiteModel
+import all Camus.External.WarnowTabatabaeeEvans.Theorem6
 import all Camus.Galled.Basic
 import all Camus.Galled.Bounds
 import all Camus.Galled.Counterexamples
@@ -21,6 +32,7 @@ import all Camus.Galled.Triangles
 import all Camus.Network.Baseline.Clades
 import all Camus.Network.Baseline.Cuts
 import all Camus.Network.Baseline.Main
+import all Camus.Network.Clades
 import all Camus.Network.Code
 import all Camus.Network.Completeness.AddEdge
 import all Camus.Network.Completeness.Admissible
@@ -57,8 +69,22 @@ import all Camus.Network.Realization.Degrees
 import all Camus.Network.Realization.Refinement
 import all Camus.Network.Realization.Subdivision
 import all Camus.Network.Realization.Support
+import all Camus.Network.Realization.SupportClades
 import all Camus.Network.Realization.Wires
 import all Camus.Network.Reticulations
+import all Camus.Network.RootAbove.Defs
+import all Camus.Network.RootAbove.Display
+import all Camus.Network.RootAbove.Example
+import all Camus.Network.RootAbove.Main
+import all Camus.Network.RootAbove.Outgroup
+import all Camus.Network.RootAbove.Pairs
+import all Camus.Network.RootAbove.RootWire
+import all Camus.Network.RootAbove.Splits
+import all Camus.Network.RootAbove.Subdivision
+import all Camus.Network.RootAbove.Transport
+import all Camus.Network.SingleEdge
+import all Camus.Network.SingleEdge.Deeper
+import all Camus.Network.SingleEdge.Switchings
 import all Camus.Network.Subdivision.Colors
 import all Camus.Network.Subdivision.Counterexample
 import all Camus.Network.Subdivision.Cuts
@@ -67,9 +93,17 @@ import all Camus.Network.Subdivision.Invariance
 import all Camus.Network.Subdivision.Switching
 import all Camus.Network.Subdivision.Wires
 import all Camus.Pipelines.Algorithm1
+import all Camus.Pipelines.Astral
+import all Camus.Pipelines.Coalescent
+import all Camus.Pipelines.Coalescent.Frequencies
+import all Camus.Pipelines.Coalescent.Quartets
+import all Camus.Pipelines.Coalescent.Topology
 import all Camus.Pipelines.Counterexample
 import all Camus.Pipelines.Filtering
+import all Camus.Pipelines.Inclusion
 import all Camus.Pipelines.Recovery
+import all Camus.Pipelines.SNP
+import all Camus.Pipelines.SNPCondition
 import all Camus.Pipelines.Statistical
 import all Camus.Pipelines.Uniqueness
 import all Camus.Preliminaries.Lemma1.Cuts
@@ -77,6 +111,7 @@ import all Camus.Preliminaries.Lemma1.Switches
 import all Camus.Preliminaries.Lemma1.Tree
 import all Camus.Preliminaries.Lemma1.Unique
 import all Camus.Preliminaries.Lemmas
+import all Camus.Restriction.Backtracking
 import all Camus.Restriction.Construction
 import all Camus.Restriction.Correctness
 import all Camus.Restriction.Counterexample
@@ -86,6 +121,7 @@ import all Camus.Restriction.Main
 import all Camus.Restriction.Monotonicity
 import all Camus.Restriction.Optimality
 import all Camus.Restriction.Saturation
+import all Camus.Restriction.StoppingRule
 import all Camus.Restriction.Witness
 import all Camus.Score
 import all Camus.Tree.Forest
@@ -129,43 +165,73 @@ namespace Audit
 /-- The results from prior work in `Camus/External/`, with a short label: the theorems proved
 there. The traversal stops at them. -/
 meta def externalResults : List (String × Name) :=
-  [("Observation 2 (Warnow, Tabatabaee, Evans 2025)", ``Camus.External.observation2)]
+  [("Observation 2 (Warnow, Tabatabaee, Evans 2025)", ``Camus.External.observation2),
+   ("Support of the SNP quartets (Warnow, Tabatabaee, Evans 2025, Theorem 6)",
+    ``Camus.External.support_tendsto)]
 
 /-- The numbered results of the paper, and its unnumbered claims, in the order of the paper. -/
 meta def paperResults : List (String × Name) :=
-  [("Lemma 1", ``Camus.lemma1),
+  [("Def 1, networks built on T", ``Camus.RootedNetwork.BuiltOn.exists_anchored),
+   ("Lemma 1", ``Camus.lemma1),
    ("Lemma 1, second sentence", ``Camus.lemma1_union),
    ("Lemma 1, second sentence, edge families", ``Camus.DynamicProgramming.novel_disjoint_union),
    ("Lemma 2", ``Camus.lemma2),
    ("Lemma 2, edge families", ``Camus.EdgeAbove.target_unique),
+   ("Def 4, the quartets satisfied by T + e", ``Camus.Realization.mem_novel_single_iff),
    ("Eq (1)", ``Camus.equation1),
    ("Eq (2)", ``Camus.DynamicProgramming.Array),
    ("Eq (3)", ``Camus.DynamicProgramming.s),
    ("Eq (4)", ``Camus.DynamicProgramming.equation4),
    ("Eq (5)", ``Camus.DynamicProgramming.equation5),
    ("Theorem 1", ``Camus.theorem1),
-   ("Sec 2.3, operations", ``Camus.Complexity.scalarOperations_bound),
-   ("Sec 2.3, memory", ``Camus.Complexity.scalarSpace_bound),
-   ("Sec 2.4, operations", ``Camus.Complexity.budgetOperations_bound),
+   ("Theorem 1, Definition 1's class", ``Camus.theorem1_builtOn),
+   ("Sec 2.3, preprocessing", ``Camus.Complexity.preprocess_time),
+   ("Sec 2.3, delta", ``Camus.Complexity.val_delta),
+   ("Sec 2.3, delta in O(1)", ``Camus.Complexity.time_delta),
+   ("Sec 2.3, the program computes M", ``Camus.Complexity.camus_array),
+   ("Sec 2.3, running time", ``Camus.Complexity.camus_time),
+   ("Sec 2.3, memory", ``Camus.Complexity.storedIntegers_bound),
    ("Sec 2.4, n - 1 reticulations", ``Camus.RootedNetwork.anchored_reticulation_bound),
    ("Sec 2.4, the restricted DP", ``Camus.BudgetDP.reticulation_restriction),
+   ("Sec 2.4, backtracking", ``Camus.BudgetDP.trace_graph_optimal),
+   ("Sec 2.4, the networks N_k", ``Camus.BudgetDP.backtracking_networks),
+   ("Sec 2.4, Definition 1's class", ``Camus.BudgetDP.exact_graph_optimal_builtOn),
+   ("Sec 2.4, the program computes M", ``Camus.Complexity.camusBudget_agrees),
+   ("Sec 2.4, running time", ``Camus.Complexity.camusBudget_time),
    ("Sec 2.4, monotonicity fails (E5)", ``Camus.not_exactCountMonotone),
    ("Sec 2.4, at most k", ``Camus.atMostScore_mono),
+   ("Sec 2.4, the stopping rule fails (E6)", ``Camus.not_exactStoppingRule),
+   ("Sec 2.4, the stopping rule fails, at most k (E6)", ``Camus.not_atMostStoppingRule),
    ("Sec 3.2, uniqueness fails (E7)", ``Camus.not_uniqueOptimum),
    ("Sec 3.2, CAMUS may add an edge (E7)", ``Camus.camus_may_add_edge),
+   ("Sec 3.2, identifiability fails (E7)", ``Camus.Counterexamples.shallow_not_identifiable),
+   ("Sec 3.2, a deeper donor keeps the quartets (E7)", ``Camus.Realization.deeper_donor_displays),
+   ("Sec 3.2, CAMUS may return the deeper network (E7)",
+    ``Camus.Counterexamples.camus_may_return_deep),
    ("Sec 3.2, corrected", ``Camus.recovery),
    ("Sec 3.2, corrected, trees are identifiable", ``Camus.tree_identifiable),
-   ("Sec 3.2, corrected, in probability", ``Camus.correctedStatisticalConsistency),
+   ("Sec 3.2, the ASTRAL step", ``Camus.astral_maximizer_tendsto),
+   ("Sec 3.2, corrected, in the site model", ``Camus.snp_recovery_tendsto),
+   ("Sec 3.2, corrected, in probability", ``Camus.snp_correctedStatisticalConsistency),
+   ("Sec 3.2, E7 in the site model", ``Camus.Counterexamples.deeperDonor_meets_hypotheses),
+   ("Sec 3.2, a tree of N need not be a basis (E8)",
+    ``Camus.Counterexamples.camus_output_not_rootAboveNet),
    ("Sec 3.4, Algorithm 1", ``Camus.Algorithm1.filterQuartets_mono),
-   ("Sec 3.4, threshold as a ratio", ``Camus.retainSecond_iff_ratio)]
+   ("Sec 3.4, threshold as a ratio", ``Camus.retainSecond_iff_ratio),
+   ("Sec 3.4, the MSC pattern", ``Camus.Coalescent.msc_pattern),
+   ("Sec 3.4, filtering under the MSC", ``Camus.Coalescent.msc_filterQuartets),
+   ("Sec 3.4, filtering keeps q2 when p2 > p3", ``Camus.Coalescent.filterBlock_keeps_second)]
 
 /-- The theorems that Palomar's comparator checks (`theorem_names` of `comparator.json`). -/
 meta def solutionResults : List Name :=
   [``Camus.Challenge.theorem1, ``Camus.Challenge.exists_array_trace,
    ``Camus.Challenge.tree_displays_iff, ``Camus.Challenge.edgeWeight_eq,
-   ``Camus.Challenge.reticulation_restriction, ``Camus.Challenge.exists_budgetArray,
-   ``Camus.Challenge.not_exactCountMonotone, ``Camus.Challenge.not_uniqueOptimum,
-   ``Camus.Challenge.recovery, ``Camus.Challenge.tree_identifiable]
+   ``Camus.Challenge.definition1_reduction, ``Camus.Challenge.builtOn_not_anchored,
+   ``Camus.Challenge.reticulation_restriction, ``Camus.Challenge.exists_budget_traces,
+   ``Camus.Challenge.not_exactCountMonotone, ``Camus.Challenge.not_exactStoppingRule,
+   ``Camus.Challenge.not_atMostStoppingRule, ``Camus.Challenge.not_uniqueOptimum,
+   ``Camus.Challenge.recovery, ``Camus.Challenge.tree_identifiable,
+   ``Camus.Challenge.recovery_needs_identifiable]
 
 /-- Lean's standard axioms. -/
 meta def standardAxioms : List Name := [``propext, ``Classical.choice, ``Quot.sound]
