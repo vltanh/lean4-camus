@@ -1,7 +1,7 @@
 module
 
 public import Camus
-public import Camus.MainTheorem
+public import Camus.DP.Theorem1
 
 -- Preserve the Nat lattice instance chosen by the immutable Challenge imports.
 -- Later proof imports also export Nat.instLattice; it is definitionally equal

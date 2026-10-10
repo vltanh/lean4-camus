@@ -20,7 +20,7 @@ from pathlib import Path
 
 # ---- configuration -------------------------------------------------------------------------
 # The library module that holds the shared definitions, and the Challenge file.
-DEFS = 'Camus/Definitions.lean'
+DEFS = 'Camus/Defs.lean'
 CHALLENGE = 'Challenge.lean'
 # The marker lines around the shared block, in both files.
 BEGIN = '-- BEGIN SHARED DEFINITIONS\n'

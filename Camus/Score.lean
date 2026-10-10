@@ -1,6 +1,6 @@
 module
 
-public import Camus.Definitions
+public import Camus.Defs
 
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Multiset.Filter
