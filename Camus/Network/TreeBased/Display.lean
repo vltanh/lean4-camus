@@ -24,6 +24,7 @@ is built (Definition 1) induces it (`RootedNetwork.displays_iff_exists_builtOn`)
 * `DisplayedSubdivision.cladeBelow_original`: the taxa below the image of a vertex `p` of `t` are
   the clade of `p`.
 * `DisplayedSubdivision.induced_iff_cuts`: `t` induces the quartets cut by the edges of `S`.
+* `DisplayedSubdivision.induced_eq`: the trees of one switching induce the same quartets.
 * `RootedNetwork.displays_iff_exists_builtOn`: Definition 1, Q(N_r) = ∪_{t∈𝒯} Q(t).
 -/
 
@@ -329,6 +330,15 @@ theorem induced_iff_cuts (H : DisplayedSubdivision t N S) (ht : t.WellLabelled) 
       rw [H.cladeBelow_rootWire hy, q.cutBy_false_of_taxa_subset (hq.trans
         H.taxa_preserved.symm.subset)] at hcut
       exact absurd hcut (by simp)
+
+/-- The tree of a switching is determined by its quartets: two trees whose subdivisions are the
+same switching `S` have the same taxa and induce the same quartets, those cut by the edges of
+`S`. -/
+theorem induced_eq {t' : PhyloTree} (H : DisplayedSubdivision t N S)
+    (H' : DisplayedSubdivision t' N S) : t.taxa = t'.taxa ∧ ∀ q : Quartet,
+      q.induced t = q.induced t' := by
+  refine ⟨H.taxa_preserved.symm.trans H'.taxa_preserved, fun q => ?_⟩
+  rw [Bool.eq_iff_iff, H.induced_iff_cuts H.wellLabelled, H'.induced_iff_cuts H'.wellLabelled]
 
 end DisplayedSubdivision
 

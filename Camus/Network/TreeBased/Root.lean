@@ -22,7 +22,8 @@ adding reticulate edges to t)". This fails when the root of `N` lies on a cycle 
 and holds when the root of `N` has an outgroup leaf as a child, as in the pipelines of Section 3:
 then every switching keeps the edges out of the root (`RootedNetwork.rootEdges_mem_of_outgroup`),
 and `N` is built with the root kept on the tree of every switching
-(`RootedNetwork.exists_support_of_outgroup`, `RootedNetwork.BuiltOn.anchored_of_outgroup`).
+(`RootedNetwork.exists_support_of_outgroup`, `RootedNetwork.BuiltOn.anchored_of_outgroup`), hence
+obtained from it by adding edges (`RootedNetwork.BuiltOn.exists_canonical_of_outgroup`).
 
 ## Main results
 
@@ -33,8 +34,9 @@ and `N` is built with the root kept on the tree of every switching
 * `RootedNetwork.exists_anchoredExtension`, `RootedNetwork.exists_canonical`: every rooted binary
   level-1 network is built with the root kept on a well-labelled tree, and is isomorphic to a
   network obtained from it by adding edges.
-* `RootedNetwork.exists_support_of_outgroup`, `RootedNetwork.BuiltOn.anchored_of_outgroup`: with
-  an outgroup leaf below the root, every tree of `N` keeps the root.
+* `RootedNetwork.exists_support_of_outgroup`, `RootedNetwork.BuiltOn.anchored_of_outgroup`,
+  `RootedNetwork.BuiltOn.exists_canonical_of_outgroup`: with an outgroup leaf below the root, every
+  tree of `N` keeps the root, and `N` is obtained from it by adding edges.
 -/
 
 @[expose] public section
@@ -347,6 +349,17 @@ theorem BuiltOn.anchored_of_outgroup {t : PhyloTree} (hN : N.BuiltOn t) {z : ℕ
   obtain ⟨hbin, S, ⟨H⟩⟩ := hN
   exact ⟨hbin, S, ⟨H.toSupportOfRootEdges hbin
     (rootEdges_mem_of_outgroup hbin H.switching hz hzr)⟩⟩
+
+/-- Section 3.2, "N can be obtained by adding reticulate edges to t", with an outgroup: if the root
+of `N` has an outgroup leaf as a child, then for every tree `t` on which `N` is built in the sense
+of Definition 1, `N` is isomorphic to the network obtained from `t` by adding an edge above each
+pair of a cycle-separated family `E` (Definition 3). -/
+theorem BuiltOn.exists_canonical_of_outgroup {t : PhyloTree} (hN : N.BuiltOn t) {z : ℕ}
+    (hz : z ∈ N.taxa) (hzr : (N.root, N.leaf z) ∈ N.edges) :
+    ∃ E : Finset (Address × Address), EdgeAbove.CycleSeparated t E ∧
+      Nonempty (N.Iso (Realization.graph t E)) := by
+  obtain ⟨hbin, S, ⟨H⟩⟩ := hN.anchored_of_outgroup hz hzr
+  exact ⟨H.extracted, H.extracted_separated hbin, H.canonical_iso hbin⟩
 
 end RootedNetwork
 
