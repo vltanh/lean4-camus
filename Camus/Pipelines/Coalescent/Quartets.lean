@@ -443,6 +443,26 @@ theorem quartetProb_other {σ : SpeciesTree L} (hσ : σ.IsBinary) (k : QuartetK
     (quartetSpeciesTree_isBinary hσ k hk) ((induces_species_iff σ k hk s).1 hs) (side_card s)
     (side_card s') h1 h2
 
+/-- The pattern of the MSC on four taxa, for the topology `s` induced by the binary species tree
+`σ`: it is strictly the most probable topology, and the two others have the same positive
+probability. -/
+theorem msc_pattern_of_induces {σ : SpeciesTree L} (hσ : σ.IsBinary) (k : QuartetKey)
+    (hk : keyTaxa k ⊆ L) {s : Fin 3} (hs : Induces (unroot σ.clusters) (k.quartet s)) :
+    (∀ s', s' ≠ s → quartetProb σ (k.quartet s') < quartetProb σ (k.quartet s)) ∧
+      (∀ s' s'', s' ≠ s → s'' ≠ s →
+        quartetProb σ (k.quartet s') = quartetProb σ (k.quartet s'')) ∧
+      ∀ s', s' ≠ s → 0 < quartetProb σ (k.quartet s') := by
+  have hx := unrootedLength_side_pos σ k hk hs
+  refine ⟨fun s' hs' => ?_, fun s' s'' hs' hs'' => ?_, fun s' hs' => ?_⟩
+  · -- `(1/3) e^{−x} < 1 − (2/3) e^{−x}` since `e^{−x} < 1`
+    rw [quartetProb_other hσ k hk hs hs', quartetProb_species hσ k hk hs]
+    have : exp (-(quartetSpeciesTree σ k hk).unrootedLength (side s)) < 1 :=
+      Real.exp_lt_one_iff.2 (neg_lt_zero.2 hx)
+    linarith
+  · rw [quartetProb_other hσ k hk hs hs', quartetProb_other hσ k hk hs hs'']
+  · rw [quartetProb_other hσ k hk hs hs']
+    positivity
+
 /-- **Section 3.3**: "the multi-species coalescent (MSC) model (Takahata 1989) under which, for
 every four species, the most probable quartet tree matches the species tree and the other two
 quartet trees have the same lower probability". Under the MSC on a rooted binary species tree `σ`
@@ -456,14 +476,8 @@ theorem msc_pattern {σ : SpeciesTree L} (hσ : σ.IsBinary) (k : QuartetKey)
       ∀ s' s'', s' ≠ s → s'' ≠ s →
         quartetProb σ (k.quartet s') = quartetProb σ (k.quartet s'') := by
   obtain ⟨s, hs, -⟩ := existsUnique_species hσ k hk
-  have hx := unrootedLength_side_pos σ k hk hs
-  refine ⟨s, hs, fun s' hs' => ?_, fun s' s'' hs' hs'' => ?_⟩
-  · -- `(1/3) e^{−x} < 1 − (2/3) e^{−x}` since `e^{−x} < 1`
-    rw [quartetProb_other hσ k hk hs hs', quartetProb_species hσ k hk hs]
-    have : exp (-(quartetSpeciesTree σ k hk).unrootedLength (side s)) < 1 :=
-      Real.exp_lt_one_iff.2 (neg_lt_zero.2 hx)
-    linarith
-  · rw [quartetProb_other hσ k hk hs hs', quartetProb_other hσ k hk hs hs'']
+  obtain ⟨hlt, heq, -⟩ := msc_pattern_of_induces hσ k hk hs
+  exact ⟨s, hs, hlt, heq⟩
 
 end Coalescent
 
