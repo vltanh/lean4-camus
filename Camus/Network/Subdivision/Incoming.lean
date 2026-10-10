@@ -3,6 +3,25 @@ module
 public import Camus.Network.Subdivision.Colors
 public import Camus.Network.Realization.Support
 
+/-!
+# Switchings of a subdivision descend
+
+Auxiliary to `GraphSubdivision.displays_iff`. Let `N` be a subdivision of `P`. A switching keeps one
+incoming arc at each non-root vertex (`RootedNetwork.Switching`; Definition 1 deletes the other
+incoming edge of each reticulation). A vertex interior to a wire has exactly one incoming arc, the
+one on its wire. So a switching `B` of `N` keeps every arc of each wire except possibly the last
+one, its terminal arc. Hence an edge of `P` is active (its whole wire lies in `B`) if and only if
+its terminal arc is in `B`, and the active edges form a switching of `P`.
+
+## Main results
+
+* `GraphSubdivision.terminal`: the terminal arc of the wire of an edge of `P`.
+* `GraphSubdivision.active_eq_retained`: for a switching `B` of `N`, an edge of `P` is active if and
+  only if its terminal arc is in `B`.
+* `GraphSubdivision.active_switching`: for a switching `B` of `N`, the active edges form a switching
+  of `P`.
+-/
+
 @[expose] public section
 
 namespace Camus
@@ -18,6 +37,7 @@ theorem wire_last_not_mem_dropLast {L : List ℕ} (hL : L.Nodup) {v : ℕ}
   intro h
   exact (List.nodup_append.mp hn).2.2 _ h _ (by simp) rfl
 
+/-- The source of an arc of a duplicate-free wire is its first vertex or an interior vertex. -/
 theorem wire_source_cases {L : List ℕ} (hL : L.Nodup) {f : ℕ × ℕ}
     (hf : f ∈ wireEdges L) : L.head? = some f.1 ∨ f.1 ∈ wireInterior L := by
   rcases wire_vertex_cases (List.mem_of_mem_dropLast (wire_edge_source_mem hf)) with h | h | h
@@ -25,6 +45,7 @@ theorem wire_source_cases {L : List ℕ} (hL : L.Nodup) {f : ℕ × ℕ}
   · exact (wire_last_not_mem_dropLast hL h (wire_edge_source_mem hf)).elim
   · exact Or.inr h
 
+/-- The target of an arc of a duplicate-free wire is its last vertex or an interior vertex. -/
 theorem wire_target_cases {L : List ℕ} (hL : L.Nodup) {f : ℕ × ℕ}
     (hf : f ∈ wireEdges L) : L.getLast? = some f.2 ∨ f.2 ∈ wireInterior L := by
   rcases wire_vertex_cases (List.mem_of_mem_tail (wire_edge_target_mem hf)) with h | h | h
@@ -36,16 +57,19 @@ namespace GraphSubdivision
 
 variable {P N : RootedNetwork}
 
+/-- The image of a vertex of `P` is a vertex of `N`. -/
 theorem original_mem_vertices (H : GraphSubdivision P N) {u : ℕ} (hu : u ∈ P.vertices) :
     H.original u ∈ N.vertices := by
   rw [H.vertices_covered]
   exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨u, hu, rfl⟩)
 
+/-- A vertex interior to a wire is a vertex of `N`. -/
 theorem interior_mem_vertices (H : GraphSubdivision P N) {e : ℕ × ℕ}
     (he : e ∈ P.edges) {v : ℕ} (hv : v ∈ wireInterior (H.wire e)) : v ∈ N.vertices := by
   rw [H.vertices_covered]
   exact Finset.mem_union_right _ (Finset.mem_biUnion.mpr ⟨e, he, hv⟩)
 
+/-- An arc of `N` lies on the wire of at most one edge of `P`. -/
 theorem edge_owner_unique (H : GraphSubdivision P N) {e f arc : ℕ × ℕ}
     (he : e ∈ P.edges) (hf : f ∈ P.edges)
     (h1 : arc ∈ wireEdges (H.wire e)) (h2 : arc ∈ wireEdges (H.wire f)) : e = f := by
@@ -89,19 +113,25 @@ theorem terminal_exists (H : GraphSubdivision P N) {e : ℕ × ℕ} (he : e ∈ 
   obtain ⟨u, hu⟩ := wire_edge_target_exists htail
   exact ⟨(u, H.original e.2), hu, rfl⟩
 
+/-- The terminal arc of the wire of an edge `e` of `P`: the arc of the wire that enters
+`H.original e.2`. -/
 noncomputable def terminal (H : GraphSubdivision P N) (e : ℕ × ℕ) : ℕ × ℕ :=
   if h : e ∈ P.edges then Classical.choose (H.terminal_exists h) else (0,0)
 
+/-- The terminal arc of an edge `e` of `P` lies on the wire of `e` and enters `H.original e.2`. -/
 theorem terminal_spec (H : GraphSubdivision P N) {e : ℕ × ℕ} (he : e ∈ P.edges) :
     H.terminal e ∈ wireEdges (H.wire e) ∧ (H.terminal e).2 = H.original e.2 := by
   classical
   simpa only [terminal, dite_eq_left he] using Classical.choose_spec (H.terminal_exists he)
 
+/-- Distinct edges of `P` have distinct terminal arcs. -/
 theorem terminal_injective (H : GraphSubdivision P N) : Set.InjOn H.terminal P.edges := by
   intro e he f hf heq
   apply H.edge_owner_unique he hf (H.terminal_spec he).1
   exact heq ▸ (H.terminal_spec hf).1
 
+/-- Every arc of `N` entering the image of a vertex `u` of `P` is the terminal arc of an edge of `P`
+entering `u`. -/
 theorem original_incoming_owner (H : GraphSubdivision P N) {u : ℕ}
     (hu : u ∈ P.vertices) {arc : ℕ × ℕ} (harc : arc ∈ N.edges)
     (htarget : arc.2 = H.original u) :
@@ -118,6 +148,7 @@ theorem original_incoming_owner (H : GraphSubdivision P N) {u : ℕ}
   exact wire_incoming_unique (H.wire_laws e he).2.1 (H.terminal_spec he).1 hwire
     ((H.terminal_spec he).2.trans (he2 ▸ htarget.symm))
 
+/-- The arcs of `N` entering a vertex interior to the wire of `e` are arcs of that wire. -/
 theorem interior_incoming_eq (H : GraphSubdivision P N) {e : ℕ × ℕ}
     (he : e ∈ P.edges) {v : ℕ} (hv : v ∈ wireInterior (H.wire e)) :
     N.edges.filter (fun f => f.2 = v) = (wireEdges (H.wire e)).filter (fun f => f.2 = v) := by
@@ -140,6 +171,7 @@ theorem interior_incoming_eq (H : GraphSubdivision P N) {e : ℕ × ℕ}
   · rintro ⟨harc, hatarget⟩
     exact ⟨by rw [H.edges_covered]; exact Finset.mem_biUnion.mpr ⟨e, he, harc⟩, hatarget⟩
 
+/-- A vertex interior to a wire has exactly one incoming arc in `N`. -/
 theorem interior_incoming_card (H : GraphSubdivision P N) {e : ℕ × ℕ}
     (he : e ∈ P.edges) {v : ℕ} (hv : v ∈ wireInterior (H.wire e)) :
     (N.edges.filter (fun f => f.2 = v)).card = 1 := by
@@ -147,6 +179,7 @@ theorem interior_incoming_card (H : GraphSubdivision P N) {e : ℕ × ℕ}
   have htail : v ∈ (H.wire e).tail := List.mem_of_mem_dropLast (List.mem_toFinset.mp hv)
   exact ite_eq_left htail
 
+/-- A switching of `N` contains every arc entering a vertex interior to a wire. -/
 theorem interior_incoming_retained (H : GraphSubdivision P N)
     {B : Finset (ℕ × ℕ)} (hB : N.Switching B) {e arc : ℕ × ℕ}
     (he : e ∈ P.edges) (harc : arc ∈ N.edges)
@@ -161,9 +194,13 @@ theorem interior_incoming_retained (H : GraphSubdivision P N)
   have hm : arc ∈ B.filter (fun f => f.2 = arc.2) := by rw [heq]; exact Finset.mem_filter.mpr ⟨harc, rfl⟩
   exact (Finset.mem_filter.mp hm).1
 
+/-- The edges of `P` whose terminal arc lies in `B`. -/
 noncomputable def retained (H : GraphSubdivision P N) (B : Finset (ℕ × ℕ)) : Finset (ℕ × ℕ) :=
   P.edges.filter (fun e => H.terminal e ∈ B)
 
+/-- Let `B ⊆ N.edges` and let `u` be a vertex of `P`. Taking terminal arcs is a bijection from the
+edges of `retained B` entering `u` to the arcs of `B` entering `H.original u`; so `u` has as many
+incoming edges in `retained B` as `H.original u` has incoming arcs in `B`. -/
 theorem original_incoming_card (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     (hB : B ⊆ N.edges) {u : ℕ} (hu : u ∈ P.vertices) :
     ((H.retained B).filter (fun e => e.2 = u)).card =
@@ -182,6 +219,7 @@ theorem original_incoming_card (H : GraphSubdivision P N) {B : Finset (ℕ × �
     obtain ⟨e, heP, he2, heq⟩ := H.original_incoming_owner hu (hB heB) he2
     refine ⟨e, Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨heP, heq ▸ heB⟩, he2⟩, heq⟩
 
+/-- If `B` is a switching of `N`, then `retained B` is a switching of `P`. -/
 theorem retained_switching (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     (hB : N.Switching B) : P.Switching (H.retained B) := by
   refine ⟨Finset.filter_subset _ _, ?_⟩
@@ -191,6 +229,9 @@ theorem retained_switching (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
   rw [← H.root_preserved]
   exact fun h => hroot (H.original_injective hu H.root_left h)
 
+/-- If `B` is a switching of `N`, an edge of `P` is active (its whole wire lies in `B`) if and only
+if its terminal arc lies in `B`: the other arcs of the wire enter interior vertices, and `B` keeps
+them all. -/
 theorem active_eq_retained (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     (hB : N.Switching B) : H.active B = H.retained B := by
   classical
@@ -211,6 +252,7 @@ theorem active_eq_retained (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
       rw [H.edges_covered]
       exact Finset.mem_biUnion.mpr ⟨e, he, harc⟩
 
+/-- If `B` is a switching of `N`, the active edges of `P` form a switching of `P`. -/
 theorem active_switching (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     (hB : N.Switching B) : P.Switching (H.active B) := by
   rw [H.active_eq_retained hB]

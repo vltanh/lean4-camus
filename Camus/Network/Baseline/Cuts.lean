@@ -5,15 +5,35 @@ public import Camus.Network.Realization.Subdivision
 public import Camus.DP.Frontier
 public import Camus.Network.Completeness.Tree
 
+/-!
+# Deleting the edge above a vertex of `T`
+
+Auxiliary to `Realization.baseline_displays_iff` (the quartets displayed by `T` are those of
+`Q(T)`). The canonical network of the empty family, `Realization.graph t ∅`, is the tree `T` itself,
+with the vertex at address `p` encoded as `Address.code p`. Deleting the edge above a vertex `p`
+leaves two components: the subtree `T_p` (the addresses `x` with `p <+: x`) and the rest of `T`.
+
+## Main results
+
+* `Realization.baselineCut`: the edge above `p`, joining `parent p` and `p`.
+* `Realization.baselineCut_reachable_iff`: after deleting it, two vertices of `T` are connected if
+  and only if both or neither lie in `T_p`.
+-/
+
 @[expose] public section
 
 namespace Camus.Realization
 
+/-- The undirected edge above the vertex `p` of `T`, joining `parent p` and `p` (as encoded by
+`Address.code`). -/
 def baselineCut (p : Address) : Sym2 ℕ := s(Address.code (parent p), Address.code p)
 
+/-- The underlying undirected graph of `T` (`Realization.graph t ∅`) with the edge above `p`
+deleted. -/
 noncomputable def baselineCutGraph (t : PhyloTree) (p : Address) : SimpleGraph ℕ :=
   (graph t ∅).underlying.deleteEdges {baselineCut p}
 
+/-- Distinct vertices have distinct edges above them. -/
 theorem baselineCut_injective : Function.Injective baselineCut := by
   intro p q h
   rcases Sym2.eq_iff.mp h with h | h
@@ -26,10 +46,13 @@ theorem baselineCut_injective : Function.Injective baselineCut := by
     have hp : p = parent p := (parent_prefix p).eq_of_length_le (by rw [h₁, ← hlength]) |>.symm
     exact hp.trans h₁
 
+/-- For `p ≠ q`, `p` is a prefix of `parent q` if and only if `p` is a prefix of `q`. -/
 theorem prefix_parent_iff {p q : Address} (hneq : p ≠ q) :
     p <+: parent q ↔ p <+: q :=
   ⟨fun h => h.trans (parent_prefix q), fun h => prefix_parent_of_ne h hneq⟩
 
+/-- After deleting the edge above `p`, two adjacent vertices both lie in `T_p` or both lie outside
+it. -/
 theorem baselineCut_adj_prefix {t : PhyloTree} {p : Address} {u v : ℕ}
     (h : (baselineCutGraph t p).Adj u v) :
     p <+: addressOf u ↔ p <+: addressOf v := by
@@ -50,6 +73,8 @@ theorem baselineCut_adj_prefix {t : PhyloTree} {p : Address} {u v : ℕ}
   · exact directed u v he (by simpa only [Set.mem_singleton_iff] using hcut)
   · exact (directed v u he (by simpa only [Set.mem_singleton_iff, Sym2.eq_swap] using hcut)).symm
 
+/-- After deleting the edge above `p`, two connected vertices both lie in `T_p` or both lie outside
+it. -/
 theorem baselineCut_reachable_prefix {t : PhyloTree} {p : Address} {u v : ℕ}
     (h : (baselineCutGraph t p).Reachable u v) :
     p <+: addressOf u ↔ p <+: addressOf v := by
@@ -58,6 +83,8 @@ theorem baselineCut_reachable_prefix {t : PhyloTree} {p : Address} {u v : ℕ}
   | nil => rfl
   | cons hadj walk ih => exact (baselineCut_adj_prefix hadj).trans ih
 
+/-- After deleting the edge above `p`, every non-root vertex `q ≠ p` of `T` is still connected to
+its parent, by the edge above `q`. -/
 theorem baselineCut_step {t : PhyloTree} {p q : Address}
     (hq : q ∈ t.nodes) (hqnil : q ≠ []) (hqp : q ≠ p) :
     (baselineCutGraph t p).Reachable (Address.code q) (Address.code (parent q)) := by
@@ -76,6 +103,7 @@ theorem baselineCut_step {t : PhyloTree} {p q : Address}
   apply baselineCut_injective
   simpa only [baselineCut, Sym2.eq_swap] using h
 
+/-- After deleting the edge above `p`, every vertex of `T_p` is connected to `p`. -/
 theorem baselineCut_inside {t : PhyloTree} {p x : Address}
     (hx : x ∈ t.nodes) (hpx : p <+: x) :
     (baselineCutGraph t p).Reachable (Address.code x) (Address.code p) := by
@@ -98,6 +126,8 @@ theorem baselineCut_inside {t : PhyloTree} {p x : Address}
       exact (baselineCut_step hx hnil heq).trans
         (ih (parent x).length hlt hparent hp rfl)
 
+/-- After deleting the edge above `p`, every vertex of `T` outside `T_p` is connected to the
+root. -/
 theorem baselineCut_outside {t : PhyloTree} {p x : Address}
     (hx : x ∈ t.nodes) (hpx : ¬p <+: x) :
     (baselineCutGraph t p).Reachable (Address.code x) (Address.code []) := by
@@ -119,6 +149,8 @@ theorem baselineCut_outside {t : PhyloTree} {p x : Address}
       exact (baselineCut_step hx hnil hneq).trans
         (ih (parent x).length hlt hparent hp rfl)
 
+/-- After deleting the edge above `p` from `T`, two vertices `x`, `y` of `T` are connected if and
+only if both or neither lie in the subtree `T_p` (`p <+: x ↔ p <+: y`). -/
 theorem baselineCut_reachable_iff {t : PhyloTree} {p x y : Address}
     (hx : x ∈ t.nodes) (hy : y ∈ t.nodes) :
     (baselineCutGraph t p).Reachable (Address.code x) (Address.code y) ↔

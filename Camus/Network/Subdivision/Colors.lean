@@ -3,18 +3,39 @@ module
 public import Camus.Network.Subdivision.Wires
 public import Camus.Network.Completeness.Reachability
 
+/-!
+# Reachability through a subdivision
+
+Auxiliary to `GraphSubdivision.displays_iff`. Let `N` be a subdivision of `P`
+(`H : GraphSubdivision P N`): each edge `e` of `P` is replaced by a directed path of `N`, its wire
+`H.wire e`, from `H.original e.1` to `H.original e.2`. For a set `B` of arcs of `N`, call an edge of
+`P` active if its whole wire lies in `B` (`GraphSubdivision.active`). Then two vertices of `P` are
+connected by active edges if and only if their images are connected in the underlying undirected
+graph of `B`. One direction follows each wire. For the other, colour the vertices of `P` by the
+connected components of the active edges and extend the colouring to `N` wire by wire
+(`exists_wire_coloring`), so that no arc of `B` joins two colours.
+
+## Main results
+
+* `GraphSubdivision.active`: the edges of `P` whose wire lies in `B`.
+* `GraphSubdivision.reachable_iff`: connectivity of images in `B` is connectivity by active edges.
+-/
+
 @[expose] public section
 
 namespace Camus.GraphSubdivision
 
 variable {P N : RootedNetwork}
 
+/-- Wire interiors are disjoint: a vertex interior to the wires of two edges `e`, `f` of `P` forces
+`e = f`. -/
 theorem interior_unique (H : GraphSubdivision P N) {e f : ℕ × ℕ}
     (he : e ∈ P.edges) (hf : f ∈ P.edges) {v : ℕ}
     (hv : v ∈ wireInterior (H.wire e)) (hw : v ∈ wireInterior (H.wire f)) : e = f := by
   by_contra hne
   exact Finset.disjoint_left.mp (H.interiors_disjoint he hf hne) hv hw
 
+/-- A vertex interior to a wire is not the image of a vertex of `P`. -/
 theorem interior_not_original (H : GraphSubdivision P N) {e : ℕ × ℕ}
     (he : e ∈ P.edges) {v u : ℕ} (hv : v ∈ wireInterior (H.wire e))
     (hu : u ∈ P.vertices) : v ≠ H.original u := by
@@ -22,6 +43,8 @@ theorem interior_not_original (H : GraphSubdivision P N) {e : ℕ × ℕ}
   exact Finset.disjoint_left.mp (H.wire_laws e he).2.2.2.2 hv
     (Finset.mem_image.mpr ⟨u, hu, h.symm⟩)
 
+/-- A left inverse of `H.original` on the vertices of `P`; it returns the root of `P` on vertices of
+`N` that are not images. -/
 noncomputable def originalOf (H : GraphSubdivision P N) (v : ℕ) : ℕ :=
   if h : ∃ u ∈ P.vertices, H.original u = v then h.choose else P.root
 
@@ -32,6 +55,11 @@ theorem originalOf_eq (H : GraphSubdivision P N) {u : ℕ} (hu : u ∈ P.vertice
   simp only [originalOf, dite_eq_left hex]
   exact H.original_injective hex.choose_spec.1 hu hex.choose_spec.2
 
+/-- Gluing the wire colourings. Let `B ⊆ N.edges` and let `C` colour the vertices of `P` so that the
+two ends of every edge of `P` whose whole wire lies in `B` have the same colour. Then some colouring
+of `N` gives each image `H.original u` the colour `C u` and both ends of every arc of `B` the same
+colour. Each wire is coloured by `exists_wire_coloring`; the wire interiors are disjoint, so these
+colourings combine. -/
 theorem exists_subdivision_coloring {β : Type*} (H : GraphSubdivision P N)
     (B : Finset (ℕ × ℕ)) (hB : B ⊆ N.edges) (C : ℕ → β)
     (hC : ∀ e ∈ P.edges, wireEdges (H.wire e) ⊆ B → C e.1 = C e.2) :
@@ -81,10 +109,16 @@ theorem exists_subdivision_coloring {β : Type*} (H : GraphSubdivision P N)
     hwire e he f.2 (List.mem_of_mem_tail (wire_edge_target_mem hfe))]
   exact (hcw e he).2.2 f hfe hf
 
+/-- The active edges of `P` for a set `B` of arcs of `N`: the edges of `P` whose whole wire lies in
+`B`. -/
 def active (H : GraphSubdivision P N) (B : Finset (ℕ × ℕ)) : Finset (ℕ × ℕ) := by
   classical
   exact P.edges.filter (fun e => wireEdges (H.wire e) ⊆ B)
 
+/-- Contracting the wires. Let `B ⊆ N.edges` and let `u`, `v` be vertices of `P`. If their images
+are connected in the underlying graph of `B`, then `u` and `v` are connected by active edges. The
+connected components of the active edges, extended to `N` by `exists_subdivision_coloring`, are
+constant along every walk in `B`. -/
 theorem reachable_contract (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     (hB : B ⊆ N.edges) {u v : ℕ} (hu : u ∈ P.vertices) (hv : v ∈ P.vertices) :
     ({N with edges := B}).underlying.Reachable (H.original u) (H.original v) →
@@ -113,6 +147,8 @@ theorem reachable_contract (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
   rw [horig _ hu, horig _ hv] at heq
   exact SimpleGraph.ConnectedComponent.exact heq
 
+/-- If the whole wire of an edge `e` of `P` lies in `B`, its two ends are connected in the
+underlying graph of `B`. -/
 theorem wire_reachable (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     {e : ℕ × ℕ} (he : e ∈ P.edges) (hwire : wireEdges (H.wire e) ⊆ B) :
     ({N with edges := B}).underlying.Reachable (H.original e.1) (H.original e.2) := by
@@ -135,6 +171,8 @@ theorem wire_reachable (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     Option.some.inj ((List.getLast?_eq_some_getLast hne).symm.trans hl.2.2.2.1)
   simpa only [hhead, hlast] using hpairs.rel_head (List.getLast_mem hne)
 
+/-- Following the wires. If `u` and `v` are connected by active edges of `P`, their images are
+connected in the underlying graph of `B`. -/
 theorem reachable_expand (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)} {u v : ℕ} :
     ({P with edges := H.active B}).underlying.Reachable u v →
       ({N with edges := B}).underlying.Reachable (H.original u) (H.original v) := by
@@ -153,6 +191,8 @@ theorem reachable_expand (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)} {u
   rintro ⟨walk⟩
   exact lift walk
 
+/-- Let `B ⊆ N.edges` and let `u`, `v` be vertices of `P`. The images of `u` and `v` are connected
+in the underlying graph of `B` if and only if `u` and `v` are connected by active edges of `P`. -/
 theorem reachable_iff (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     (hB : B ⊆ N.edges) {u v : ℕ} (hu : u ∈ P.vertices) (hv : v ∈ P.vertices) :
     ({N with edges := B}).underlying.Reachable (H.original u) (H.original v) ↔

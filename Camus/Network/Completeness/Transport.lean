@@ -2,10 +2,25 @@ module
 
 public import Camus.Network.Completeness.Iso
 
+/-!
+# Transporting a subdivision along an isomorphism
+
+`GraphSubdivision P Q` says that `Q` is obtained from `P` by subdividing edges. If a map `f` is
+injective on the vertices of `Q` and maps the vertices, edges, root and labelled leaves of `Q`
+onto those of `M`, then `M` is a subdivision of `P` too. The single-edge reduction
+(`SupportSubdivision.single_edge_reduction`) uses this to move a subdivision of a canonical
+network to `N` along the decoding.
+
+## Main results
+
+* `GraphSubdivision.map_target`: the transported subdivision.
+-/
+
 @[expose] public section
 
 namespace Camus
 
+/-- The interior of the image of a wire under `f` is the image of its interior. -/
 theorem wireInterior_map (l : List ℕ) (f : ℕ → ℕ) :
     wireInterior (l.map f) = (wireInterior l).image f := by
   classical
@@ -17,18 +32,21 @@ namespace GraphSubdivision
 
 variable {P Q M : RootedNetwork}
 
+/-- The image of a vertex of `P` is a vertex of `Q`. -/
 theorem original_mem_vertices (R : GraphSubdivision P Q) {v : ℕ}
     (hv : v ∈ P.vertices) : R.original v ∈ Q.vertices := by
   classical
   rw [R.vertices_covered]
   exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨v,hv,rfl⟩)
 
+/-- The interior vertices of the wire of an edge of `P` are vertices of `Q`. -/
 theorem interior_mem_vertices (R : GraphSubdivision P Q) {e : ℕ × ℕ}
     (he : e ∈ P.edges) {v : ℕ} (hv : v ∈ wireInterior (R.wire e)) : v ∈ Q.vertices := by
   classical
   rw [R.vertices_covered]
   exact Finset.mem_union_right _ (Finset.mem_biUnion.mpr ⟨e,he,hv⟩)
 
+/-- The vertices of the wire of an edge of `P` are vertices of `Q`. -/
 theorem wire_mem_vertices (R : GraphSubdivision P Q) {e : ℕ × ℕ}
     (he : e ∈ P.edges) {v : ℕ} (hv : v ∈ R.wire e) : v ∈ Q.vertices := by
   rcases wire_vertex_cases hv with hh | hl | hi
@@ -42,8 +60,9 @@ theorem wire_mem_vertices (R : GraphSubdivision P Q) {e : ℕ × ℕ}
     exact R.original_mem_vertices (R.edge_endpoints e he).2
   · exact R.interior_mem_vertices he hi
 
-/-- Transport a subdivision by a vertex bijection preserving graph edges,
-root and taxon labels. All parameters are the defining graph-map laws. -/
+/-- Let `R` show that `Q` is a subdivision of `P`, and let `f` be injective on the vertices of
+`Q` and map the vertices, edges, root and labelled leaves of `Q` onto those of `M`. Then `M` is a
+subdivision of `P`, with vertex map `f ∘ R.original` and wires mapped by `f`. -/
 noncomputable def map_target (R : GraphSubdivision P Q) (f : ℕ → ℕ)
     (hinj : Set.InjOn f Q.vertices)
     (hverts : Q.vertices.image f = M.vertices)

@@ -2,12 +2,29 @@ module
 
 public import Camus.Restriction.Correctness
 
+/-!
+# Section 2.4: the array exists
+
+The recurrence of `Camus/Restriction/Defs.lean` defines the rows at a vertex from rows strictly
+below it, so an array satisfying it exists: `BudgetDP.bottomUp` evaluates the recurrence round
+after round, and after more rounds than the depth of `T` the rows no longer change. Since the rows
+are correct (`BudgetDP.array_correct`), a row is nonempty exactly when its budget is feasible.
+
+## Main results
+
+* `BudgetDP.exists_array`: for every tree `T` and edge weights `w` there is an array satisfying the
+  recurrence.
+* `BudgetDP.row_nonempty_iff`: `M[v][k]` is nonempty iff some feasible family of exactly `k` edges
+  has its targets in `T_v`.
+-/
+
 @[expose] public section
 
 namespace Camus.BudgetDP
 
 open DynamicProgramming
 
+/-- The knapsack over `rs` depends only on the rows of the subtrees in `rs`. -/
  theorem forest_congr {M N : Address → ℕ → Finset ℕ} {rs : List Address}
     (h : ∀ r ∈ rs, ∀ k, M r k = N r k) : ∀ k, forest M rs k = forest N rs k := by
   induction rs with
@@ -18,6 +35,7 @@ open DynamicProgramming
     have ht : forest M rs = forest N rs := funext (ih (fun s hs=>h s (by simp [hs])))
     simp only [forest,hr,ht]
 
+/-- The candidate values at `v` depend only on the rows at the vertices strictly below `v`. -/
  theorem cases_congr (t : PhyloTree) (w : Pair → ℕ) {M N : Address → ℕ → Finset ℕ}
     {v : Address} (hv : v ∈ t.nodes)
     (h : ∀ r ∈ t.nodes, v <+: r → v ≠ r → ∀ k, M r k=N r k) :
@@ -47,12 +65,14 @@ open DynamicProgramming
       intro e he
       rw [hf e he]
 
-/-- Finite rounds evaluating the exact-budget knapsack recurrence, with maximum
-pruning at every node. No feasible network family is enumerated. -/
+/-- `n` rounds of the recurrence, starting from empty rows: round `n + 1` sets every row to `best`
+of its candidate values computed from the rows of round `n`. -/
 noncomputable def bottomUp (t : PhyloTree) (w : Pair → ℕ) : ℕ → Address → ℕ → Finset ℕ
   | 0, _, _ => ∅
   | n+1, v, k => best (cases t w (bottomUp t w n) v k)
 
+/-- The rows at `v` are the same after any two numbers of rounds larger than
+`remainingDepth t v`, which bounds the height of `T_v`. -/
  theorem bottomUp_stable (t : PhyloTree) (w : Pair → ℕ) {v : Address}
     (hv : v ∈ t.nodes) {a b : ℕ} (ha : remainingDepth t v < a)
     (hb : remainingDepth t v < b) : ∀ k, bottomUp t w a v k = bottomUp t w b v k := by
@@ -73,8 +93,8 @@ noncomputable def bottomUp (t : PhyloTree) (w : Pair → ℕ) : ℕ → Address 
         simp only [bottomUp]
         rw [cases_congr t w hv hsub k]
 
-/-- A concrete finite bottom-up array exists for every input tree and weight
-function; exact budget rows are not hypothesized to be inhabited. -/
+/-- Section 2.4: for every tree `T` and edge weights `w` there is an array `M` satisfying the
+recurrence (`BudgetDP.Array t w M`): `bottomUp` after more rounds than the depth of `T`. -/
  theorem exists_array (t : PhyloTree) (w : Pair → ℕ) : ∃ M, Array t w M := by
   let K := t.nodes.sup List.length + 1
   let M := bottomUp t w K
@@ -84,8 +104,9 @@ function; exact budget rows are not hypothesized to be inhabited. -/
   have hs := bottomUp_stable t w hv hbound (show remainingDepth t v < K+1 by omega) k
   exact hs
 
-/-- An exact-budget row is nonempty iff a feasible family of that exact size
-exists. Impossible budgets remain empty, rather than being given score zero. -/
+/-- Section 2.4: if `M` satisfies the recurrence, the row `M[v][k]` is nonempty iff some feasible
+family of exactly `k` edges has all its targets in `T_v`. Rows of impossible budgets are empty,
+rather than holding the value `0`. -/
  theorem row_nonempty_iff (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
     (hM : Array t w M) {v : Address} (hv : v ∈ t.nodes) (k : ℕ) :
     (M v k).Nonempty ↔ ∃ E, FeasibleBelow t v E ∧ E.card=k := by

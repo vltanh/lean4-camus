@@ -3,14 +3,34 @@ module
 public import Camus.Network.Completeness.Decode
 public import Camus.Network.Completeness.AddEdge
 
+/-!
+# The single-edge network T + e
+
+For a non-tree edge `d`, Section 2.1 defines `T + d` as the subnetwork of `N` obtained by
+removing all other non-tree edges and then suppressing the vertices of indegree and outdegree
+one. `SupportSubdivision.single_edge_reduction` states it as a subdivision: `N` restricted to the
+edges `S ∪ {d}` is a subdivision of the canonical network `Realization.graph t {H.pairOf d}`.
+This file reduces that statement to a subdivision between the supports of two canonical networks:
+add the edge of `H.pairOf d` to both (`GraphSubdivision.addEdge`), then move the result to `N`
+along the decoding (`GraphSubdivision.map_target`).
+
+## Main results
+
+* `SupportSubdivision.transport_single_refinement`: the reduction step.
+-/
+
 @[expose] public section
 
 namespace Camus.SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
-/-- Transport the canonical selected-edge subdivision to the original graph.
-The input is the concrete refinement of canonical support wires. -/
+/-- Let `d` be a non-tree edge, and let `R` show that the support of
+`Realization.graph t H.extracted` is a subdivision of the support of
+`Realization.graph t {H.pairOf d}`, with the identity as vertex map. Then `N` restricted to the
+edges `S ∪ {d}` is a subdivision of `Realization.graph t {H.pairOf d}`. The proof adds the edge
+from the donor to the recipient of `H.pairOf d` to both supports and transports the result along
+the decoding. -/
 theorem transport_single_refinement (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne)
     (hpairs : Set.InjOn H.pairOf (N.edges \ S : Finset (ℕ × ℕ)))

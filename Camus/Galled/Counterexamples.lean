@@ -7,45 +7,76 @@ public import Mathlib.Tactic.NormNum
 public import Mathlib.Tactic.FinCases
 public import Mathlib.Data.Fintype.Fin
 
+/-!
+# Checked examples in the block grammar: E1, E3 and E4
+
+Three findings of the report, on concrete networks of the block grammar `GalledNetwork`, checked by
+evaluation. Labels: `A = 0`, `B = 1`, `C = 2`, `D = 3`, and the outgroup `O = 4`.
+
+* E1, Equation (1). The paper calls `Q` a multiset, while `δ_T(q, (u, w))` already counts the copies
+  of `q` in `Q`. Summing `δ` over `Q` copy by copy counts a quartet with `c` copies `c · c` times
+  (`squared_multiplicity_counterexample`, with `c = 2`). The formalization sums over the distinct
+  quartets of `Q`, as the weighted-set representation of Section 2.3 suggests (`Camus.equation1`).
+* E3, Section 2.4. For `T = (A,(B,(D,C)))` and `Q = {AC|BD}`, a valid network built on `T` with two
+  reticulations displays `AC|BD`, and every valid four-leaf network built on `T` with three
+  reticulations displays no quartet of `Q` (`exact_budget_nonmonotone`): the best score for an
+  exact number of reticulations can decrease.
+* E4, Section 3.2. The five-leaf tree `T = (O,((B,A),(D,C)))` (`truth`) and the network obtained by
+  adding one edge above `(A, C)` (`extra`) are both built on `T` and both display the five quartets
+  of `T`, with zero and one reticulations (`uniqueness_counterexample`): the true network is not the
+  unique optimum.
+
+The directed-graph versions of E3 and E4 are `Counterexamples.graph_exact_budget_nonmonotone` and
+`Counterexamples.graph_uniqueness_counterexample`, which also use `smallConstraint`, `oneQuartet`,
+`constraint` and `data` from this file.
+-/
+
 @[expose] public section
 
 namespace Camus.Counterexamples
 
 open PhyloTree GalledNetwork
 
+/-- The quartet on the taxa `0, 1, 2, 3` with split `s`: `01|23` for `s = 0`, `02|13` for `s = 1`,
+`03|12` for `s = 2`. The next four definitions are the same for the other sets of four taxa of
+`{0, 1, 2, 3, 4}`. -/
 def q0123 (s : Fin 3) : Quartet := ⟨0, 1, 2, 3, by decide, by decide, by decide, s⟩
 def q0124 (s : Fin 3) : Quartet := ⟨0, 1, 2, 4, by decide, by decide, by decide, s⟩
 def q0134 (s : Fin 3) : Quartet := ⟨0, 1, 3, 4, by decide, by decide, by decide, s⟩
 def q0234 (s : Fin 3) : Quartet := ⟨0, 2, 3, 4, by decide, by decide, by decide, s⟩
 def q1234 (s : Fin 3) : Quartet := ⟨1, 2, 3, 4, by decide, by decide, by decide, s⟩
 
-/-- A=0, B=1, C=2, D=3, and outgroup O=4. The child order is immaterial
-biologically and is chosen here to match the recorded support switching exactly. -/
+/-- E4: the five-leaf tree `T = (O,((B,A),(D,C)))`. Its child order is that of a tree displayed by
+`extra`, since `Extends` compares plane trees. -/
 def constraint : PhyloTree :=
   .fork (.leaf 4) (.fork (.fork (.leaf 1) (.leaf 0)) (.fork (.leaf 3) (.leaf 2)))
 
+/-- E4: the true network, the tree `T` itself, with no reticulation. -/
 def truth : GalledNetwork :=
   .fork (.leaf 4) (.fork (.fork (.leaf 1) (.leaf 0)) (.fork (.leaf 3) (.leaf 2)))
 
-/-- Add the edge above A→C. The gall has three hanging path nodes plus its
-source and reticulation, hence five cycle vertices. The outgroup remains outside. -/
+/-- E4: `T` with one edge added above `(A, C)`. Its cycle has five vertices: `((B,A),(D,C))` at the
+top, `(B,A)` and the subdivision vertex above `A` on one path, `(D,C)` on the other, and the
+reticulation above `C`. The outgroup `O` is outside the cycle. -/
 def extra : GalledNetwork :=
   .fork (.leaf 4) (.gall [.leaf 1, .leaf 0] [.leaf 3] (.leaf 2))
 
-/-- Exactly the five quartets induced on the five four-taxon subsets of T. -/
+/-- E4: the five quartets of `T`, one for each set of four of its taxa: `AB|CD`, `AB|CO`, `AB|DO`,
+`AO|CD` and `BO|CD`. -/
 def data : Multiset Quartet :=
   {q0123 0, q0124 0, q0134 0, q0234 2, q1234 2}
 
+/-- The distinct quartets of `Q` displayed by the block network `n`. -/
 def repertoire (Q : Multiset Quartet) (n : GalledNetwork) : Finset Quartet :=
   Q.toFinset.filter (fun q => n.containsQuartet q = true)
 
+/-- The distinct quartets of `Q` satisfied by the block network `n` relative to `t`. -/
 def novelRepertoire (Q : Multiset Quartet) (n : GalledNetwork)
     (t : PhyloTree) : Finset Quartet :=
   Q.toFinset.filter (fun q => n.satisfies t q = true)
 
-/-- This input really contains every induced quartet of the truth, rather than
-an arbitrarily selected subset. Four increasing labels from {0,1,2,3,4} have
-exactly the five possibilities enumerated below. -/
+/-- E4: `data` is the set of quartets induced by `T`, so `Q = data` is a multiset version of
+`Q(N_r)` for the true network `N = T`. -/
 theorem data_is_exact (q : Quartet) :
     q.induced constraint = true ↔ q ∈ data := by
   by_cases ht : q.taxa ⊆ constraint.taxa
@@ -70,10 +101,10 @@ theorem data_is_exact (q : Quartet) :
       rcases hq with rfl | rfl | rfl | rfl | rfl <;> exact ht (by decide)
     simp [Quartet.induced, ht, hq]
 
-/-- Checked witnesses for E4 (§3.2): distinct reticulation counts, valid,
-well-labelled networks, the same displayed constraint tree, and equal maximum
-input support. The finite-family formulation already contradicts unique
-optimality in any larger feasible family because the score cannot exceed 5. -/
+/-- E4 (Section 3.2): `truth` and `extra` are phylogenetic networks built on `T`, with zero and one
+reticulations; both display all five quartets of `data`, and neither satisfies any (they are all
+quartets of `T`). No network displays more than the five quartets, so both are optimal
+(`witnesses_globally_optimal`) and the true network is not the unique optimum. -/
 theorem uniqueness_counterexample :
     truth.Phylogenetic ∧ extra.Phylogenetic ∧
     truth.Extends constraint ∧ extra.Extends constraint ∧
@@ -89,9 +120,8 @@ theorem uniqueness_counterexample :
   simp only [Phylogenetic, ht, he, htl, hel, true_and]
   decide +kernel
 
-/-- For the fixed exact input `data`, both witnesses attain the total number
-of observations and are global maxima, not merely maxima in a selected finite
-pair of candidates. -/
+/-- E4: every block network displays at most as many quartets of `data` as `truth` and as `extra`,
+which display all of them. -/
 theorem witnesses_globally_optimal (n : GalledNetwork) :
     score data (repertoire data n) ≤ score data (repertoire data truth) ∧
     score data (repertoire data n) ≤ score data (repertoire data extra) := by
@@ -99,30 +129,38 @@ theorem witnesses_globally_optimal (n : GalledNetwork) :
   have he := uniqueness_counterexample.2.2.2.2.2.2.2.1
   constructor <;> simpa only [ht, he] using score_le_card data (repertoire data n)
 
-/-- E1: literal multiset summation of delta counts two copies twice. The
-weighted-support sum in Equation1 gives 2, whereas the occurrence sum gives4. -/
+/-- E1 (Equation (1)): for `Q = {0, 0}` and `D = {0}`, two elements of `Q` lie in `D`, but summing
+`δ = delta Q D` over `Q` copy by copy gives `2 + 2 = 4`. Equation (1) is therefore read as a sum
+over the distinct elements of `Q` (`Camus.equation1`). -/
 theorem squared_multiplicity_counterexample :
     score ({(0 : ℕ), 0} : Multiset ℕ) {0} = 2 ∧
     (({(0 : ℕ), 0} : Multiset ℕ).map
       (delta ({(0 : ℕ), 0} : Multiset ℕ) {0})).sum = 4 := by
   decide
 
-/-- E3 exact-budget witnesses. T=(A,(B,(D,C))). -/
+/-- E3: the four-leaf tree `T = (A,(B,(D,C)))`. Its quartet is `AB|CD`. -/
 def smallConstraint : PhyloTree := .fork (.leaf 0) (.fork (.leaf 1) (.fork (.leaf 3) (.leaf 2)))
 
+/-- E3: `T` with the edge from above `(B,(D,C))` to above `C`. Its cycle passes through `(B,(D,C))`
+and `(D,C)`; deleting the tree edge into the reticulation gives `(A,(C,(B,D)))`, which induces
+`AC|BD`. -/
 def oneReticulation : GalledNetwork :=
   .fork (.leaf 0) (.gall [] [.leaf 1, .leaf 3] (.leaf 2))
 
+/-- E3: `oneReticulation` with a triangle at the root, from above `A` to above `(B,(D,C))`. -/
 def twoReticulations : GalledNetwork :=
   .gall [.leaf 0] [] (.gall [] [.leaf 1, .leaf 3] (.leaf 2))
 
+/-- E3: `T` with a triangle at each of its three internal vertices. -/
 def threeTriangles : GalledNetwork :=
   .gall [.leaf 0] [] (.gall [.leaf 1] [] (.gall [.leaf 3] [] (.leaf 2)))
 
+/-- E3: `Q = {AC|BD}`, a quartet that `T` does not induce. -/
 def oneQuartet : Multiset Quartet := {q0123 1}
 
-/-- Computed witness scores. The separate saturation theorem is needed to
-exclude a different three-reticulation network with better score. -/
+/-- E3: `oneReticulation`, `twoReticulations` and `threeTriangles` are phylogenetic networks built
+on `T`, with one, two and three reticulations, displaying `1`, `1` and `0` quartets of `Q`. That no
+other network with three reticulations does better is `exact_three_score_zero`. -/
 theorem exact_budget_witnesses :
     oneReticulation.Phylogenetic ∧ twoReticulations.Phylogenetic ∧
     threeTriangles.Phylogenetic ∧
@@ -143,9 +181,9 @@ theorem exact_budget_witnesses :
   simp only [Phylogenetic, h1, h2, h3, hl1, hl2, hl3, true_and]
   decide +kernel
 
-/-- Every four-leaf valid block network at exact budget three is saturated,
-so it has no quartet beyond the constraint switching. This is the universal
-upper bound missing from a comparison of individual witnesses. -/
+/-- E3: every valid four-leaf network built on `T` with exactly three reticulations displays no
+quartet of `Q`. With `n − 1 = 3` reticulations it consists of triangles, so it displays only the
+quartet `AB|CD` of `T` (`GalledNetwork.saturated_contains_eq`). -/
 theorem exact_three_score_zero (n : GalledNetwork) (hn : n.Valid)
     (hleaves : n.labels.length = 4) (hr : n.reticulations = 3)
     (hext : n.Extends smallConstraint) :
@@ -156,9 +194,11 @@ theorem exact_three_score_zero (n : GalledNetwork) (hn : n.Valid)
   rw [ht] at hq
   simp [score, repertoire, oneQuartet, hq]
 
-/-- E3: the exact-budget optimum is one at budget two and zero at budget three
-in the concrete valid four-leaf block model. In particular, exact-budget
-monotonicity cannot be justified by inclusion of feasible families. -/
+/-- E3 (Section 2.4), in the block grammar: some phylogenetic four-leaf network built on
+`T = (A,(B,(D,C)))` with exactly two reticulations displays the quartet of `Q = {AC|BD}`, and every
+valid four-leaf network built on `T` with exactly three reticulations displays none. The best score
+for an exact number of reticulations decreases from `1` to `0`, against Section 2.4's "the score
+... will never decrease as the number of reticulations increases". -/
 theorem exact_budget_nonmonotone :
     (∃ n : GalledNetwork, n.Phylogenetic ∧ n.labels.length = 4 ∧
       n.Extends smallConstraint ∧ n.reticulations = 2 ∧

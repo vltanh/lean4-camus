@@ -2,14 +2,36 @@ module
 
 public import Camus.Network.Realization.Support
 
+/-!
+# The canonical network of an edge family: subdivision of the tree
+
+With no added edge, the canonical network `Realization.graph t ∅` is `T` itself
+(`Realization.baseline_edges`). This file proves that the support of `Realization.graph t E`,
+the network without its added edges, is a subdivision of `T` (`GraphSubdivision`): every vertex
+of `T` is kept, and the edge from `parent(p)` to `p` is replaced by the wire above `p`. It is used
+to show that the quartets displayed by `T` are displayed by `Realization.graph t E`, and it is
+the starting point of the single-edge reduction `T + e`
+(`Realization.singletonSupportSubdivision`).
+
+## Main results
+
+* `Realization.addressOf_code`: `Realization.addressOf` decodes the codes of vertices of `T`.
+* `Realization.baseline_edges`: the edges of `Realization.graph t ∅` are the edges of `T`.
+* `Realization.supportGraphSubdivision`: the support of `Realization.graph t E` is a subdivision
+  of `T`.
+-/
+
 @[expose] public section
 
 namespace Camus.Realization
 
+/-- The address with code `n`: the inverse of `Address.code`, with value the root `[]` when
+`n` is not a code. -/
 noncomputable def addressOf (n : ℕ) : Address := by
   classical
   exact if h : ∃ p, Address.code p = n then h.choose else []
 
+/-- `Realization.addressOf` inverts `Address.code`. -/
 theorem addressOf_code (p : Address) : addressOf (Address.code p) = p := by
   classical
   unfold addressOf
@@ -17,6 +39,8 @@ theorem addressOf_code (p : Address) : addressOf (Address.code p) = p := by
   simp only [dite_eq_left hex]
   exact Address.code_injective hex.choose_spec
 
+/-- With no added edge, the canonical network is `T`: the edges of `Realization.graph t ∅` are
+the edges from `parent(p)` to `p`, for the non-root vertices `p` of `T`. -/
 theorem baseline_edges (t : PhyloTree) :
     (graph t ∅).edges = (t.nodes.erase []).image
       (fun p => (Address.code (parent p), Address.code p)) := by
@@ -26,8 +50,9 @@ theorem baseline_edges (t : PhyloTree) :
     List.flatMap_nil, List.append_nil, wireEdges]
   simpa using Finset.biUnion_singleton
 
-/-- Subdivision preserves the rooted support tree before the reticulation arcs
-are inserted. The construction follows the actual canonical wires. -/
+/-- For a family of admissible pairs, the support of `Realization.graph t E` (the network
+without its added edges) is a subdivision of `T`, given as `Realization.graph t ∅`. The vertex
+map is the identity, and the edge from `parent(p)` to `p` is replaced by the wire above `p`. -/
 noncomputable def supportGraphSubdivision (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) :
     GraphSubdivision (graph t ∅) {graph t E with edges := supportEdges t E} := by

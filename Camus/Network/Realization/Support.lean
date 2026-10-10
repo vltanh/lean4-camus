@@ -2,22 +2,46 @@ module
 
 public import Camus.Network.Realization.Wires
 
+/-!
+# The canonical network of an edge family: the support switching
+
+The support edges `Realization.supportEdges t E` of `Realization.graph t E` are the edges of all
+wires; they form the subdivision of `T` inside the network, its support. For a family of
+admissible pairs, this file proves that the support edges form a switching of the network
+(`RootedNetwork.Switching`: exactly one support edge ends at each non-root vertex, as when
+Definition 1 deletes one incoming edge of each reticulation), and that the other edges of the
+network are the added edges `u′ → w′`. It also proves that in any support subdivision the anchor
+of a vertex inside the wire above `p` is `p`.
+
+## Main results
+
+* `Realization.support_switching`: the support edges form a switching of the network.
+* `Realization.added_edge_not_support`: the added edge `u′ → w′` is not a support edge.
+* `Realization.nonSupportEdges`: the edges outside the support are the added edges.
+* `SupportSubdivision.anchor_eq`: the anchor of a vertex inside the wire above `p` is `p`.
+-/
+
 @[expose] public section
 
 namespace Camus.Realization
 
+/-- The edges of the path `a, b, …` are `a → b` and the edges of the path `b, …`. -/
 theorem wireEdges_cons_cons (a b : ℕ) (L : List ℕ) :
     wireEdges (a :: b :: L) = insert (a,b) (wireEdges (b :: L)) := by
   simp [wireEdges]
 
+/-- The end of an edge of the path `L` is in the tail of `L`. -/
 theorem edge_second_mem_tail {L : List ℕ} {e : ℕ × ℕ} (he : e ∈ wireEdges L) :
     e.2 ∈ L.tail := by
   exact (List.of_mem_zip (List.mem_toFinset.mp he)).2
 
+/-- The start of an edge of the path `L` is a vertex of `L`. -/
 theorem edge_first_mem {L : List ℕ} {e : ℕ × ℕ} (he : e ∈ wireEdges L) :
     e.1 ∈ L := by
   exact (List.of_mem_zip (List.mem_toFinset.mp he)).1
 
+/-- On a path `L` without repetition, one edge of `L` ends at `v` if `v` is in the tail of
+`L`, and none otherwise. -/
 theorem incoming_wire_card (L : List ℕ) (hL : L.Nodup) (v : ℕ) :
     ((wireEdges L).filter (fun e => e.2 = v)).card = if v ∈ L.tail then 1 else 0 := by
   classical
@@ -42,11 +66,15 @@ theorem incoming_wire_card (L : List ℕ) (hL : L.Nodup) (v : ℕ) :
         simp only [List.tail_cons, List.mem_cons, hv, false_or]
         rfl
 
+/-- The vertices of the wire above `p`, its first vertex `parent(p)` excepted, are the
+vertices inside it and `p`. -/
 theorem mem_tail_wire {t : PhyloTree} {E : Finset Pair} {p : Address} {v : ℕ} :
     v ∈ (wire t E p).tail ↔ v ∈ wireInterior (wire t E p) ∨ v = Address.code p := by
   rw [wireInterior_eq]
   simp [wire, List.append_assoc, or_assoc]
 
+/-- For a family of admissible pairs and distinct vertices `p ≠ q` of `T`, the wires above
+`p` and above `q`, each without its first vertex, are disjoint. -/
 theorem tail_wires_disjoint (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {p q : Address}
     (hp : p ∈ t.nodes) (hq : q ∈ t.nodes) (hpq : p ≠ q) :
@@ -62,6 +90,9 @@ theorem tail_wires_disjoint (t : PhyloTree) (E : Finset Pair)
       (Finset.mem_image.mpr ⟨p, hp, hc.symm⟩)
   · exact hpq (Address.code_injective (hc.symm.trans hc'))
 
+/-- For a family of admissible pairs, if `v` lies on the wire above a non-root vertex `p` of `T`
+and is not its first vertex, the support edges ending at `v` are the edges of this wire ending
+at `v`. -/
 theorem support_incoming_eq_wire (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ [])
     {v : ℕ} (hv : v ∈ (wire t E p).tail) :
@@ -81,6 +112,8 @@ theorem support_incoming_eq_wire (t : PhyloTree) (E : Finset Pair)
   · rintro ⟨he, heq⟩
     exact ⟨⟨p, ⟨hp0, hp⟩, he⟩, heq⟩
 
+/-- For a family of admissible pairs, the support edges form a switching of
+`Realization.graph t E`: exactly one support edge ends at each non-root vertex. -/
 theorem support_switching (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) :
     (graph t E).Switching (supportEdges t E) := by
@@ -105,6 +138,8 @@ theorem support_switching (t : PhyloTree) (E : Finset Pair)
     rw [support_incoming_eq_wire t E hE hp hp0 hv]
     exact (incoming_wire_card _ (wire_nodup t E hE hp hp0) v).trans (ite_eq_left hv)
 
+/-- For `(u, w)` in a family of admissible pairs, the added edge `u′ → w′` is not a support
+edge: `u′` and `w′` are inside the wires above `u` and above `w`, and `u ≠ w`. -/
 theorem added_edge_not_support {t : PhyloTree} {E : Finset Pair}
     (hE : E ⊆ EdgeAbove.candidates t) {e : Pair} (he : e ∈ E) :
     (donor t e, recipient t e) ∉ supportEdges t E := by
@@ -129,6 +164,8 @@ theorem added_edge_not_support {t : PhyloTree} {E : Finset Pair}
   have ha := (Finset.mem_filter.mp (hE he)).2
   exact ha.2.2.2.2 ((hw.trans hu.symm) ▸ List.prefix_refl e.1)
 
+/-- For a family of admissible pairs, the edges of `Realization.graph t E` outside the support
+are the added edges `u′ → w′`, `(u, w) ∈ E`. -/
 theorem nonSupportEdges (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) :
     (graph t E).edges \ supportEdges t E = E.image (fun e => (donor t e, recipient t e)) := by
@@ -147,6 +184,8 @@ end Camus.Realization
 
 namespace Camus.SupportSubdivision
 
+/-- In a support subdivision `H` of `T` in `N`, the anchor of a vertex inside the wire above a
+non-root vertex `p` of `T` is `p`. -/
 theorem anchor_eq {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
     (H : SupportSubdivision t N S) {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ [])
     {v : ℕ} (hv : v ∈ wireInterior (H.wire p)) : H.anchor v = p := by

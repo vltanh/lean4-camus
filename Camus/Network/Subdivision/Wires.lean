@@ -2,10 +2,29 @@ module
 
 public import Camus.Network.Completeness.Wires
 
+/-!
+# Colouring a wire
+
+Auxiliary to `GraphSubdivision.displays_iff` (subdividing edges does not change the displayed
+quartets). A wire is the directed path that replaces an edge of `P` in a subdivision `N`: a
+duplicate-free list `L` of vertices, whose arcs `wireEdges L` are its consecutive pairs. Given a set
+`B` of arcs, this file colours the vertices of one wire, with prescribed colours at its two ends, so
+that every arc of the wire in `B` joins two vertices of the same colour. The end colours may differ
+only if some arc of the wire is missing from `B`. `GraphSubdivision.exists_subdivision_coloring`
+glues these colourings over all wires.
+
+## Main results
+
+* `wire_edge_idxOf`: each arc of a wire goes one step forward along the list.
+* `exists_wire_coloring`: the colouring of one wire.
+-/
+
 @[expose] public section
 
 namespace Camus
 
+/-- Each arc `(x, y)` of a duplicate-free wire `L` goes one step forward: the position of `y` in `L`
+is the position of `x` plus one. -/
 theorem wire_edge_idxOf {L : List ℕ} (hL : L.Nodup) {e : ℕ × ℕ}
     (he : e ∈ wireEdges L) : L.idxOf e.2 = L.idxOf e.1 + 1 := by
   induction L with
@@ -32,6 +51,8 @@ theorem wire_edge_idxOf {L : List ℕ} (hL : L.Nodup) {e : ℕ × ℕ}
         simp only [List.idxOf_cons_ne _ (Ne.symm hfirst), List.idxOf_cons_ne _ (Ne.symm hsecond)]
         rw [ih htail he]
 
+/-- No arc of the wire in `B` crosses an arc `gap` of the wire missing from `B`: both ends of the
+arc lie at or before the source of `gap`, or both lie after it. -/
 theorem wire_gap_color {L : List ℕ} (hL : L.Nodup) {B : Finset (ℕ × ℕ)}
     {gap : ℕ × ℕ} (hgap : gap ∈ wireEdges L) (hmissing : gap ∉ B)
     {e : ℕ × ℕ} (he : e ∈ wireEdges L) (heB : e ∈ B) :
@@ -50,6 +71,11 @@ theorem wire_gap_color {L : List ℕ} (hL : L.Nodup) {B : Finset (ℕ × ℕ)}
   · intro h
     omega
 
+/-- Colouring one wire. Let `L` be a duplicate-free wire from `a` to `b`, `B` a set of arcs, and
+`ca`, `cb` two colours with `ca = cb` whenever the whole wire lies in `B`. Then some colouring gives
+`a` the colour `ca`, `b` the colour `cb`, and both ends of every arc of the wire in `B` the same
+colour. If `ca ≠ cb`, some arc of the wire is missing from `B`; colour the vertices up to its source
+with `ca` and the others with `cb`. -/
 theorem exists_wire_coloring {β : Type*} (L : List ℕ) (hL : L.Nodup)
     {a b : ℕ} (hhead : L.head? = some a) (hlast : L.getLast? = some b)
     (B : Finset (ℕ × ℕ)) (ca cb : β) (hfull : wireEdges L ⊆ B → ca = cb) :

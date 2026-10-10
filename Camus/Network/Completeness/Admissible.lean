@@ -2,10 +2,32 @@ module
 
 public import Camus.Network.Completeness.Reachability
 
+/-!
+# Extracted pairs are admissible
+
+Let `d = (u', w')` be a non-tree edge with pair `H.pairOf d = (u, w)` (Definition 2). This file
+shows that `(u, w)` is admissible (`EdgeAbove.Admissible`): `u` and `w` are non-root vertices of
+`T` and `w` is not an ancestor of `u`, so an edge can be added above `(u, w)` (Definition 3).
+The step left after `SupportSubdivision.deleted_anchor_not_strict_ancestor` is `u ≠ w`: the cycle
+of `d` passes through an original vertex of `T`, which it could not do if both endpoints of `d`
+lay inside the same wire.
+
+## Main results
+
+* `SupportSubdivision.fundamentalCycle_contains_original`: the cycle of a non-tree edge passes
+  through an original vertex.
+* `SupportSubdivision.deleted_anchors_ne`: `u ≠ w`.
+* `SupportSubdivision.deleted_pair_admissible`: `(u, w)` is admissible.
+* `path_between_chain_members`: two members of a chain of adjacent vertices are joined by a path
+  inside the chain.
+-/
+
 @[expose] public section
 
 namespace Camus
 
+/-- If consecutive members of the list `l` are adjacent in `G`, any two members of `l` are joined
+by a path of `G` through members of `l`. -/
 theorem path_between_chain_members {G : SimpleGraph ℕ} {l : List ℕ}
     (hchain : l.IsChain G.Adj) {u v : ℕ} (hu : u ∈ l) (hv : v ∈ l) :
     ∃ p : G.Walk u v, p.IsPath ∧ p.support ⊆ l := by
@@ -29,6 +51,7 @@ theorem path_between_chain_members {G : SimpleGraph ℕ} {l : List ℕ}
 
 namespace RootedNetwork
 
+/-- The vertices of a cycle in the undirected graph of `N` are vertices of `N`. -/
 theorem cycle_support_mem_vertices {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     {v : ℕ} {c : N.underlying.Walk v v} (hc : c.IsCycle) {x : ℕ}
     (hx : x ∈ c.support) : x ∈ N.vertices := by
@@ -47,6 +70,9 @@ namespace SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
+/-- The cycle of a non-tree edge `d` passes through an original vertex. Otherwise each of its
+vertices would lie inside a wire, hence be an endpoint of a non-tree edge whose cycle meets that
+of `d`, hence an endpoint of `d`; but a cycle has at least three vertices. -/
 theorem fundamentalCycle_contains_original (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     ∃ p ∈ t.nodes, H.original p ∈ (RootedNetwork.fundamentalCycle hN H.switching he).support := by
@@ -85,6 +111,9 @@ theorem fundamentalCycle_contains_original (H : SupportSubdivision t N S)
     by_cases h : e.1 = e.2 <;> simp [h]
   omega
 
+/-- The anchors `u` and `w` of the endpoints of a non-tree edge differ. If both endpoints lay
+inside one wire, the switching path between them would stay inside that wire, and the cycle of
+the edge would contain no original vertex. -/
 theorem deleted_anchors_ne (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     H.anchor e.1 ≠ H.anchor e.2 := by
@@ -112,6 +141,8 @@ theorem deleted_anchors_ne (H : SupportSubdivision t N S)
   · exact H.interior_not_original hu.1 hu.2.1
       (List.mem_toFinset.mpr (hps hpath)) (Finset.mem_image.mpr ⟨q,hq,rfl⟩)
 
+/-- The pair `(u, w)` of a non-tree edge (Definition 2) is admissible: `u` and `w` are non-root
+vertices of `T`, and `w` is not an ancestor of `u`. -/
 theorem deleted_pair_admissible (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     EdgeAbove.Admissible t (H.pairOf e) := by

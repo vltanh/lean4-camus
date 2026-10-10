@@ -3,10 +3,32 @@ module
 public import Camus.Network.Completeness.Degrees
 public import Mathlib.Data.List.Chain
 
+/-!
+# Directed reachability along wires
+
+This file follows directed paths of switching edges. Along a wire each vertex reaches every later
+vertex, and `H.original p` reaches `H.original q` whenever `p` is an ancestor of `q` in `T`.
+Since `N` is acyclic, the anchor `w` of the head of a non-tree edge is not a strict ancestor of
+the anchor `u` of its tail. With `u ≠ w` (`SupportSubdivision.deleted_anchors_ne`) this shows
+that the pair `(u, w)` of Definition 2 is admissible
+(`SupportSubdivision.deleted_pair_admissible`).
+
+## Main results
+
+* `wire_chain`: a relation that holds on the edges of a wire holds between its consecutive
+  vertices.
+* `SupportSubdivision.original_reachable_of_prefix`: an ancestor in `T` reaches its descendants
+  along switching edges.
+* `SupportSubdivision.deleted_anchor_not_strict_ancestor`: if `w` is an ancestor of `u`, then
+  `w = u`.
+-/
+
 @[expose] public section
 
 namespace Camus
 
+/-- If a relation `R` holds on every edge of the wire `l`, it holds between consecutive vertices
+of `l`. -/
 theorem wire_chain {R : ℕ → ℕ → Prop} (l : List ℕ)
     (h : ∀ e ∈ wireEdges l, R e.1 e.2) : l.IsChain R := by
   induction l with
@@ -26,6 +48,7 @@ namespace SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
+/-- Along the wire of `p`, each vertex reaches every later vertex along switching edges. -/
 theorem wire_reachability_pairwise (H : SupportSubdivision t N S)
     {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) :
     (H.wire p).Pairwise (Relation.ReflTransGen (fun u v => (u,v) ∈ S)) := by
@@ -34,6 +57,7 @@ theorem wire_reachability_pairwise (H : SupportSubdivision t N S)
   intro e he
   exact Relation.ReflTransGen.single (H.wire_edge_mem_support hp hp0 he)
 
+/-- `H.original (parent p)` reaches every vertex of the wire of `p` along switching edges. -/
 theorem wire_reachable_from_head (H : SupportSubdivision t N S)
     {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}
     (hv : v ∈ H.wire p) :
@@ -48,6 +72,7 @@ theorem wire_reachable_from_head (H : SupportSubdivision t N S)
   rw [← hhead]
   exact (H.wire_reachability_pairwise hp hp0).rel_head hv
 
+/-- Every vertex of the wire of `p` reaches `H.original p` along switching edges. -/
 theorem wire_reachable_to_last (H : SupportSubdivision t N S)
     {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}
     (hv : v ∈ H.wire p) :
@@ -62,6 +87,7 @@ theorem wire_reachable_to_last (H : SupportSubdivision t N S)
   rw [← hlast]
   exact (H.wire_reachability_pairwise hp hp0).rel_getLast hv
 
+/-- `H.original (parent p)` reaches `H.original p` along switching edges. -/
 theorem wire_head_reaches_last (H : SupportSubdivision t N S)
     {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) :
     Relation.ReflTransGen (fun u w => (u,w) ∈ S)
@@ -71,6 +97,8 @@ theorem wire_head_reaches_last (H : SupportSubdivision t N S)
   rw [(H.wire_laws p hp hp0).2.2.1]
   simp
 
+/-- If `p` is an ancestor of `q` in `T`, then `H.original p` reaches `H.original q` along
+switching edges. -/
 theorem original_reachable_of_prefix (H : SupportSubdivision t N S)
     {p q : Address} (hq : q ∈ t.nodes) (hpq : p <+: q) :
     Relation.ReflTransGen (fun u w => (u,w) ∈ S) (H.original p) (H.original q) := by
@@ -87,6 +115,9 @@ theorem original_reachable_of_prefix (H : SupportSubdivision t N S)
     rw [hpbr]
     exact (ih hpr).trans hwire
 
+/-- Let `d = (u', w')` be a non-tree edge with anchors `u` and `w`. If `w` is an ancestor of `u`,
+then `w = u`. Otherwise `w'` reaches `H.original w`, which reaches `H.original (parent u)`, which
+reaches `u'`, all along switching edges, and `d` closes a directed cycle. -/
 theorem deleted_anchor_not_strict_ancestor (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S)
     (hpref : H.anchor e.2 <+: H.anchor e.1) : H.anchor e.2 = H.anchor e.1 := by

@@ -4,17 +4,33 @@ public import Camus.Defs
 
 public import Camus.Tree.Forest
 
+/-!
+# Codes of addresses
+
+The networks `Realization.graph t E` built from `T` use natural numbers as vertex identifiers: a
+vertex `p` of `T` is the number `Address.code p`, and the new vertices u', w' get fresh numbers
+above all of these. This file proves that the codes are positive and injective, so distinct
+vertices of `T` get distinct identifiers.
+
+## Main results
+
+* `Address.code_pos`: codes are positive.
+* `Address.code_injective`: distinct addresses have distinct codes.
+-/
+
 @[expose] public section
 
 namespace Camus
 
 namespace Address
 
+/-- The code of an address is positive. -/
 theorem code_pos (p : Address) : 0 < code p := by
   induction p with
   | nil => simp [code]
   | cons b p ih => cases b <;> simp only [code] <;> omega
 
+/-- Distinct addresses have distinct codes: `Address.code` is injective. -/
 theorem code_injective : Function.Injective code := by
   intro p
   induction p with

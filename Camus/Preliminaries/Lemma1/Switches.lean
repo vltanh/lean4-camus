@@ -3,11 +3,34 @@ module
 public import Camus.Preliminaries.Lemma1.Cuts
 public import Camus.Preliminaries.Lemma1.Tree
 
+/-!
+# Lemma 1, uniqueness: switchings of `N` with one non-tree edge
+
+Let `N` be a rooted binary level-1 network with a switching `S` whose edges form the subdivided `T`,
+and `d` a non-tree edge. The network `{N with edges := insert d S}` (all other non-tree edges
+deleted) is a subdivision of `T + d`. This file shows that a switching `K` of it differs from `S`
+only on the cycle of `d`, and that if deleting an edge of `K` separates a quartet that `T` does not
+induce, that edge lies on the cycle of `d`. These facts are used in the uniqueness part of Lemma 1
+(`Preliminaries/Lemma1/Unique.lean`).
+
+## Main results
+
+* `RootedNetwork.single_switch_missing_on_cycle`: an edge of `S` missing from `K` lies on the cycle
+  of `d`.
+* `RootedNetwork.single_switch_cut_reachable_iff`: after deleting an edge not on the cycle of `d`,
+  `K` and `S` have the same components.
+* `RootedNetwork.single_raw_novel_cut_on_cycle`: the deleted edge of a switching witness for a
+  quartet that `T` does not induce lies on the cycle of `d`.
+-/
+
 @[expose] public section
 
 namespace Camus.RootedNetwork
 
-/-- Cutting a subgraph and replacing its missing chords by support paths. -/
+/-- Let `S ⊆ R ⊆ T ⊆ N.edges` be sets of edges of `N` (here `T` is a set of edges, not the tree),
+with `S` a switching of `N`, and let `B` be a set of edges that avoids the path of `S` joining the
+ends of each edge of `T \ R`. Then after deleting `B`, two vertices are connected in
+`{N with edges := T}` iff they are connected in `{N with edges := R}`. -/
 theorem reachable_subgraph_reduce_iff {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     {S : Finset (ℕ × ℕ)} (hS : N.Switching S)
     (T R : Finset (ℕ × ℕ)) (hSR : S ⊆ R) (hRT : R ⊆ T) (hTN : T ⊆ N.edges)
@@ -53,7 +76,7 @@ theorem reachable_subgraph_reduce_iff {N : RootedNetwork} (hN : N.RootedBinaryLe
     rw [SimpleGraph.deleteEdges_adj] at hab ⊢
     exact ⟨⟨hab.1.1,hab.1.2.imp (fun h => hRT h) (fun h => hRT h)⟩,hab.2⟩
 
-/-- A single-edge switching can remove a support arc only at that edge's recipient. -/
+/-- A switching `K ⊆ S ∪ {d}` of `N` omits only edges of `S` that enter the head of `d`. -/
 theorem single_switch_missing_head {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     {S K : Finset (ℕ × ℕ)} (hS : N.Switching S) (hK : N.Switching K)
     {d : ℕ × ℕ} (hKraw : K ⊆ insert d S) {g : ℕ × ℕ}
@@ -75,7 +98,8 @@ theorem single_switch_missing_head {N : RootedNetwork} (hN : N.RootedBinaryLevel
       (switching_incoming_unique hN hS (by rw [← hkg]; exact hk) hg) hkg
     exact False.elim (hgK (hkEq ▸ hkK))
 
-/-- Every support arc omitted by a single-edge switching lies on that cycle. -/
+/-- An edge of `S` omitted by a switching `K ⊆ S ∪ {d}` of `N` lies on the cycle of `d`: it is the
+edge of `S` entering the head of `d`. -/
 theorem single_switch_missing_on_cycle {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     {S K : Finset (ℕ × ℕ)} (hS : N.Switching S) (hK : N.Switching K)
     {d : ℕ × ℕ} (hd : d ∈ N.edges \ S) (hKraw : K ⊆ insert d S)
@@ -96,8 +120,8 @@ theorem single_switch_missing_on_cycle {N : RootedNetwork} (hN : N.RootedBinaryL
     exact edge_ne hN (Finset.mem_sdiff.mp hd).1 (SimpleGraph.Walk.Nil.eq hp).symm
   exact (supportPath hN hS hd).val.mk_start_snd_mem_edges hpne
 
-/-- Outside the selected cycle, a single-edge switching and the original support
-have identical cut components. -/
+/-- Let `K ⊆ S ∪ {d}` be a switching of `N` and `b` an edge not on the cycle of `d`. After deleting
+`b`, two vertices are connected in `K` iff they are connected in `S`. -/
 theorem single_switch_cut_reachable_iff {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     {S K : Finset (ℕ × ℕ)} (hS : N.Switching S) (hK : N.Switching K)
     {d : ℕ × ℕ} (hd : d ∈ N.edges \ S) (hKraw : K ⊆ insert d S)
@@ -144,7 +168,9 @@ theorem single_switch_cut_reachable_iff {N : RootedNetwork} (hN : N.RootedBinary
     exact List.mem_cons_of_mem _ hpath
   exact hKiff.symm.trans hSiff
 
-/-- A switching witness for a novel quartet must cut the selected cycle. -/
+/-- Let `K ⊆ S ∪ {d}` be a switching of `N` and `b` an edge of `K` whose deletion separates a
+quartet `q` that `T` does not induce. Then `b` lies on the cycle of `d`: otherwise deleting `b`
+would separate `q` in the subdivided `T` as well, and `T` would induce `q`. -/
 theorem single_raw_novel_cut_on_cycle {t : PhyloTree} (ht : t.WellLabelled)
     {N : RootedNetwork} (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)}
     (H : SupportSubdivision t N S) {d : ℕ × ℕ} (hd : d ∈ N.edges \ S)

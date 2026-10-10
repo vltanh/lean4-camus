@@ -3,10 +3,31 @@ module
 public import Camus.Network.Baseline.Cuts
 public import Camus.Network.Isomorphism.Rename
 
+/-!
+# Edge cuts of `T` and its clades
+
+Auxiliary to `Realization.baseline_displays_iff`. The clades of `T` (`PhyloTree.clades`) are the
+taxon sets of its subtrees `T_p`. Deleting the edge above a vertex `p` of `T` separates the two
+pairs of a quartet `q` if and only if the clade of `T_p` contains one pair and avoids the other
+(`Quartet.cutBy`). The file also shows that `T` has no switching other than itself and that its
+edges are the edges above its non-root vertices.
+
+## Main results
+
+* `PhyloTree.clades_mem_iff`: the clades of `T` are the taxon sets of its subtrees.
+* `Realization.baselineCut_separates_iff`: deleting the edge above `p` separates `q` if and only if
+  the clade of `T_p` induces the split of `q`.
+* `Realization.baseline_switching_unique`: the only switching of `Realization.graph t ∅` is its
+  whole arc set.
+* `Realization.baseline_edgeSet`: the edges of `T` are the edges above its non-root vertices.
+* `Quartet.cutBy_not_whole`: a set containing the four taxa of `q` does not induce its split.
+-/
+
 @[expose] public section
 
 namespace Camus.PhyloTree
 
+/-- The taxa of a subtree of `t` are taxa of `t`. -/
 theorem subtree_taxa_subset {t sub : PhyloTree} {p : Address}
     (hp : t.nodeAt p = some sub) : sub.taxa ⊆ t.taxa := by
   induction t generalizing p with
@@ -28,6 +49,8 @@ theorem subtree_taxa_subset {t sub : PhyloTree} {p : Address}
         simp only [taxa, labels, List.toFinset_append]
         exact Finset.mem_union_right _ hr
 
+/-- The clades of `t` (`PhyloTree.clades`) are the taxon sets of its subtrees, the whole tree
+included. -/
 theorem clades_mem_iff (t : PhyloTree) (S : Finset ℕ) :
     S ∈ t.clades ↔ ∃ p sub, t.nodeAt p = some sub ∧ sub.taxa = S := by
   induction t with
@@ -61,6 +84,8 @@ theorem clades_mem_iff (t : PhyloTree) (S : Finset ℕ) :
         · exact List.mem_cons_of_mem _ (List.mem_append_left _ (ihl.mpr ⟨p, sub, hp, rfl⟩))
         · exact List.mem_cons_of_mem _ (List.mem_append_right _ (ihr.mpr ⟨p, sub, hp, rfl⟩))
 
+/-- In a well-labelled tree `t`, a taxon `a` of `t` lies in the subtree at `p` if and only if `p` is
+a prefix of the address of the leaf labelled `a`. -/
 theorem subtree_taxa_iff_prefix {t sub : PhyloTree} (ht : t.WellLabelled)
     {p : Address} (hp : t.nodeAt p = some sub) {a : ℕ} (ha : a ∈ t.taxa) :
     a ∈ sub.taxa ↔ p <+: Realization.leafAddress t a := by
@@ -79,10 +104,13 @@ end Camus.PhyloTree
 
 namespace Camus.Quartet
 
+/-- Both sides of the split of a quartet are nonempty. -/
 theorem sides_nonempty (q : Quartet) : q.sides.1.Nonempty ∧ q.sides.2.Nonempty := by
   unfold sides
   split_ifs <;> simp
 
+/-- A set containing all four taxa of `q` does not induce the split of `q`. So the clade of the
+whole tree, which `PhyloTree.clades` lists, induces no quartet. -/
 theorem cutBy_not_whole (q : Quartet) (S : Finset ℕ) (hq : q.taxa ⊆ S) : q.cutBy S ≠ true := by
   intro h
   have hp : q.sides.1 ⊆ S ∧ Disjoint q.sides.2 S ∨
@@ -97,6 +125,8 @@ end Camus.Quartet
 
 namespace Camus.Realization
 
+/-- For nonempty sets `A`, `B` and a predicate `P`: `P` is constant on `A` and on `B`, with
+different values on the two, if and only if `P` holds on `A` and fails on `B`, or the reverse. -/
 theorem side_partition_iff {A B : Finset ℕ} (hA : A.Nonempty) (hB : B.Nonempty)
     (P : ℕ → Prop) :
     ((∀ a ∈ A, ∀ b ∈ A, P a ↔ P b) ∧
@@ -126,6 +156,10 @@ theorem side_partition_iff {A B : Finset ℕ} (hA : A.Nonempty) (hB : B.Nonempty
         fun a ha b hb => ⟨fun _ => hB b hb, fun _ => hB a ha⟩,
         fun a ha b hb h => hA a ha (h.mpr (hB b hb))⟩
 
+/-- Let `t` be well-labelled, `sub` its subtree at `p`, and `q` a quartet on taxa of `t`. Deleting
+the edge above `p` from `T` separates the two pairs of `q` if and only if the clade of `sub` induces
+the split of `q` (`Quartet.cutBy`): after the deletion, two leaves are connected if and only if both
+or neither lie in `sub` (`Realization.baselineCut_reachable_iff`). -/
 theorem baselineCut_separates_iff {t sub : PhyloTree} (ht : t.WellLabelled)
     {p : Address} (hp : t.nodeAt p = some sub) (q : Quartet)
     (hq : q.taxa ⊆ t.taxa) :
@@ -155,6 +189,8 @@ theorem baselineCut_separates_iff {t sub : PhyloTree} (ht : t.WellLabelled)
       fun a ha b hb => (reach a b (hsecond a ha) (hsecond b hb)).mpr (hBB a ha b hb),
       fun a ha b hb h => hAB a ha b hb ((reach a b (hfirst a ha) (hsecond b hb)).mp h)⟩
 
+/-- The only switching of `T` (`Realization.graph t ∅`) is its whole arc set: each non-root vertex
+of `T` has exactly one incoming arc, which a switching must keep. -/
 theorem baseline_switching_unique (t : PhyloTree) (ht : t.WellLabelled)
     {S : Finset (ℕ × ℕ)} (hS : (graph t ∅).Switching S) : S = (graph t ∅).edges := by
   classical
@@ -184,6 +220,8 @@ theorem baseline_switching_unique (t : PhyloTree) (ht : t.WellLabelled)
   have hfe := Finset.card_le_one.mp (htotal.2 e.2 hev henil).le f hfN e heN
   exact hfe ▸ (Finset.mem_filter.mp hf).1
 
+/-- The edges of the underlying undirected graph of `T` (`Realization.graph t ∅`) are the edges
+`Realization.baselineCut p` above the non-root vertices `p` of `T`. -/
 theorem baseline_edgeSet (t : PhyloTree) (edge : Sym2 ℕ) :
     edge ∈ (graph t ∅).underlying.edgeSet ↔
       ∃ p ∈ t.nodes, p ≠ [] ∧ baselineCut p = edge := by

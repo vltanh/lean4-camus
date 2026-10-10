@@ -3,12 +3,31 @@ module
 public import Camus.Network.Isomorphism.Rename
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
 
+/-!
+# Isomorphic networks display the same quartets
+
+Every network built on `T` is isomorphic to the canonical network `Realization.graph t E` of a
+family `E` of pairs (`SupportSubdivision.canonical_iso`). This file shows that an isomorphism
+(`RootedNetwork.Iso`: a bijection of the vertex sets preserving arcs, root and labelled leaves) does
+not change the displayed quartets. So a network built on `T` has the score of its canonical network,
+which lets Theorem 1 and the results of Section 2.4 range over all networks built on `T` while the
+dynamic program ranges over families of pairs.
+
+## Main results
+
+* `RootedNetwork.Iso.displays_iff`: isomorphic networks display the same quartets.
+-/
+
 @[expose] public section
 
 namespace Camus
 
 namespace RootedNetwork
 
+/-- Isomorphic networks display the same quartets. Let `N` and `P` be rooted binary level-1 networks
+and `i` an isomorphism from `N` to `P`. Then `N` displays `q` if and only if `P` displays `q`. The
+bijection of vertex sets extends to a permutation of `ℕ` (`Equiv.extendSubtype`), and
+`RootedNetwork.displays_of_rename` applies in both directions. -/
 theorem Iso.displays_iff {N P : RootedNetwork}
     (hN : N.RootedBinaryLevelOne) (hP : P.RootedBinaryLevelOne)
     (i : N.Iso P) (q : Quartet) : N.DisplaysQuartet q ↔ P.DisplaysQuartet q := by

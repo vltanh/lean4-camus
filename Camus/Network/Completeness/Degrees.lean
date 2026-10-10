@@ -3,11 +3,37 @@ module
 public import Camus.Network.Completeness.Wires
 public import Camus.DP.Frontier
 
+/-!
+# The endpoints of non-tree edges lie inside wires
+
+In a rooted binary network a non-root vertex has indegree and outdegree `(1, 0)`, `(1, 2)` or
+`(2, 1)`. Comparing the degrees in `N` with those in the switching `S` locates the non-tree edges
+relative to `T`. The head of a non-tree edge is a reticulation. Neither endpoint is an original
+vertex of `T`, so both lie inside wires: the endpoints `u'` and `w'` of Definition 2 subdivide
+the edges of `T` above their anchors `u` and `w`. Conversely, every vertex inside a wire is an
+endpoint of a non-tree edge.
+
+## Main results
+
+* `RootedNetwork.deleted_edge_target_reticulation`: the head of a non-tree edge has indegree two
+  and outdegree one.
+* `SupportSubdivision.deleted_source_not_original`,
+  `SupportSubdivision.deleted_target_not_original`: neither endpoint of a non-tree edge is an
+  original vertex.
+* `SupportSubdivision.deleted_source_anchor_spec`, `SupportSubdivision.deleted_target_anchor_spec`:
+  each endpoint of a non-tree edge lies inside the wire of its anchor, a non-root vertex of `T`.
+* `SupportSubdivision.deleted_source_tree_vertex`: the tail of a non-tree edge has indegree one
+  and outdegree two.
+* `SupportSubdivision.interior_is_deleted_endpoint`: every vertex inside a wire is an endpoint of
+  a non-tree edge.
+-/
+
 @[expose] public section
 
 namespace Camus
 namespace RootedNetwork
 
+/-- Every vertex of a rooted binary network has outdegree at most two. -/
 theorem outdegree_le_two {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     {v : ℕ} (hv : v ∈ N.vertices) : N.outdegree v ≤ 2 := by
   by_cases hr : v = N.root
@@ -15,16 +41,19 @@ theorem outdegree_le_two {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     rcases hN.2.2.2.2.1 with h | h <;> omega
   · rcases hN.2.2.2.2.2.2.2.2.2.1 v hv hr with h | h | h <;> omega
 
+/-- For `S ⊆ N.edges`, indegrees in `S` are at most those in `N`. -/
 theorem indegree_mono {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
     (hS : S ⊆ N.edges) (v : ℕ) : ({N with edges := S}).indegree v ≤ N.indegree v := by
   classical
   exact Finset.card_mono (Finset.filter_subset_filter _ hS)
 
+/-- For `S ⊆ N.edges`, outdegrees in `S` are at most those in `N`. -/
 theorem outdegree_mono {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
     (hS : S ⊆ N.edges) (v : ℕ) : ({N with edges := S}).outdegree v ≤ N.outdegree v := by
   classical
   exact Finset.card_mono (Finset.filter_subset_filter _ hS)
 
+/-- The head of an edge of `N.edges \ S` has smaller indegree in `S` than in `N`. -/
 theorem deleted_edge_indegree_lt {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
     (hS : S ⊆ N.edges) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     ({N with edges := S}).indegree e.2 < N.indegree e.2 := by
@@ -39,6 +68,7 @@ theorem deleted_edge_indegree_lt {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
   subst f
   exact (Finset.mem_sdiff.mp he).2 hf
 
+/-- The tail of an edge of `N.edges \ S` has smaller outdegree in `S` than in `N`. -/
 theorem deleted_edge_outdegree_lt {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
     (hS : S ⊆ N.edges) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     ({N with edges := S}).outdegree e.1 < N.outdegree e.1 := by
@@ -53,6 +83,8 @@ theorem deleted_edge_outdegree_lt {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
   subst f
   exact (Finset.mem_sdiff.mp he).2 hf
 
+/-- The head of a non-tree edge is a reticulation: it has indegree two and outdegree one in
+`N`. -/
 theorem deleted_edge_target_reticulation {N : RootedNetwork}
     (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)} (hS : N.Switching S)
     {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
@@ -77,6 +109,8 @@ namespace SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
+/-- An internal vertex `p` of `T` has outdegree at least two in `S`: the wires of its two
+children leave `H.original p` by distinct switching edges. -/
 theorem original_fork_outdegree_support (H : SupportSubdivision t N S)
     {p : Address} {l r : PhyloTree} (hp : t.nodeAt p = some (.fork l r)) :
     2 ≤ ({N with edges := S}).outdegree (H.original p) := by
@@ -105,6 +139,7 @@ theorem original_fork_outdegree_support (H : SupportSubdivision t N S)
   have hc := Finset.card_mono hsub
   simpa [huv, RootedNetwork.outdegree] using hc
 
+/-- A leaf of `T` has outdegree zero in `N`. -/
 theorem original_leaf_outdegree (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {p : Address} {a : ℕ}
     (hp : t.nodeAt p = some (.leaf a)) : N.outdegree (H.original p) = 0 := by
@@ -114,6 +149,8 @@ theorem original_leaf_outdegree (H : SupportSubdivision t N S)
   rw [H.leaves_preserved p hpn a hp]
   exact (hN.2.2.2.2.2.2.2.1 a haN).2.2
 
+/-- The tail of a non-tree edge is not an original vertex: an internal vertex of `T` already has
+two outgoing edges in `S`, and a leaf has none. -/
 theorem deleted_source_not_original (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     e.1 ∉ t.nodes.image H.original := by
@@ -130,6 +167,8 @@ theorem deleted_source_not_original (H : SupportSubdivision t N S)
     have hup := RootedNetwork.outdegree_le_two hN (H.original_mem_vertices hp)
     omega
 
+/-- The head of a non-tree edge is not an original vertex: it has outdegree one, while an
+original vertex has outdegree zero (a leaf) or at least two. -/
 theorem deleted_target_not_original (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     e.2 ∉ t.nodes.image H.original := by
@@ -146,6 +185,8 @@ theorem deleted_target_not_original (H : SupportSubdivision t N S)
     have hmono := RootedNetwork.outdegree_mono H.switching.1 (H.original p)
     omega
 
+/-- The tail `u'` of a non-tree edge lies inside the wire of its anchor `u`, a non-root vertex of
+`T`: `u` is the vertex of `T` directly below `u'` (Definition 2). -/
 theorem deleted_source_anchor_spec (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     H.anchor e.1 ∈ t.nodes ∧ H.anchor e.1 ≠ [] ∧
@@ -155,6 +196,8 @@ theorem deleted_source_anchor_spec (H : SupportSubdivision t N S)
   · exact False.elim (H.deleted_source_not_original hN he (Finset.mem_image.mpr ho))
   · exact hi
 
+/-- The head `w'` of a non-tree edge lies inside the wire of its anchor `w`, a non-root vertex of
+`T`: `w` is the vertex of `T` directly below `w'` (Definition 2). -/
 theorem deleted_target_anchor_spec (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     H.anchor e.2 ∈ t.nodes ∧ H.anchor e.2 ≠ [] ∧
@@ -164,6 +207,7 @@ theorem deleted_target_anchor_spec (H : SupportSubdivision t N S)
   · exact False.elim (H.deleted_target_not_original hN he (Finset.mem_image.mpr ho))
   · exact hi
 
+/-- The tail of a non-tree edge has indegree one and outdegree two in `N`. -/
 theorem deleted_source_tree_vertex (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     N.indegree e.1 = 1 ∧ N.outdegree e.1 = 2 := by
@@ -181,8 +225,8 @@ theorem deleted_source_tree_vertex (H : SupportSubdivision t N S)
   · exact h
   · omega
 
-/-- Unary support vertices have no role other than an endpoint of one deleted
-edge: the binary network degree laws exclude any remaining unary vertex. -/
+/-- Every vertex inside a wire is an endpoint of a non-tree edge. It has indegree and outdegree
+one in `S`, and `N` has no vertex with these degrees, so one of its edges in `N` is not in `S`. -/
 theorem interior_is_deleted_endpoint (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}

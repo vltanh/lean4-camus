@@ -2,10 +2,30 @@ module
 
 public import Camus.Network.Reticulations
 
+/-!
+# Section 2.4: with `n − 1` reticulations every cycle is a triangle
+
+A network built on `T` with `n` leaves has at most `n − 1` reticulations: by Lemma 2 the targets of
+the added edges are distinct internal vertices of `T` (`EdgeAbove.separated_card_bound`). When the
+bound is attained, every internal vertex is a target, and the cycle of every added edge contains
+exactly one vertex of `T`, its target: the cycle is a triangle, formed by the target and the two
+subdivision vertices. This is used for the counterexample to the monotonicity claim of Section 2.4
+(the report's E3, `Camus/Restriction/Counterexample.lean`), where a single added edge whose network
+displays the quartet in question needs a cycle through two vertices of `T`.
+
+## Main results
+
+* `EdgeAbove.footprint_internal`: the vertices of `T` on a cycle are internal vertices.
+* `EdgeAbove.saturated_footprint`: with `n − 1` added edges, every cycle meets `T` only in its
+  target.
+-/
+
 @[expose] public section
 
 namespace Camus.EdgeAbove
 
+/-- The vertices of `T` on the cycle `γ(u, w)` (`EdgeAbove.footprint`) are internal vertices of
+`T`. -/
 theorem footprint_internal {t : PhyloTree} {e : Address × Address}
     (he : Admissible t e) : footprint t e ⊆ t.internalNodes := by
   intro p hp
@@ -19,8 +39,10 @@ theorem footprint_internal {t : PhyloTree} {e : Address × Address}
     · exact (hne (PhyloTree.leaf_no_descendant hs he.1 hu)).elim
     · exact (hne (PhyloTree.leaf_no_descendant hs he.2.1 hw)).elim
 
-/-- Saturation at n−1 reticulations leaves exactly one original branching
-vertex in each cycle. This follows from disjoint footprints, not a bound alone. -/
+/-- Section 2.4: if a cycle-separated family `E` has as many edges as `T` has internal vertices
+(`n − 1`), the cycle of every `e ∈ E` meets `T` only in its target: `footprint t e = {target e}`.
+By Lemma 2 the targets are distinct, so every internal vertex is the target of some edge and lies
+on that edge's cycle; the cycles of distinct edges share no vertex of `T`. -/
 theorem saturated_footprint {t : PhyloTree} {E : Finset (Address × Address)}
     (hE : CycleSeparated t E) (hcard : E.card = t.internalNodes.card)
     {e : Address × Address} (he : e ∈ E) : footprint t e = {target e} := by

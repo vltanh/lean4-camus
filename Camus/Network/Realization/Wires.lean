@@ -2,10 +2,51 @@ module
 
 public import Camus.Network.Realization.Basic
 
+/-!
+# The canonical network of an edge family: wires
+
+We identify a vertex `p` of `T` with its code `Address.code p`. In `Realization.graph t E` the
+edge of `T` from `parent(p)` to a non-root vertex `p` is replaced by a directed path, the wire
+`Realization.wire t E p` above `p`. It runs from `parent(p)` through the fresh vertices placed on
+this edge to `p`. These are, in order, the outer endpoints (`Realization.outerEndpoints`): the
+donor `u′` of each pair `(u, w) ∈ E` with `u = p ≠ lca(u, w)` and the recipient `w′` of each
+pair with `w = p`; then the ghost donors (`Realization.ghostEndpoints`): the donor `u′` of each
+pair with `u = p = lca(u, w)`, whose recipient end `w` lies below `u`. For a family of admissible
+pairs, this file proves that the vertices inside the wire above `p` are the donors of the pairs
+with donor end `p` and the recipients of the pairs with recipient end `p`, that the wire
+interiors are pairwise disjoint and contain no vertex of `T`, and that each wire is a path from
+`parent(p)` to `p`.
+
+## Main results
+
+* `Realization.mem_wireInterior`: the vertices inside the wire above `p` are the donors `u′` of
+  the pairs `(u, w) ∈ E` with `u = p` and the recipients `w′` of the pairs with `w = p`.
+* `Realization.donor_mem_wireInterior_iff`, `Realization.recipient_mem_wireInterior_iff`: `u′`
+  is inside the wire above `p` iff `u = p`, and `w′` iff `w = p`.
+* `Realization.wireInterior_disjoint_original`, `Realization.interiors_disjoint`: the wire
+  interiors contain no vertex of `T` and are pairwise disjoint.
+* `Realization.wire_nodup`, `Realization.wire_head`, `Realization.wire_last`: the wire above `p`
+  is a path from `parent(p)` to `p`.
+* `Realization.vertices_covered`: the vertices of the network are the vertices of `T` and the
+  vertices inside the wires.
+
+## The order on a shared wire
+
+A wire can carry an endpoint of one cycle and the ghost donor of another. Suppose the pair `e`
+has an outer endpoint `x` on the wire above `p` and the pair `f` has its ghost donor `g` there.
+The cycle of `e` contains `parent(p)` and the part of the wire from `parent(p)` to `x`; the
+cycle of `f` contains the part of the wire from `g` to `p`. These cycles are disjoint only if `x`
+comes before `g`, the order used by `Realization.wire`. For a cycle-separated family each wire
+carries at most one vertex of each kind (`Realization.outerEndpoints_eq_singleton`,
+`Realization.ghostEndpoints_eq_singleton`).
+-/
+
 @[expose] public section
 
 namespace Camus.Realization
 
+/-- A fresh vertex determines its pair: if `v` is the donor or the recipient of the admissible
+pair `e`, and also of the admissible pair `f`, then `e = f`. -/
 theorem endpoint_owner_unique {t : PhyloTree} {e f : Pair}
     (he : e ∈ EdgeAbove.candidates t) (hf : f ∈ EdgeAbove.candidates t)
     {v : ℕ} (hv : v = donor t e ∨ v = recipient t e)
@@ -16,6 +57,8 @@ theorem endpoint_owner_unique {t : PhyloTree} {e f : Pair}
   · exact False.elim (donor_ne_recipient t f e (hd'.symm.trans hr))
   · exact recipient_injective t he hf (hr.symm.trans hr')
 
+/-- The outer endpoints on the wire above `p` are the donors `u′` of the pairs `(u, w) ∈ E`
+with `u = p ≠ lca(u, w)` and the recipients `w′` of the pairs with `w = p`. -/
 theorem mem_outerEndpoints {t : PhyloTree} {E : Finset Pair} {p : Address} {v : ℕ} :
     v ∈ outerEndpoints t E p ↔
       ∃ e ∈ E, (e.1 = p ∧ EdgeAbove.target e ≠ p ∧ v = donor t e) ∨
@@ -34,6 +77,8 @@ theorem mem_outerEndpoints {t : PhyloTree} {E : Finset Pair} {p : Address} {v : 
     · exact ⟨e, he, Or.inl (by simp [hu, ht])⟩
     · exact ⟨e, he, Or.inr (by simp [hw])⟩
 
+/-- The ghost donors on the wire above `p` are the donors `u′` of the pairs `(u, w) ∈ E` with
+`u = p = lca(u, w)`. -/
 theorem mem_ghostEndpoints {t : PhyloTree} {E : Finset Pair} {p : Address} {v : ℕ} :
     v ∈ ghostEndpoints t E p ↔
       ∃ e ∈ E, e.1 = p ∧ EdgeAbove.target e = p ∧ v = donor t e := by
@@ -47,10 +92,13 @@ theorem mem_ghostEndpoints {t : PhyloTree} {E : Finset Pair} {p : Address} {v : 
   · rintro ⟨e, he, hu, ht, rfl⟩
     exact ⟨e, he, by simp [hu, ht]⟩
 
+/-- The interior of the wire above `p` consists of its outer endpoints and ghost donors. -/
 theorem wireInterior_eq (t : PhyloTree) (E : Finset Pair) (p : Address) :
     wireInterior (wire t E p) = (outerEndpoints t E p ++ ghostEndpoints t E p).toFinset := by
   simp [wireInterior, wire, List.append_assoc]
 
+/-- The vertices inside the wire above `p` are the donors `u′` of the pairs `(u, w) ∈ E` with
+`u = p` and the recipients `w′` of the pairs with `w = p`. -/
 theorem mem_wireInterior {t : PhyloTree} {E : Finset Pair} {p : Address} {v : ℕ} :
     v ∈ wireInterior (wire t E p) ↔
       ∃ e ∈ E, (e.1 = p ∧ v = donor t e) ∨ (e.2 = p ∧ v = recipient t e) := by
@@ -68,6 +116,7 @@ theorem mem_wireInterior {t : PhyloTree} {E : Finset Pair} {p : Address} {v : �
       · exact Or.inl ⟨e, he, Or.inl ⟨hu, ht, hv⟩⟩
     · exact Or.inl ⟨e, he, Or.inr ⟨hw, hv⟩⟩
 
+/-- No vertex inside a wire is a vertex of `T`. -/
 theorem wireInterior_disjoint_original (t : PhyloTree) (E : Finset Pair) (p : Address) :
     Disjoint (wireInterior (wire t E p)) (t.nodes.image Address.code) := by
   classical
@@ -79,6 +128,8 @@ theorem wireInterior_disjoint_original (t : PhyloTree) (E : Finset Pair) (p : Ad
   · exact donor_ne_code e hq hd.symm
   · exact recipient_ne_code e hq hr.symm
 
+/-- For a family of admissible pairs, the wires above distinct vertices have disjoint
+interiors. -/
 theorem interiors_disjoint (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {p q : Address} (hpq : p ≠ q) :
     Disjoint (wireInterior (wire t E p)) (wireInterior (wire t E q)) := by
@@ -98,12 +149,15 @@ theorem interiors_disjoint (t : PhyloTree) (E : Finset Pair)
   · exact donor_ne_recipient t e e (hd'.symm.trans hr)
   · exact hpq (hpw.symm.trans hqw)
 
+/-- The vertices of the wire above `p` are `parent(p)`, the vertices inside it, and `p`. -/
 theorem mem_wire {t : PhyloTree} {E : Finset Pair} {p : Address} {v : ℕ} :
     v ∈ wire t E p ↔ v = Address.code (parent p) ∨
       v ∈ wireInterior (wire t E p) ∨ v = Address.code p := by
   rw [wireInterior_eq]
   simp [wire, List.append_assoc, or_assoc]
 
+/-- For `(u, w)` in a family `E` of admissible pairs, the donor `u′` is inside the wire above
+`p` iff `u = p`. -/
 theorem donor_mem_wireInterior_iff {t : PhyloTree} {E : Finset Pair}
     (hE : E ⊆ EdgeAbove.candidates t) {e : Pair} (he : e ∈ E) {p : Address} :
     donor t e ∈ wireInterior (wire t E p) ↔ e.1 = p := by
@@ -117,6 +171,8 @@ theorem donor_mem_wireInterior_iff {t : PhyloTree} {E : Finset Pair}
   · intro h
     exact mem_wireInterior.mpr ⟨e, he, Or.inl ⟨h, rfl⟩⟩
 
+/-- For `(u, w)` in a family `E` of admissible pairs, the recipient `w′` is inside the wire
+above `p` iff `w = p`. -/
 theorem recipient_mem_wireInterior_iff {t : PhyloTree} {E : Finset Pair}
     (hE : E ⊆ EdgeAbove.candidates t) {e : Pair} (he : e ∈ E) {p : Address} :
     recipient t e ∈ wireInterior (wire t E p) ↔ e.2 = p := by
@@ -142,6 +198,8 @@ private theorem outer_atom_mem_owner (t : PhyloTree) (e : Pair) (p : Address) {v
     · exact Or.inr (List.mem_singleton.mp hr)
     · simp at hr
 
+/-- For a family of admissible pairs, the outer endpoints on a wire are listed without
+repetition. -/
 theorem outerEndpoints_nodup (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) (p : Address) :
     (outerEndpoints t E p).Nodup := by
@@ -159,6 +217,8 @@ theorem outerEndpoints_nodup (t : PhyloTree) (E : Finset Pair)
       (hE (Finset.mem_toList.mp hf))
       (outer_atom_mem_owner t e p hv) (outer_atom_mem_owner t f p hw))
 
+/-- For a family of admissible pairs, the ghost donors on a wire are listed without
+repetition. -/
 theorem ghostEndpoints_nodup (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) (p : Address) :
     (ghostEndpoints t E p).Nodup := by
@@ -177,6 +237,8 @@ theorem ghostEndpoints_nodup (t : PhyloTree) (E : Finset Pair)
     exact hne (donor_injective t (hE (Finset.mem_toList.mp he))
       (hE (Finset.mem_toList.mp hf)) hw)
 
+/-- For a family of admissible pairs, no vertex is both an outer endpoint and a ghost donor
+on the same wire. -/
 theorem outer_ghost_disjoint (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) (p : Address) :
     List.Disjoint (outerEndpoints t E p) (ghostEndpoints t E p) := by
@@ -191,15 +253,18 @@ theorem outer_ghost_disjoint (t : PhyloTree) (E : Finset Pair)
     exact het hft
   · exact donor_ne_recipient t f e (hd.symm.trans hr)
 
+/-- A wire has at least two vertices. -/
 theorem wire_length (t : PhyloTree) (E : Finset Pair) (p : Address) :
     2 ≤ (wire t E p).length := by
   simp only [wire, List.length_append, List.length_singleton]
   omega
 
+/-- The wire above `p` starts at `parent(p)`. -/
 theorem wire_head (t : PhyloTree) (E : Finset Pair) (p : Address) :
     (wire t E p).head? = some (Address.code (parent p)) := by
   simp [wire, List.append_assoc]
 
+/-- The wire above `p` ends at `p`. -/
 theorem wire_last (t : PhyloTree) (E : Finset Pair) (p : Address) :
     (wire t E p).getLast? = some (Address.code p) := by
   simp only [wire, List.getLast?_append]
@@ -212,6 +277,8 @@ private theorem endpoints_ne_code (t : PhyloTree) (E : Finset Pair) (p : Address
   exact fun hc => Finset.disjoint_left.mp (wireInterior_disjoint_original t E p) h
     (Finset.mem_image.mpr ⟨q, hq, hc.symm⟩)
 
+/-- For a family of admissible pairs and a non-root vertex `p` of `T`, the wire above `p` has
+no repeated vertex. -/
 theorem wire_nodup (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {p : Address} (hp : p ∈ t.nodes) (hne : p ≠ []) :
     (wire t E p).Nodup := by
@@ -241,6 +308,8 @@ theorem wire_nodup (t : PhyloTree) (E : Finset Pair)
   · exact endpoints_ne_code t E p hparent hinner rfl
   · exact hdiff (List.mem_singleton.mp hlast)
 
+/-- For a family of admissible pairs, the vertices of `Realization.graph t E` are the vertices
+of `T` and the vertices inside the wires above the non-root vertices of `T`. -/
 theorem vertices_covered (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) :
     (graph t E).vertices = t.nodes.image Address.code ∪

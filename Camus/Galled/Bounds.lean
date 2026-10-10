@@ -2,12 +2,28 @@ module
 
 public import Camus.Galled.Basic
 
+/-!
+# The bound of `n − 1` reticulations, in the block grammar
+
+Section 2.4 of the paper uses that "a level-1 phylogenetic network on n leaves will not have more
+than n−1 reticulations". In the block grammar this is a count: with `slack` charging one unit per
+fork and `h − 1` units per gall with `h` hanging subnetworks, a valid network with `n` leaves has
+`reticulations + 1 + slack = n`. A network attains the bound iff its slack is `0`, i.e. it has no
+fork and every gall is a triangle (`Camus/Galled/Triangles.lean`). The bound for the directed-graph
+networks is `RootedNetwork.anchored_reticulation_bound`.
+
+## Main results
+
+* `GalledNetwork.reticulations_add_slack`: `reticulations + 1 + slack = n`.
+* `GalledNetwork.reticulation_bound`: at most `n − 1` reticulations.
+-/
+
 @[expose] public section
 
 namespace Camus.GalledNetwork
 
-/-- Slack in the n−1 reticulation bound: an ordinary fork costs one unit,
-and a gall with h hanging subnetworks costs h−1 units. -/
+/-- The slack in the bound of `n − 1` reticulations: one unit per fork and `h − 1` units per gall
+with `h` hanging subnetworks. -/
 def slack : GalledNetwork → ℕ
   | .leaf _ => 0
   | .fork l r => slack l + slack r + 1
@@ -15,7 +31,7 @@ def slack : GalledNetwork → ℕ
       (l.length + r.length - 1)
 termination_by n => sizeOf n
 
-/-- Exact vertex-count identity underlying §2.4's bound. -/
+/-- A valid network with `n` leaves has `reticulations + 1 + slack = n`. -/
 theorem reticulations_add_slack (n : GalledNetwork) (hn : n.Valid) :
     n.reticulations + 1 + n.slack = n.labels.length := by
   let listProperty := fun xs : List GalledNetwork =>
@@ -58,15 +74,14 @@ theorem reticulations_add_slack (n : GalledNetwork) (hn : n.Valid) :
       omega
   exact h hn
 
-/-- §2.4: a valid binary galled network with n leaves has at most n−1
-reticulations. This counts labels with multiplicity; distinct leaf labels give
-the paper's species count by the subsequent representation bridge. -/
+/-- Section 2.4: a valid network with `n` leaves has at most `n − 1` reticulations. Here `n` counts
+the leaves, `n.labels.length`; with distinct labels it is the number of taxa (`labels_card`). -/
 theorem reticulation_bound (n : GalledNetwork) (hn : n.Valid) :
     n.reticulations ≤ n.labels.length - 1 := by
   have h := reticulations_add_slack n hn
   omega
 
-/-- Distinct labels connect the storage list's length to the number of species. -/
+/-- With distinct labels, the number of leaves is the number of taxa. -/
 theorem labels_card (n : GalledNetwork) (hn : n.WellLabelled) :
     n.labels.toFinset.card = n.labels.length := by
   exact List.toFinset_card_of_nodup hn

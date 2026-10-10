@@ -2,15 +2,42 @@ module
 
 public import Camus.Network.Completeness.Encoding
 
+/-!
+# Footprints lie on the cycles of non-tree edges
+
+The footprint `EdgeAbove.footprint t (u, w)` is the set of vertices of `T` on the cycle `γ(u, w)`
+that adding an edge above `(u, w)` creates (Definition 3). This file shows that for a non-tree
+edge `d` with pair `(u, w)`, the original copy of each footprint vertex lies on the cycle of `d`
+in `N`. As the cycles of distinct non-tree edges are disjoint, so are their footprints: the
+extracted family is cycle-separated (`SupportSubdivision.extracted_separated`).
+
+The proof assigns to each vertex `v` of `N` the vertex `H.site v` of `T` at which it sits: `p`
+for `H.original p` and for the vertices inside the wire of `p`. A switching path from a vertex
+sited at or below `a` to a vertex sited elsewhere passes through `H.original (parent a)`. A child
+of a footprint vertex `x` is an ancestor of one of `u` and `w` but not of the other, so the
+switching path between the endpoints of `d` passes through `H.original x`.
+
+## Main results
+
+* `SupportSubdivision.site`: the vertex of `T` at which a vertex of `N` sits.
+* `SupportSubdivision.support_path_crosses_parent`: a switching path leaving the clade below `a`
+  passes through `H.original (parent a)`.
+* `SupportSubdivision.footprint_mem_fundamentalCycle`: the footprint of the pair of a non-tree
+  edge lies on its cycle.
+-/
+
 @[expose] public section
 
 namespace Camus.SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
+/-- The vertex of `T` at which a vertex `v` of `N` sits: `p` if `v = H.original p`, and the
+anchor of `v` if `v` lies inside a wire. So a vertex inside the wire of `p` sits at `p`. -/
 noncomputable def site (H : SupportSubdivision t N S) (v : ℕ) : Address :=
   if ∃ p ∈ t.nodes, H.original p = v then H.originalAddress v else H.anchor v
 
+/-- `H.original p` sits at `p`. -/
 theorem site_original (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) : H.site (H.original p) = p := by
   classical
@@ -18,6 +45,7 @@ theorem site_original (H : SupportSubdivision t N S) {p : Address}
   rw [ite_eq_left (show ∃ q ∈ t.nodes, H.original q = H.original p from ⟨p,hp,rfl⟩)]
   exact H.originalAddress_original hp
 
+/-- A vertex inside the wire of `p` sits at `p`. -/
 theorem site_interior (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ} (hv : v ∈ wireInterior (H.wire p)) :
     H.site v = p := by
@@ -27,18 +55,22 @@ theorem site_interior (H : SupportSubdivision t N S) {p : Address}
     fun ho => H.interior_not_original hp hp0 hv (Finset.mem_image.mpr ho))]
   exact H.anchor_eq hp hp0 hv
 
+/-- The tail of a non-tree edge sits at its anchor. -/
 theorem site_source_deleted (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     H.site e.1 = H.anchor e.1 := by
   have hu := H.deleted_source_anchor_spec hN he
   exact H.site_interior hu.1 hu.2.1 hu.2.2
 
+/-- The head of a non-tree edge sits at its anchor. -/
 theorem site_target_deleted (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S) :
     H.site e.2 = H.anchor e.2 := by
   have hw := H.deleted_target_anchor_spec hN he
   exact H.site_interior hw.1 hw.2.1 hw.2.2
 
+/-- A switching edge `(x, y)` lies on the wire of a non-root vertex `p`; `y` sits at `p`, and
+either `x` sits at `p` or `x = H.original (parent p)`, which sits at `parent p`. -/
 theorem support_edge_sites (H : SupportSubdivision t N S) {e : ℕ × ℕ}
     (he : e ∈ S) :
     ∃ p ∈ t.nodes, p ≠ [] ∧ H.site e.2 = p ∧
@@ -66,6 +98,8 @@ theorem support_edge_sites (H : SupportSubdivision t N S) {e : ℕ × ℕ}
       exact H.site_original hp
     · exact Or.inl (H.site_interior hp hp0 hinner)
 
+/-- If a switching edge `(x, y)` has one end sited at or below `a` and the other not, then
+`x = H.original (parent a)`. -/
 theorem support_clade_boundary (H : SupportSubdivision t N S) {a : Address}
     {e : ℕ × ℕ} (he : e ∈ S)
     (hcross : (a <+: H.site e.1) ≠ (a <+: H.site e.2)) :
@@ -85,6 +119,8 @@ theorem support_clade_boundary (H : SupportSubdivision t N S) {a : Address}
       exact hnot (prefix_parent_of_ne hain hne)
     simpa only [hap] using horig
 
+/-- A walk of the switching from a vertex sited at or below `a` to a vertex sited elsewhere
+passes through `H.original (parent a)`. -/
 theorem support_path_crosses_parent (H : SupportSubdivision t N S)
     {a : Address} {u v : ℕ} (p : ({N with edges := S}).underlying.Walk u v)
     (hu : a <+: H.site u) (hv : ¬a <+: H.site v) :
@@ -103,6 +139,8 @@ theorem support_path_crosses_parent (H : SupportSubdivision t N S)
       · have heq := H.support_clade_boundary he hcross.symm
         exact List.mem_cons_of_mem _ (heq.symm ▸ p.start_mem_support)
 
+/-- For `x` in the footprint of `(u, w)`, some child `x ++ [b]` of `x` is an ancestor of one of
+`u` and `w` but not of the other. -/
 theorem footprint_child_separates {e : Address × Address} {x : Address}
     (hx : x ∈ EdgeAbove.footprint t e) :
     ∃ b : Bool, (x ++ [b] <+: e.1 ∧ ¬x ++ [b] <+: e.2) ∨
@@ -122,8 +160,10 @@ theorem footprint_child_separates {e : Address × Address} {x : Address}
     · exact ⟨false,Or.inr ⟨hleft,fun hu => hboth false ⟨hu,hleft⟩⟩⟩
     · exact ⟨true,Or.inr ⟨hright,fun hu => hboth true ⟨hu,hright⟩⟩⟩
 
-/-- The original-tree part of a candidate cycle lies on its actual fundamental
-cycle. Each original vertex separates the two endpoint wires into child clades. -/
+/-- Let `d` be a non-tree edge with pair `(u, w)`. For every vertex `x` of `T` on `γ(u, w)`, that
+is, in the footprint of `(u, w)`, `H.original x` lies on the cycle of `d`. A child of `x` is an
+ancestor of one of `u` and `w` but not of the other, so the switching path between the endpoints
+of `d` leaves the clade below that child, through `H.original x`. -/
 theorem footprint_mem_fundamentalCycle (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges \ S)
     {x : Address} (hx : x ∈ EdgeAbove.footprint t (H.pairOf e)) :

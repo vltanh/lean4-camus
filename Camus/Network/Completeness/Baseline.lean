@@ -3,12 +3,27 @@ module
 public import Camus.Network.Completeness.Wires
 public import Camus.Network.Realization.Subdivision
 
+/-!
+# The switching is a subdivision of T
+
+The switching `S` of a support subdivision `H` of `T` in `N`, as a network on the vertices of
+`N`, is a subdivision (`GraphSubdivision`) of `T`, given as the canonical network
+`Realization.graph t ∅` of the empty family: `Address.code p` goes to `H.original p` and the edge
+of `T` above `p` to the wire of `p`. The proofs of Lemma 1 use it to show that a quartet
+displayed by the switching is a quartet of `T`.
+
+## Main results
+
+* `SupportSubdivision.baseline_subdivision`: the switching is a subdivision of `T`.
+-/
+
 @[expose] public section
 
 namespace Camus.SupportSubdivision
 
-/-- The arbitrary support switching is a graph subdivision of the canonically
-encoded constraint tree. This is a construction from its original wire data. -/
+/-- The switching `S`, on the vertices of `N`, is a subdivision of `T`, the canonical network
+`Realization.graph t ∅` of the empty family: `Address.code p` goes to `H.original p`, and the
+edge of `T` above `p` to the wire of `p`. -/
 noncomputable def baseline_subdivision {t : PhyloTree} {N : RootedNetwork}
     {S : Finset (ℕ × ℕ)} (H : SupportSubdivision t N S) :
     GraphSubdivision (Realization.graph t ∅) {N with edges := S} := by

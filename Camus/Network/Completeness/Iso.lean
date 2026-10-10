@@ -2,10 +2,27 @@ module
 
 public import Camus.Network.Completeness.CanonicalWires
 
+/-!
+# N is isomorphic to its canonical network
+
+The encoding maps the edges of `N` onto those of `Realization.graph t H.extracted`: the edges of
+each wire onto those of the canonical wire (`SupportSubdivision.map_wire_eq`), and each non-tree
+edge `d` onto the edge from the donor to the recipient of `H.pairOf d`. With the vertex bijection
+`SupportSubdivision.vertexEquiv`, the encoding is an isomorphism of rooted networks that
+preserves the root and the labelled leaves.
+
+## Main results
+
+* `SupportSubdivision.encode_edges_image`: the encoding maps the edges of `N` onto those of the
+  canonical network.
+* `SupportSubdivision.canonicalIso`: the isomorphism of `N` with `Realization.graph t H.extracted`.
+-/
+
 @[expose] public section
 
 namespace Camus
 
+/-- The edges of the image of a wire under `f` are the images of its edges. -/
 theorem wireEdges_map (l : List ℕ) (f : ℕ → ℕ) :
     wireEdges (l.map f) = (wireEdges l).image (Prod.map f f) := by
   classical
@@ -16,6 +33,9 @@ namespace SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
+/-- The encoding maps the edges of `N` onto those of `Realization.graph t H.extracted`: the
+switching edges onto the edges of the canonical wires, and each non-tree edge `d` onto the edge
+from the donor to the recipient of `H.pairOf d`. -/
 theorem encode_edges_image (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne)
     (hpairs : Set.InjOn H.pairOf (N.edges \ S : Finset (ℕ × ℕ)))
@@ -51,8 +71,9 @@ theorem encode_edges_image (H : SupportSubdivision t N S)
       refine Finset.mem_image.mpr ⟨f,(Finset.mem_sdiff.mp hf).1,?_⟩
       simp only [Prod.map,H.encode_donor hN hf,H.encode_recipient hN hf]
 
-/-- The graph isomorphism is constructed from the canonical vertex encoding
-and the proved equality of every directed wire. -/
+/-- The isomorphism of `N` with `Realization.graph t H.extracted` given by the encoding, when
+distinct non-tree edges have distinct pairs and the extracted family is cycle-separated. It
+preserves the root and the labelled leaves. -/
 noncomputable def canonicalIso (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne)
     (hpairs : Set.InjOn H.pairOf (N.edges \ S : Finset (ℕ × ℕ)))

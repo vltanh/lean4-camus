@@ -4,25 +4,45 @@ public import Camus.Galled.Bounds
 public import Camus.Galled.TreeIsomorphism
 public import Mathlib.Algebra.Order.BigOperators.Group.List
 
+/-!
+# Networks of triangles display only the quartets of their trees
+
+In the block grammar, a valid network with `n` leaves and `n − 1` reticulations has slack `0`
+(`GalledNetwork.reticulations_add_slack`): it has no fork, and every gall is a triangle, with a
+single hanging subnetwork. The two switchings of a triangle give the same tree up to swapping two
+children. Hence all displayed trees of such a network have the same clusters, and the network
+displays exactly the quartets of any one of its displayed trees. This is the block-grammar form of
+the argument behind the counterexample E3 of the report (`Counterexamples.exact_three_score_zero`).
+
+## Main results
+
+* `GalledNetwork.saturated_cluster_eq`: all displayed trees of a valid network with slack `0` have
+  the same clusters.
+* `GalledNetwork.saturated_contains_eq`: a valid network with `n` leaves and `n − 1` reticulations
+  displays a quartet iff any one of its displayed trees induces it.
+-/
+
 @[expose] public section
 
 namespace Camus.GalledNetwork
 
-/-- Switching a triangle cannot change the attached rooted hierarchy, apart
-from swapping its two branches. -/
+/-- The trees displayed by the triangle `gall [a] [] b` are the trees `(x, y)` with `x` displayed by
+`a` and `y` displayed by `b`: both switchings give the same tree. -/
 theorem mem_displayed_left_triangle (a b : GalledNetwork) (t : PhyloTree) :
     t ∈ (gall [a] [] b).displayed ↔
       ∃ x ∈ a.displayed, ∃ y ∈ b.displayed, PhyloTree.fork x y = t := by
   simp [displayed, choices, gallTrees, chain, chainWithout, join, eq_comm]
 
+/-- The trees displayed by the triangle `gall [] [a] b` are the trees `(y, x)` and `(x, y)` with `x`
+displayed by `a` and `y` displayed by `b`: the two switchings differ by a swap of children. -/
 theorem mem_displayed_right_triangle (a b : GalledNetwork) (t : PhyloTree) :
     t ∈ (gall [] [a] b).displayed ↔
       ∃ x ∈ a.displayed, ∃ y ∈ b.displayed,
         PhyloTree.fork y x = t ∨ PhyloTree.fork x y = t := by
   simp [displayed, choices, gallTrees, chain, chainWithout, join, eq_comm]
 
-/-- Saturating the n−1 reticulation bound forces only triangle galls and no
-ordinary fork blocks. Consequently all switchings have the same rooted clades. -/
+/-- If a valid network has slack `0` (no fork, and only triangles), all its displayed trees have the
+same clusters. -/
 theorem saturated_cluster_eq (n : GalledNetwork) (hn : n.Valid) (hz : n.slack = 0)
     (t u : PhyloTree) (ht : t ∈ n.displayed) (hu : u ∈ n.displayed) :
     PhyloTree.ClusterEq t u := by
@@ -101,8 +121,8 @@ theorem saturated_cluster_eq (n : GalledNetwork) (hn : n.Valid) (hz : n.slack = 
       · exact ihxs x hx
   exact h hn hz t ht u hu
 
-/-- At maximal feasible reticulation density every displayed quartet is already
-in the chosen constraint switching. -/
+/-- A valid network with `n` leaves and `n − 1` reticulations displays exactly the quartets of any
+one of its displayed trees `t`: `q ∈ Q(N_r)` iff `t` induces `q`. -/
 theorem saturated_contains_eq (n : GalledNetwork) (hn : n.Valid)
     (hsat : n.reticulations + 1 = n.labels.length) (t : PhyloTree)
     (ht : t ∈ n.displayed) (q : Quartet) : n.containsQuartet q = q.induced t := by

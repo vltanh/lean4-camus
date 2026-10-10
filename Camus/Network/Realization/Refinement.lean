@@ -3,22 +3,56 @@ module
 public import Camus.Network.Realization.Subdivision
 public import Camus.Network.Completeness.Splitting
 
+/-!
+# The canonical network of an edge family: splitting wires, and `T + e`
+
+Section 2.1 defines `T + e`, for a non-tree edge `e` of a network built on `T`: delete the other
+non-tree edges, then suppress the vertices of indegree and outdegree one. For the canonical
+network this reduction amounts to splitting wires. Let `(u, w)` be a pair of a cycle-separated
+family `E`. The support of `Realization.graph t E` is a subdivision of the support of
+`Realization.graph t {(u, w)}`, which is `T` with the edges above `u` and `w` subdivided by `u′`
+and `w′` (`Realization.singletonSupportSubdivision`). It is obtained from the subdivision of `T`
+in `Realization.supportGraphSubdivision` by splitting the wire above `u` at `u′`, then the wire
+above `w` at `w′` (`GraphSubdivision.splitIdentity`). `SupportSubdivision.single_edge_reduction`
+uses it to show that for a non-tree edge `e` with pair `(u, w)` of a network built on `T`, the
+network with its other non-tree edges removed is a subdivision of `Realization.graph t {(u, w)}`.
+Suppressing its vertices of indegree and outdegree one therefore gives
+`Realization.graph t {(u, w)}`: this is `T + e`, in the form in which Lemma 1 uses it.
+
+## Main results
+
+* `RootedNetwork.splitAt`: subdivide one edge of a network by a vertex.
+* `GraphSubdivision.splitIdentity`: if a subdivision has the identity as vertex map, cutting the
+  wire of an edge at an interior vertex `k` gives a subdivision of the coarse network with that
+  edge subdivided by `k`.
+* `Realization.singleton_support_split`: for `e = (u, w)`, the support of
+  `Realization.graph t {e}` is `T` with the edges above `u` and `w` subdivided by `u′` and `w′`.
+* `Realization.singletonSupportSubdivision`: for `e ∈ E`, the support of `Realization.graph t E`
+  is a subdivision of the support of `Realization.graph t {e}`, with the identity as vertex map
+  (`Realization.singletonSupportSubdivision_original`).
+-/
+
 @[expose] public section
 
 namespace Camus
 
 namespace WireSplit
 
+/-- The upper part of a split wire runs from its first vertex to the splitting vertex; its
+interior is contained in the interior of the wire. -/
 theorem upper_interior_subset {l : List ℕ} {v : ℕ} (W : WireSplit l v) :
     wireInterior W.upper ⊆ wireInterior l := by
   rw [W.interior_covered]
   exact Finset.subset_union_right.trans (Finset.subset_union_left)
 
+/-- The lower part of a split wire runs from the splitting vertex to its last vertex; its
+interior is contained in the interior of the wire. -/
 theorem lower_interior_subset {l : List ℕ} {v : ℕ} (W : WireSplit l v) :
     wireInterior W.lower ⊆ wireInterior l := by
   rw [W.interior_covered]
   exact Finset.subset_union_right
 
+/-- For a wire without repetition, the splitting vertex is not inside the upper part. -/
 theorem upper_interior_not_marker {l : List ℕ} {v : ℕ} (W : WireSplit l v) (hl : l.Nodup) :
     v ∉ wireInterior W.upper := by
   obtain ⟨a,b,heq,ha,hb⟩ := W
@@ -31,12 +65,14 @@ theorem upper_interior_not_marker {l : List ℕ} {v : ℕ} (W : WireSplit l v) (
     simpa only [List.tail_dropLast] using hmem)
   exact hva (hdrop ▸ hvs)
 
+/-- For a wire without repetition, the splitting vertex is not inside the lower part. -/
 theorem lower_interior_not_marker {l : List ℕ} {v : ℕ} (W : WireSplit l v) (hl : l.Nodup) :
     v ∉ wireInterior W.lower := by
   have hn := List.nodup_cons.mp (W.lower_nodup hl)
   intro hv
   exact hn.1 (List.mem_of_mem_dropLast (List.mem_toFinset.mp hv))
 
+/-- For a wire without repetition, the two parts of a split have disjoint interiors. -/
 theorem interiors_disjoint {l : List ℕ} {v : ℕ} (W : WireSplit l v) (hl : l.Nodup) :
     Disjoint (wireInterior W.upper) (wireInterior W.lower) := by
   obtain ⟨a,b,heq,ha,hb⟩ := W
@@ -55,6 +91,8 @@ end WireSplit
 
 namespace RootedNetwork
 
+/-- The network `P` with its edge `e = (a, b)` subdivided by the vertex `k`: `k` is added, and
+the edge `a → b` is replaced by `a → k` and `k → b`. -/
 noncomputable def splitAt (P : RootedNetwork) (e : ℕ × ℕ) (k : ℕ) : RootedNetwork :=
   { vertices := insert k P.vertices
     edges := P.edges.erase e ∪ {(e.1,k),(k,e.2)}
@@ -66,10 +104,14 @@ end RootedNetwork
 
 namespace GraphSubdivision
 
+/-- The wires of a subdivision after the wire of `e = (a, b)` is split at `k`: the edge
+`a → k` gets the upper part, the edge `k → b` the lower part, and every other edge keeps its
+wire. -/
 noncomputable def splitWire {P N : RootedNetwork} (H : GraphSubdivision P N)
     (e : ℕ × ℕ) (k : ℕ) (W : WireSplit (H.wire e) k) (f : ℕ × ℕ) : List ℕ :=
   if f = (e.1,k) then W.upper else if f = (k,e.2) then W.lower else H.wire f
 
+/-- If `k` is not a vertex of `P`, every edge of `P` keeps its wire. -/
 theorem splitWire_old {P N : RootedNetwork} (H : GraphSubdivision P N)
     (e : ℕ × ℕ) {k : ℕ} (hk : k ∉ P.vertices) (W : WireSplit (H.wire e) k)
     {f : ℕ × ℕ} (hf : f ∈ P.edges) : H.splitWire e k W f = H.wire f := by
@@ -82,18 +124,21 @@ theorem splitWire_old {P N : RootedNetwork} (H : GraphSubdivision P N)
     exact hk (by simpa only [h] using hends.1)
   simp [splitWire,hu,hl]
 
+/-- The edge `a → k` gets the upper part of the split wire. -/
 theorem splitWire_upper {P N : RootedNetwork} (H : GraphSubdivision P N)
     (e : ℕ × ℕ) (k : ℕ) (W : WireSplit (H.wire e) k) :
     H.splitWire e k W (e.1,k) = W.upper := by simp [splitWire]
 
+/-- The edge `k → b` gets the lower part of the split wire. -/
 theorem splitWire_lower {P N : RootedNetwork} (H : GraphSubdivision P N)
     {e : ℕ × ℕ} (he : e ∈ P.edges) {k : ℕ} (hk : k ∉ P.vertices)
     (W : WireSplit (H.wire e) k) : H.splitWire e k W (k,e.2) = W.lower := by
   have hke : k ≠ e.1 := fun h => hk (h ▸ (H.edge_endpoints e he).1)
   simp [splitWire,hke]
 
-/-- Refining an identity subdivision at a proper wire interior changes the
-coarse graph by one elementary subdivision; the fine graph stays fixed. -/
+/-- Let `H` be a subdivision of `P` in `N` whose vertex map is the identity, `e` an edge of
+`P`, and `k` a vertex inside the wire of `e`. Then `N` is a subdivision of `P` with `e`
+subdivided by `k`: the wire of `e` is cut at `k` into the wires of the two edges through `k`. -/
 noncomputable def splitIdentity {P N : RootedNetwork} (H : GraphSubdivision P N)
     (hid : H.original = id) (e : ℕ × ℕ) (he : e ∈ P.edges) (k : ℕ)
     (hmark : k ∈ wireInterior (H.wire e)) (W : WireSplit (H.wire e) k) :
@@ -212,11 +257,13 @@ noncomputable def splitIdentity {P N : RootedNetwork} (H : GraphSubdivision P N)
     rw [hrest,W.edges_covered]
     simp [Finset.union_assoc,Finset.union_comm ]
 
+/-- `GraphSubdivision.splitIdentity` keeps the identity as vertex map. -/
 theorem splitIdentity_original {P N : RootedNetwork} (H : GraphSubdivision P N)
     (hid : H.original = id) (e : ℕ × ℕ) (he : e ∈ P.edges) (k : ℕ)
     (hmark : k ∈ wireInterior (H.wire e)) (W : WireSplit (H.wire e) k) :
     (H.splitIdentity hid e he k hmark W).original = id := rfl
 
+/-- Transporting a subdivision along an equality of coarse networks keeps its vertex map. -/
 theorem original_transport {P Q N : RootedNetwork} (h : P = Q)
     (H : GraphSubdivision P N) : (h ▸ H).original = H.original := by
   cases h
@@ -226,12 +273,17 @@ end GraphSubdivision
 
 namespace Realization
 
+/-- The edge of `T` above `p`, from `parent(p)` to `p`. -/
 def originalEdge (p : Address) : ℕ × ℕ := (Address.code (parent p), Address.code p)
 
+/-- Distinct addresses have distinct edges above them. -/
 theorem originalEdge_injective : Function.Injective originalEdge := by
   intro p q h
   exact Address.code_injective (congrArg Prod.snd h)
 
+/-- The wires of `Realization.graph t {e}`, for an admissible pair `e = (u, w)`: the wire above
+`u` is `parent(u), u′, u`, the wire above `w` is `parent(w), w′, w`, and every other wire is a
+single edge. -/
 theorem singleton_wire {t : PhyloTree} {e : Pair} (he : EdgeAbove.Admissible t e)
     (p : Address) : wire t {e} p =
       if p = e.1 then [Address.code (parent p),donor t e,Address.code p]
@@ -248,6 +300,8 @@ theorem singleton_wire {t : PhyloTree} {e : Pair} (he : EdgeAbove.Admissible t e
       simp [wire,outerEndpoints,ghostEndpoints,hne,hu]
     · simp [wire,outerEndpoints,ghostEndpoints,hu,hw,Ne.symm hu,Ne.symm hw]
 
+/-- The support edges of `Realization.graph t {e}`, for an admissible pair `e = (u, w)`: the
+edges of `T`, with the edges above `u` and `w` replaced by the paths through `u′` and `w′`. -/
 theorem singleton_support {t : PhyloTree} {e : Pair} (he : EdgeAbove.Admissible t e) :
     supportEdges t {e} =
       (((graph t ∅).edges.erase (originalEdge e.1)).erase (originalEdge e.2)) ∪
@@ -278,6 +332,8 @@ theorem singleton_support {t : PhyloTree} {e : Pair} (he : EdgeAbove.Admissible 
   simp [singleton_wire he e.1,singleton_wire he e.2,Ne.symm hne,wireEdges,
     Finset.union_comm,Finset.insert_comm]
 
+/-- The support of `Realization.graph t {e}`, for an admissible pair `e = (u, w)`, is `T` with
+the edge above `u` subdivided by `u′`, then the edge above `w` subdivided by `w′`. -/
 theorem singleton_support_split {t : PhyloTree} {e : Pair}
     (he : EdgeAbove.Admissible t e) :
     {graph t {e} with edges := supportEdges t {e}} =
@@ -310,6 +366,10 @@ theorem singleton_support_split {t : PhyloTree} {e : Pair}
     · simp only [originalEdge] at hf
       simp [hf,originalEdge]
 
+/-- For `e = (u, w)` in a cycle-separated family `E`, the support of `Realization.graph t E` is
+a subdivision of the support of `Realization.graph t {e}`. It refines the subdivision of `T` in
+`Realization.supportGraphSubdivision` by splitting the wire above `u` at `u′` and the wire above
+`w` at `w′`. -/
 noncomputable def singletonSupportSubdivision {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E) :
     GraphSubdivision {graph t {e} with edges := supportEdges t {e}}
@@ -330,6 +390,7 @@ noncomputable def singletonSupportSubdivision {t : PhyloTree} {E : Finset Pair}
     change donor t e ∈ wireInterior (wire t E (addressOf (Address.code e.1)))
     rw [addressOf_code]
     exact mem_wireInterior.mpr ⟨e,he,Or.inl ⟨rfl,rfl⟩⟩
+  -- Split the wire above `u` at `u′`.
   let W := Classical.choice (exists_wireSplit (H.wire_laws _ hu).2.1 hd)
   let H₁ := H.splitIdentity rfl (originalEdge e.1) hu (donor t e) hd W
   have hd0 : donor t e ∉ (graph t ∅).vertices := by
@@ -344,10 +405,13 @@ noncomputable def singletonSupportSubdivision {t : PhyloTree} {E : Finset Pair}
     change recipient t e ∈ wireInterior (wire t E (addressOf (Address.code e.2)))
     rw [addressOf_code]
     exact mem_wireInterior.mpr ⟨e,he,Or.inr ⟨rfl,rfl⟩⟩
+  -- Then split the wire above `w` at `w′`.
   let W₂ := Classical.choice (exists_wireSplit (H₁.wire_laws _ hw₁).2.1 hr)
   let H₂ := H₁.splitIdentity rfl (originalEdge e.2) hw₁ (recipient t e) hr W₂
+  -- The coarse network obtained is the support of `Realization.graph t {e}`.
   exact (singleton_support_split hae).symm ▸ H₂
 
+/-- The vertex map of `Realization.singletonSupportSubdivision` is the identity. -/
 theorem singletonSupportSubdivision_original {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E) :
     (singletonSupportSubdivision hE he).original = id := by

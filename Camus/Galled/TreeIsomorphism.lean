@@ -2,13 +2,28 @@ module
 
 public import Camus.Galled.Basic
 
+/-!
+# Rooted tree isomorphism and clusters
+
+`PhyloTree` stores plane trees, with an order on the two children of each vertex; the paper's trees
+are unordered. This file defines rooted isomorphism, which swaps children (`PhyloTree.RootedIso`),
+and equality of the sets of clusters (`PhyloTree.ClusterEq`), and shows that both preserve the
+induced quartets. They serve the block grammar: the trees displayed by a network of triangles all
+have the same clusters (`GalledNetwork.saturated_cluster_eq`).
+
+## Main results
+
+* `PhyloTree.RootedIso.induced_eq`: isomorphic trees induce the same quartets.
+* `PhyloTree.ClusterEq.induced_eq`: trees with the same clusters induce the same quartets.
+* `GalledNetwork.DisplaysTopology`: a network displays a tree up to rooted isomorphism.
+-/
+
 @[expose] public section
 
 namespace Camus.PhyloTree
 
-/-- Label-preserving rooted-tree isomorphism allows independent swaps of the two
-children of each internal vertex. This connects plane-tree storage to the
-unordered trees of the paper. -/
+/-- Rooted isomorphism of leaf-labelled trees: equality up to swapping the two children of any
+internal vertices. -/
 inductive RootedIso : PhyloTree → PhyloTree → Prop
   | leaf (a : ℕ) : RootedIso (.leaf a) (.leaf a)
   | fork {l₁ r₁ l₂ r₂ : PhyloTree} : RootedIso l₁ l₂ → RootedIso r₁ r₂ →
@@ -27,7 +42,7 @@ theorem RootedIso.symm {t u : PhyloTree} (h : RootedIso t u) : RootedIso u t := 
   | fork _ _ hl hr => exact .fork hl hr
   | swap _ _ hl hr => exact .swap hr hl
 
-/-- Swaps preserve taxon sets. -/
+/-- Isomorphic trees have the same taxa. -/
 theorem RootedIso.taxa_eq {t u : PhyloTree} (h : RootedIso t u) : t.taxa = u.taxa := by
   induction h with
   | leaf => rfl
@@ -40,8 +55,7 @@ theorem RootedIso.taxa_eq {t u : PhyloTree} (h : RootedIso t u) : t.taxa = u.tax
     simp only [taxa, labels, List.toFinset_append]
     rw [hl, hr, Finset.union_comm]
 
-/-- Swaps preserve the rooted cluster hierarchy, hence every unrooted quartet
-cut. No converse or general graph-isomorphism claim is assumed here. -/
+/-- Isomorphic trees have the same clusters. -/
 theorem RootedIso.clades_eq {t u : PhyloTree} (h : RootedIso t u) :
     t.clades.toFinset = u.clades.toFinset := by
   induction h with
@@ -54,8 +68,7 @@ theorem RootedIso.clades_eq {t u : PhyloTree} (h : RootedIso t u) :
     rw [h₁.taxa_eq, h₂.taxa_eq, hl, hr]
     simp only [Finset.union_comm]
 
-/-- The quartet predicate is invariant under the storage choices allowed by
-rooted-tree isomorphism. -/
+/-- Isomorphic trees induce the same quartets. -/
 theorem RootedIso.induced_eq {t u : PhyloTree} (h : RootedIso t u) (q : Quartet) :
     q.induced t = q.induced u := by
   have hc : t.clades.any q.cutBy = u.clades.any q.cutBy := by
@@ -73,7 +86,8 @@ theorem RootedIso.induced_eq {t u : PhyloTree} (h : RootedIso t u) (q : Quartet)
       exact List.mem_toFinset.mpr hs
   simp only [Quartet.induced, h.taxa_eq, hc]
 
-/-- Equality of the labelled rooted cluster hierarchy. -/
+/-- `t` and `u` have the same taxa and the same clusters (the sets of leaves below their
+vertices). -/
 def ClusterEq (t u : PhyloTree) : Prop :=
   t.taxa = u.taxa ∧ t.clades.toFinset = u.clades.toFinset
 
@@ -85,6 +99,7 @@ theorem ClusterEq.symm {t u : PhyloTree} (h : ClusterEq t u) : ClusterEq u t :=
 theorem ClusterEq.trans {t u v : PhyloTree} (h : ClusterEq t u) (h' : ClusterEq u v) :
     ClusterEq t v := ⟨h.1.trans h'.1, h.2.trans h'.2⟩
 
+/-- Forks of trees with the same clusters have the same clusters. -/
 theorem ClusterEq.fork {a b c d : PhyloTree} (h : ClusterEq a c) (h' : ClusterEq b d) :
     ClusterEq (.fork a b) (.fork c d) := by
   constructor
@@ -95,10 +110,13 @@ theorem ClusterEq.fork {a b c d : PhyloTree} (h : ClusterEq a c) (h' : ClusterEq
   · simp only [clades, List.toFinset_cons, List.toFinset_append]
     rw [h.1, h'.1, h.2, h'.2]
 
+/-- `(a, b)` and `(b, a)` have the same clusters. -/
 theorem ClusterEq.fork_swap (a b : PhyloTree) : ClusterEq (.fork a b) (.fork b a) :=
   ⟨(RootedIso.swap (.refl a) (.refl b)).taxa_eq,
     (RootedIso.swap (.refl a) (.refl b)).clades_eq⟩
 
+/-- Trees with the same clusters induce the same quartets: a quartet on taxa of the tree is induced
+iff some cluster contains one of its two pairs and no taxon of the other (`Quartet.induced`). -/
 theorem ClusterEq.induced_eq {t u : PhyloTree} (h : ClusterEq t u) (q : Quartet) :
     q.induced t = q.induced u := by
   have hc : t.clades.any q.cutBy = u.clades.any q.cutBy := by
@@ -120,13 +138,11 @@ end Camus.PhyloTree
 
 namespace Camus.GalledNetwork
 
-/-- A switching displays an unordered copy of the constraint tree. This is
-separate from an anchored, root-preserving edge-addition witness, which is needed
-for the full DP theorem. -/
+/-- `n` displays `t` up to rooted isomorphism: some displayed tree of `n` is isomorphic to `t`. -/
 def DisplaysTopology (n : GalledNetwork) (t : PhyloTree) : Prop :=
   ∃ u ∈ n.displayed, PhyloTree.RootedIso u t
 
-/-- Literal plane-tree containment always provides the corresponding topology. -/
+/-- A network built on `t` displays `t` up to isomorphism. -/
 theorem extends_displaysTopology {n : GalledNetwork} {t : PhyloTree}
     (h : n.Extends t) : n.DisplaysTopology t :=
   ⟨t, h, PhyloTree.RootedIso.refl t⟩

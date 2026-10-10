@@ -3,10 +3,32 @@ module
 public import Camus.Network.Completeness.Cycles
 public import Mathlib.Data.List.Nodup
 
+/-!
+# Wires of a support subdivision
+
+The wire `H.wire p` of a non-root vertex `p` of `T` is the directed path of `N` that subdivides
+the edge of `T` above `p`, from `H.original (parent p)` to `H.original p`. A list `l` is read as
+a path: `wireEdges l` are its consecutive pairs, and `wireInterior l` its vertices other than the
+first and the last. This file proves the list facts used throughout the completeness proof and
+the basic properties of the wires of `H`: their edges lie in the switching `S`, their vertices in
+`N`, two wires with their first vertices removed are disjoint, and a vertex inside a wire has one
+outgoing switching edge.
+
+## Main results
+
+* `wire_vertex_cases`: a vertex of a wire is its first vertex, its last vertex, or inside it.
+* `SupportSubdivision.wire_edge_mem_support`: the edges of a wire are switching edges.
+* `SupportSubdivision.tail_wires_disjoint`: the wires of distinct vertices, their first vertices
+  removed, are disjoint.
+* `SupportSubdivision.interior_outdegree_support`: a vertex inside a wire has outdegree one in
+  `S`.
+-/
+
 @[expose] public section
 
 namespace Camus
 
+/-- The tails of the edges of a wire `l`, in order, form `l` without its last vertex. -/
 theorem wire_edges_map_fst (l : List ℕ) :
     (l.zip l.tail).map Prod.fst = l.dropLast := by
   induction l with
@@ -18,20 +40,24 @@ theorem wire_edges_map_fst (l : List ℕ) :
       simpa only [List.tail_cons, List.zip_cons_cons, List.map_cons,
         List.dropLast_cons_cons] using congrArg (List.cons x) ih
 
+/-- The heads of the edges of a wire `l`, in order, form `l` without its first vertex. -/
 theorem wire_edges_map_snd (l : List ℕ) :
     (l.zip l.tail).map Prod.snd = l.tail :=
   List.map_snd_zip (by simp)
 
+/-- The tail of an edge of a wire `l` lies in `l.dropLast`. -/
 theorem wire_edge_source_mem {l : List ℕ} {e : ℕ × ℕ} (he : e ∈ wireEdges l) :
     e.1 ∈ l.dropLast := by
   rw [← wire_edges_map_fst]
   exact List.mem_map.mpr ⟨e, List.mem_toFinset.mp he, rfl⟩
 
+/-- The head of an edge of a wire `l` lies in `l.tail`. -/
 theorem wire_edge_target_mem {l : List ℕ} {e : ℕ × ℕ} (he : e ∈ wireEdges l) :
     e.2 ∈ l.tail := by
   rw [← wire_edges_map_snd]
   exact List.mem_map.mpr ⟨e, List.mem_toFinset.mp he, rfl⟩
 
+/-- Every vertex of `l.dropLast` is the tail of an edge of the wire `l`. -/
 theorem wire_edge_source_exists {l : List ℕ} {v : ℕ} (hv : v ∈ l.dropLast) :
     ∃ w, (v,w) ∈ wireEdges l := by
   rw [← wire_edges_map_fst] at hv
@@ -40,6 +66,7 @@ theorem wire_edge_source_exists {l : List ℕ} {v : ℕ} (hv : v ∈ l.dropLast)
   subst v
   exact List.mem_toFinset.mpr he
 
+/-- Every vertex of `l.tail` is the head of an edge of the wire `l`. -/
 theorem wire_edge_target_exists {l : List ℕ} {v : ℕ} (hv : v ∈ l.tail) :
     ∃ u, (u,v) ∈ wireEdges l := by
   rw [← wire_edges_map_snd] at hv
@@ -48,6 +75,7 @@ theorem wire_edge_target_exists {l : List ℕ} {v : ℕ} (hv : v ∈ l.tail) :
   subst v
   exact List.mem_toFinset.mpr he
 
+/-- In a wire without repeated vertices, a vertex is the tail of at most one edge. -/
 theorem wire_outgoing_unique {l : List ℕ} (hl : l.Nodup) {e f : ℕ × ℕ}
     (he : e ∈ wireEdges l) (hf : f ∈ wireEdges l) (hv : e.1 = f.1) : e = f := by
   have hm : ((l.zip l.tail).map Prod.fst).Nodup := by
@@ -56,6 +84,7 @@ theorem wire_outgoing_unique {l : List ℕ} (hl : l.Nodup) {e f : ℕ × ℕ}
   exact List.inj_on_of_nodup_map hm (List.mem_toFinset.mp he)
     (List.mem_toFinset.mp hf) hv
 
+/-- In a wire without repeated vertices, a vertex is the head of at most one edge. -/
 theorem wire_incoming_unique {l : List ℕ} (hl : l.Nodup) {e f : ℕ × ℕ}
     (he : e ∈ wireEdges l) (hf : f ∈ wireEdges l) (hv : e.2 = f.2) : e = f := by
   have hm : ((l.zip l.tail).map Prod.snd).Nodup := by
@@ -64,6 +93,7 @@ theorem wire_incoming_unique {l : List ℕ} (hl : l.Nodup) {e f : ℕ × ℕ}
   exact List.inj_on_of_nodup_map hm (List.mem_toFinset.mp he)
     (List.mem_toFinset.mp hf) hv
 
+/-- A vertex of a wire is its first vertex, its last vertex, or an interior vertex. -/
 theorem wire_vertex_cases {l : List ℕ} {v : ℕ} (hv : v ∈ l) :
     l.head? = some v ∨ l.getLast? = some v ∨ v ∈ wireInterior l := by
   classical
@@ -83,6 +113,7 @@ theorem wire_vertex_cases {l : List ℕ} {v : ℕ} (hv : v ∈ l) :
           apply List.mem_dropLast_of_mem_of_ne_getLast? hv
           exact Ne.symm hlast
 
+/-- An interior vertex of `l` lies in `l.dropLast`. -/
 theorem wire_interior_mem_dropLast {l : List ℕ} {v : ℕ}
     (hv : v ∈ wireInterior l) : v ∈ l.dropLast := by
   cases l with
@@ -93,6 +124,7 @@ theorem wire_interior_mem_dropLast {l : List ℕ} {v : ℕ}
     | cons b l =>
       exact List.mem_cons_of_mem a (List.mem_toFinset.mp hv)
 
+/-- In a wire without repeated vertices, the first vertex does not occur again. -/
 theorem wire_head_not_mem_tail {l : List ℕ} (hl : l.Nodup) {v : ℕ}
     (hv : l.head? = some v) : v ∉ l.tail := by
   cases l with
@@ -102,6 +134,7 @@ theorem wire_head_not_mem_tail {l : List ℕ} (hl : l.Nodup) {v : ℕ}
     subst v
     exact (List.nodup_cons.mp hl).1
 
+/-- In a wire with at least two vertices, the first vertex lies in `l.dropLast`. -/
 theorem wire_head_mem_dropLast {l : List ℕ} (hlen : 2 ≤ l.length) {v : ℕ}
     (hv : l.head? = some v) : v ∈ l.dropLast := by
   cases l with
@@ -118,6 +151,7 @@ namespace SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
+/-- The edges of the wire of a non-root vertex of `T` are switching edges. -/
 theorem wire_edge_mem_support (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) {e : ℕ × ℕ}
     (he : e ∈ wireEdges (H.wire p)) : e ∈ S := by
@@ -125,6 +159,7 @@ theorem wire_edge_mem_support (H : SupportSubdivision t N S) {p : Address}
   rw [H.edges_covered]
   exact Finset.mem_biUnion.mpr ⟨p, Finset.mem_erase.mpr ⟨hp0,hp⟩, he⟩
 
+/-- The vertices of the wire of a non-root vertex of `T` are vertices of `N`. -/
 theorem wire_mem_vertices (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ} (hv : v ∈ H.wire p) :
     v ∈ N.vertices := by
@@ -140,6 +175,7 @@ theorem wire_mem_vertices (H : SupportSubdivision t N S) {p : Address}
     exact H.original_mem_vertices hp
   · exact H.interior_mem_vertices hp hp0 hinner
 
+/-- A vertex of the wire of `p` that is not an original vertex lies inside the wire. -/
 theorem interior_of_mem_wire_not_original (H : SupportSubdivision t N S)
     {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}
     (hv : v ∈ H.wire p) (hno : v ∉ t.nodes.image H.original) :
@@ -155,6 +191,7 @@ theorem interior_of_mem_wire_not_original (H : SupportSubdivision t N S)
     exact False.elim (hno (Finset.mem_image.mpr ⟨p,hp,heq⟩))
   · exact hinner
 
+/-- A vertex of the wire of `p` other than the first lies inside the wire or is `H.original p`. -/
 theorem tail_wire_cases (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ} (hv : v ∈ (H.wire p).tail) :
     v ∈ wireInterior (H.wire p) ∨ v = H.original p := by
@@ -163,6 +200,8 @@ theorem tail_wire_cases (H : SupportSubdivision t N S) {p : Address}
   · exact Or.inr (Option.some.inj (hlast.symm.trans (H.wire_laws p hp hp0).2.2.2.1))
   · exact Or.inl hinner
 
+/-- The wires of distinct non-root vertices `p ≠ q`, their first vertices removed, are
+disjoint. -/
 theorem tail_wires_disjoint (H : SupportSubdivision t N S) {p q : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) (hq : q ∈ t.nodes) (hq0 : q ≠ [])
     (hpq : p ≠ q) : List.Disjoint (H.wire p).tail (H.wire q).tail := by
@@ -178,6 +217,8 @@ theorem tail_wires_disjoint (H : SupportSubdivision t N S) {p q : Address}
       (Finset.mem_image.mpr ⟨p,hp,ho.symm⟩)
   · exact hpq (H.original_injective hp hq (ho.symm.trans ho'))
 
+/-- The wire of `p` leaves `H.original (parent p)` by a switching edge to one of its later
+vertices. -/
 theorem wire_head_outgoing_exists (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) :
     ∃ v, (H.original (parent p),v) ∈ S ∧ v ∈ (H.wire p).tail := by
@@ -185,6 +226,7 @@ theorem wire_head_outgoing_exists (H : SupportSubdivision t N S) {p : Address}
   obtain ⟨v,he⟩ := wire_edge_source_exists (wire_head_mem_dropLast hw.1 hw.2.2.1)
   exact ⟨v,H.wire_edge_mem_support hp hp0 he,wire_edge_target_mem he⟩
 
+/-- A vertex inside a wire is the tail of at most one switching edge. -/
 theorem interior_outgoing_unique (H : SupportSubdivision t N S)
     {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}
     (hv : v ∈ wireInterior (H.wire p)) {e f : ℕ × ℕ}
@@ -208,6 +250,7 @@ theorem interior_outgoing_unique (H : SupportSubdivision t N S)
   exact wire_outgoing_unique (H.wire_laws p hp hp0).2.1 heq hfr
     (hev.trans hfv.symm)
 
+/-- A vertex inside a wire has outdegree one in the switching `S`. -/
 theorem interior_outdegree_support (H : SupportSubdivision t N S)
     {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}
     (hv : v ∈ wireInterior (H.wire p)) :

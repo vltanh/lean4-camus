@@ -4,10 +4,27 @@ public import Camus.Network.Completeness.Order
 public import Camus.Network.Realization.CycleWires
 public import Mathlib.Data.List.Permutation
 
+/-!
+# The wires of N are the canonical wires
+
+For each non-root vertex `p` of `T`, the encoding maps the wire of `p` in `N`, vertex by vertex
+and in order, to the wire of `p` in the canonical network `Realization.graph t H.extracted`. The
+interiors agree as sets: both consist of the names of the endpoints of non-tree edges with
+anchor `p`. As the extracted family is cycle-separated, the canonical interior is at most one
+outer endpoint followed by at most one ghost donor, and the reverse order cannot occur in `N`
+(`SupportSubdivision.no_ghost_before_endpoint`).
+
+## Main results
+
+* `SupportSubdivision.map_wire_eq`: `(H.wire p).map H.encode = Realization.wire t H.extracted p`.
+-/
+
 @[expose] public section
 
 namespace Camus
 
+/-- A list of length at least two with first element `a` and last element `b` is
+`a :: (l.tail.dropLast ++ [b])`. -/
 theorem wire_decompose {l : List ℕ} (hlen : 2 ≤ l.length) {a b : ℕ}
     (hhead : l.head? = some a) (hlast : l.getLast? = some b) :
     l = a :: (l.tail.dropLast ++ [b]) := by
@@ -26,6 +43,8 @@ namespace SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
+/-- The encoding maps the interior of the wire of `p` onto the interior of the canonical wire
+`Realization.wire t H.extracted p`. -/
 theorem encoded_interior_eq (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) :
     (wireInterior (H.wire p)).image H.encode =
@@ -57,6 +76,8 @@ theorem encoded_interior_eq (H : SupportSubdivision t N S)
         simpa only [pairOf] using (htarget ▸ hspec.2.2)
       exact Finset.mem_image.mpr ⟨e.2,hinner,(H.encode_recipient hN he).trans hcode.symm⟩
 
+/-- The encoded interior of the wire of `p` is not `[g, o]` with `g` a ghost donor and `o` an
+outer endpoint of the canonical wire (`SupportSubdivision.no_ghost_before_endpoint`). -/
 theorem encoded_ghost_before_outer_impossible (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne)
     (hpairs : Set.InjOn H.pairOf (N.edges \ S : Finset (ℕ × ℕ)))
@@ -101,8 +122,11 @@ theorem encoded_ghost_before_outer_impossible (H : SupportSubdivision t N S)
   rw [hmid,huEq,hvEq] at hwire
   exact H.no_ghost_before_endpoint hN he hf hef hp hp0 hgt hw hwire
 
-/-- The canonical order is forced: at most one outer endpoint is followed by at
-most one inner ghost donor. The other order would violate cycle disjointness. -/
+/-- Assume that distinct non-tree edges have distinct pairs and that the extracted family is
+cycle-separated. For a non-root vertex `p` of `T`, the encoding maps the wire of `p` in `N`, as a
+list, to the wire of `p` in `Realization.graph t H.extracted`. The interiors agree as sets; the
+canonical interior is at most one outer endpoint followed by at most one ghost donor, and the
+other order cannot occur in `N`. -/
 theorem map_wire_eq (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne)
     (hpairs : Set.InjOn H.pairOf (N.edges \ S : Finset (ℕ × ℕ)))

@@ -4,6 +4,28 @@ public import Camus.Defs
 public import Camus.Tree.Forest
 public import Mathlib.Data.Fintype.Card
 
+/-!
+# Anchors of the vertices inside wires
+
+This file starts the completeness proof, which shows that every network built on `T` is a
+canonical network (`SupportSubdivision.canonical_iso`, outlined in
+`Camus/Network/Completeness/Main.lean`). Fix a support subdivision `H` of `T` in `N`. A vertex of
+`N` is either an original vertex `H.original p` or lies inside the wire of exactly one non-root
+vertex `p` of `T`, the wire that subdivides the edge of `T` above `p`. In the second case its
+anchor `H.anchor v` is `p`, the vertex of `T` directly below it. So the pair
+`H.pairOf d = (u, w)` of a non-tree edge `d = (u', w')` is the pair of Definition 2. The file
+also shows that the switching `S` reaches every vertex from the root.
+
+## Main results
+
+* `SupportSubdivision.interior_unique`: a vertex lies inside at most one wire.
+* `SupportSubdivision.anchor_eq`: the anchor of a vertex inside the wire of `p` is `p`.
+* `SupportSubdivision.vertex_cases`: every vertex of `N` is original or lies inside the wire of
+  its anchor.
+* `RootedNetwork.switching_reachable`: every vertex of `N` is reachable from the root along
+  switching edges.
+-/
+
 @[expose] public section
 
 namespace Camus
@@ -11,7 +33,8 @@ namespace SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
-/-- A subdivision vertex belongs to precisely one original wire. -/
+/-- A vertex lies inside at most one wire: if `v` lies inside the wires of the non-root vertices
+`p` and `q` of `T`, then `p = q`. -/
 theorem interior_unique (H : SupportSubdivision t N S) {p q : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) (hq : q ∈ t.nodes) (hq0 : q ≠ [])
     {v : ℕ} (hvp : v ∈ wireInterior (H.wire p))
@@ -22,7 +45,7 @@ theorem interior_unique (H : SupportSubdivision t N S) {p q : Address}
     (Finset.mem_erase.mpr ⟨hq0, hq⟩) hpq
   exact Finset.disjoint_left.mp hd hvp hvq
 
-/-- The anchor selection really returns the original wire containing a vertex. -/
+/-- If `v` lies inside the wire of the non-root vertex `p`, its anchor `H.anchor v` is `p`. -/
 theorem anchor_eq (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}
     (hv : v ∈ wireInterior (H.wire p)) : H.anchor v = p := by
@@ -34,6 +57,7 @@ theorem anchor_eq (H : SupportSubdivision t N S) {p : Address}
   obtain ⟨hq, hq0, hvq⟩ := Classical.choose_spec hex
   exact H.interior_unique hq hq0 hp hp0 hvq hv
 
+/-- A vertex inside some wire lies inside the wire of its anchor, a non-root vertex of `T`. -/
 theorem anchor_spec (H : SupportSubdivision t N S) {v : ℕ}
     (hv : v ∈ (t.nodes.erase []).biUnion (fun p => wireInterior (H.wire p))) :
     H.anchor v ∈ t.nodes ∧ H.anchor v ≠ [] ∧
@@ -44,17 +68,20 @@ theorem anchor_spec (H : SupportSubdivision t N S) {v : ℕ}
   rw [H.anchor_eq hp hp0 hv]
   exact ⟨hp, hp0, hv⟩
 
+/-- A vertex inside a wire is not an original vertex. -/
 theorem interior_not_original (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}
     (hv : v ∈ wireInterior (H.wire p)) : v ∉ t.nodes.image H.original := by
   exact fun ho => Finset.disjoint_left.mp (H.wire_laws p hp hp0).2.2.2.2 hv ho
 
+/-- Original vertices are vertices of `N`. -/
 theorem original_mem_vertices (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) : H.original p ∈ N.vertices := by
   classical
   rw [H.vertices_covered]
   exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨p, hp, rfl⟩)
 
+/-- Vertices inside wires are vertices of `N`. -/
 theorem interior_mem_vertices (H : SupportSubdivision t N S) {p : Address}
     (hp : p ∈ t.nodes) (hp0 : p ≠ []) {v : ℕ}
     (hv : v ∈ wireInterior (H.wire p)) : v ∈ N.vertices := by
@@ -63,7 +90,8 @@ theorem interior_mem_vertices (H : SupportSubdivision t N S) {p : Address}
   exact Finset.mem_union_right _
     (Finset.mem_biUnion.mpr ⟨p, Finset.mem_erase.mpr ⟨hp0, hp⟩, hv⟩)
 
-/-- Every vertex is either an original vertex or has a genuine non-root anchor. -/
+/-- Every vertex of `N` is an original vertex `H.original p`, or lies inside the wire of its
+anchor, a non-root vertex of `T`. -/
 theorem vertex_cases (H : SupportSubdivision t N S) {v : ℕ} (hv : v ∈ N.vertices) :
     (∃ p ∈ t.nodes, H.original p = v) ∨
       (H.anchor v ∈ t.nodes ∧ H.anchor v ≠ [] ∧
@@ -78,8 +106,9 @@ end SupportSubdivision
 
 namespace RootedNetwork
 
-/-- A switching of a finite DAG reaches every vertex from its root. This is
-proved by induction on the full network's strict ancestor relation. -/
+/-- Every vertex of `N` is reachable from the root along the edges of a switching `S`. The proof
+is by induction along the strict-ancestor relation of `N`, well-founded since `N` is finite and
+acyclic: the switching edge into a non-root vertex comes from a strict ancestor. -/
 theorem switching_reachable {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     {S : Finset (ℕ × ℕ)} (hS : N.Switching S) {v : ℕ} (hv : v ∈ N.vertices) :
     Relation.ReflTransGen (fun u w => (u,w) ∈ S) N.root v := by

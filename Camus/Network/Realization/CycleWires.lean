@@ -2,10 +2,40 @@ module
 
 public import Camus.Network.Realization.Cycles
 
+/-!
+# The canonical network of an edge family: wires on a cycle
+
+For a cycle-separated family `E`, this file describes the wires met by the cycle `γ(u, w)` of a
+pair `(u, w) ∈ E`. Every wire carries at most one outer endpoint and at most one ghost donor
+(`Realization.outerEndpoints_eq_singleton`, `Realization.ghostEndpoints_eq_singleton`). An outer
+endpoint of a pair on the wire above `p` puts `parent(p)` in the footprint of that pair, and
+footprints are disjoint. Two pairs with a ghost donor on the wire above `p` both have target
+`p`, so they are equal by Lemma 2 for edge families (`EdgeAbove.target_unique`). So the wire
+above `p` is: `parent(p)`, at most one outer endpoint, at most one ghost donor, `p`. Next, the
+wire above a vertex of the footprint other than `lca(u, w)` carries no fresh vertex
+(`Realization.internal_cycle_wire`). Finally, the edges that `γ(u, w)` follows besides
+`u′ → w′` are support edges: `parent(u) → u′` if `u ≠ lca(u, w)`, `u′ → u` if `u = lca(u, w)`
+(a ghost donor), `parent(w) → w′`, and `parent(p) → p` for `p` in the footprint other than
+`lca(u, w)`. `Realization.fundamentalCycle_support_subset` uses them to show that `γ(u, w)`
+stays in its vertex set.
+
+## Main results
+
+* `Realization.outerEndpoints_eq_singleton`, `Realization.ghostEndpoints_eq_singleton`: a wire
+  carries at most one outer endpoint and at most one ghost donor.
+* `Realization.internal_cycle_wire`: the wire above a footprint vertex other than the target is
+  the single edge from its parent.
+* `Realization.donor_boundary_edge`, `Realization.recipient_boundary_edge`,
+  `Realization.ghost_boundary_edge`, `Realization.internal_cycle_parent_edge`: the support edges
+  along `γ(u, w)`.
+-/
+
 @[expose] public section
 
 namespace Camus.Realization
 
+/-- For an admissible pair `(u, w)` with `u ≠ lca(u, w)`, `parent(u)` is in the footprint of
+`(u, w)`. -/
 theorem donor_parent_mem_footprint {t : PhyloTree} {e : Pair}
     (he : EdgeAbove.Admissible t e) (hne : EdgeAbove.target e ≠ e.1) :
     parent e.1 ∈ EdgeAbove.footprint t e := by
@@ -23,6 +53,9 @@ private theorem outer_owner_parent {t : PhyloTree} {e : Pair} {p : Address}
   · exact donor_parent_mem_footprint he hne
   · exact recipient_parent_mem_footprint he
 
+/-- For a cycle-separated family, the wire above `p` carries at most one outer endpoint. An
+outer endpoint of a pair puts `parent(p)` in its footprint, the footprints of distinct pairs are
+disjoint, and a pair `(u, w)` has `u ≠ w`. -/
 theorem outerEndpoints_mem_unique {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {p : Address} {v w : ℕ}
     (hv : v ∈ outerEndpoints t E p) (hw : w ∈ outerEndpoints t E p) : v = w := by
@@ -48,6 +81,9 @@ theorem outerEndpoints_mem_unique {t : PhyloTree} {E : Finset Pair}
   · exact False.elim (hune (hu'.trans hr.symm))
   · exact hv.trans hw.symm
 
+/-- For a cycle-separated family, the wire above `p` carries at most one ghost donor: two pairs
+with a ghost donor there both have target `p`, so they are equal by Lemma 2 for edge families
+(`EdgeAbove.target_unique`). -/
 theorem ghostEndpoints_mem_unique {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {p : Address} {v w : ℕ}
     (hv : v ∈ ghostEndpoints t E p) (hw : w ∈ ghostEndpoints t E p) : v = w := by
@@ -71,18 +107,24 @@ private theorem nodup_eq_singleton_of_mem {L : List ℕ} (hL : L.Nodup) {v : ℕ
       exact (List.nodup_cons.mp hL).1 (heq ▸ hw)
     rw [hnil]
 
+/-- For a cycle-separated family, if `v` is an outer endpoint on the wire above `p`, it is the
+only one. -/
 theorem outerEndpoints_eq_singleton {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {p : Address} {v : ℕ}
     (hv : v ∈ outerEndpoints t E p) : outerEndpoints t E p = [v] :=
   nodup_eq_singleton_of_mem (outerEndpoints_nodup t E hE.1 p) hv
     (fun _w hw => outerEndpoints_mem_unique hE hw hv)
 
+/-- For a cycle-separated family, if `v` is a ghost donor on the wire above `p`, it is the only
+one. -/
 theorem ghostEndpoints_eq_singleton {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {p : Address} {v : ℕ}
     (hv : v ∈ ghostEndpoints t E p) : ghostEndpoints t E p = [v] :=
   nodup_eq_singleton_of_mem (ghostEndpoints_nodup t E hE.1 p) hv
     (fun _w hw => ghostEndpoints_mem_unique hE hw hv)
 
+/-- For `(u, w)` in a cycle-separated family and `p` in its footprint with `p ≠ lca(u, w)`,
+no fresh vertex lies on the wire above `p`. -/
 theorem internal_cycle_wire_empty {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E) {p : Address}
     (hp : p ∈ EdgeAbove.footprint t e) (hp0 : p ≠ EdgeAbove.target e) :
@@ -125,6 +167,8 @@ theorem internal_cycle_wire_empty {t : PhyloTree} {E : Finset Pair}
     subst f
     exact hp0 hft.symm
 
+/-- For `(u, w)` in a cycle-separated family and `p` in its footprint with `p ≠ lca(u, w)`,
+the wire above `p` is the single edge `parent(p) → p`. -/
 theorem internal_cycle_wire {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E) {p : Address}
     (hp : p ∈ EdgeAbove.footprint t e) (hp0 : p ≠ EdgeAbove.target e) :
@@ -142,6 +186,8 @@ theorem wireEdges_append_right_subset (A B : List ℕ) : wireEdges B ⊆ wireEdg
   | nil => exact Finset.Subset.refl _
   | cons a A ih => exact ih.trans (wireEdges_cons_subset _ _)
 
+/-- For `(u, w)` in a cycle-separated family with `u ≠ lca(u, w)`, `parent(u) → u′` is a
+support edge. -/
 theorem donor_boundary_edge {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E)
     (hne : EdgeAbove.target e ≠ e.1) :
@@ -157,6 +203,7 @@ theorem donor_boundary_edge {t : PhyloTree} {E : Finset Pair}
     rw [hwire,wireEdges_cons_cons]
     exact Finset.mem_insert_self _ _⟩
 
+/-- For `(u, w)` in a cycle-separated family, `parent(w) → w′` is a support edge. -/
 theorem recipient_boundary_edge {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E) :
     (Address.code (parent e.2), recipient t e) ∈ supportEdges t E := by
@@ -171,6 +218,8 @@ theorem recipient_boundary_edge {t : PhyloTree} {E : Finset Pair}
     rw [hwire,wireEdges_cons_cons]
     exact Finset.mem_insert_self _ _⟩
 
+/-- For `(u, w)` in a cycle-separated family with `u = lca(u, w)` (a ghost donor), `u′ → u` is
+a support edge. -/
 theorem ghost_boundary_edge {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E)
     (hghost : EdgeAbove.target e = e.1) :
@@ -187,6 +236,8 @@ theorem ghost_boundary_edge {t : PhyloTree} {E : Finset Pair}
   rw [hwire]
   exact wireEdges_append_right_subset _ _ (by simp [wireEdges])
 
+/-- For `(u, w)` in a cycle-separated family and `p` in its footprint with `p ≠ lca(u, w)`,
+`parent(p) → p` is a support edge. -/
 theorem internal_cycle_parent_edge {t : PhyloTree} {E : Finset Pair}
     (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E) {p : Address}
     (hp : p ∈ EdgeAbove.footprint t e) (hp0 : p ≠ EdgeAbove.target e) :

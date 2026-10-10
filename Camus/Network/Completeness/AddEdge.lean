@@ -2,12 +2,26 @@ module
 
 public import Camus.Network.Completeness.Transport
 
+/-!
+# Adding an edge to a subdivision
+
+If `N` is a subdivision of `P` that keeps the names of the vertices of `P`, adding an edge
+`e ∉ P.edges` between two distinct vertices of `P` to both networks gives a subdivision again;
+the wire of `e` is `e` itself. The single-edge reduction
+(`SupportSubdivision.single_edge_reduction`) uses it to add the retained non-tree edge.
+
+## Main results
+
+* `GraphSubdivision.addEdge`: the subdivision with the edge added.
+-/
+
 @[expose] public section
 
 namespace Camus.GraphSubdivision
 
-/-- Add a preserved arc to both graphs of an identity subdivision. Its wire
-has no interior vertices, so all original subdivision wires are retained. -/
+/-- Let `N` be a subdivision of `P` whose vertex map is the identity, and let `e ∉ P.edges` join
+two distinct vertices of `P`. Adding `e` to the edges of `P` and of `N` gives a subdivision, in
+which the wire of `e` is `[e.1, e.2]` and the other wires are unchanged. -/
 noncomputable def addEdge {P N : RootedNetwork} (H : GraphSubdivision P N)
     (hid : H.original = id) (e : ℕ × ℕ) (he : e ∉ P.edges)
     (hends : e.1 ∈ P.vertices ∧ e.2 ∈ P.vertices) (hne : e.1 ≠ e.2) :

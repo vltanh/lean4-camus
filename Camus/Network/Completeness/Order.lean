@@ -2,14 +2,34 @@ module
 
 public import Camus.Network.Completeness.Splitting
 
+/-!
+# Order of endpoints on a shared wire
+
+Non-tree edges with disjoint cycles may have endpoints inside the same wire. On the wire above
+`p`, the canonical network places the endpoint of an outer cycle before the donor of a ghost pair
+with target `p` (`Realization.outerEndpoints`, `Realization.ghostEndpoints`); a pair `(u, w)` is a
+ghost pair when `u = lca(u, w)`. This file shows that `N` has the same order. If the ghost donor
+`u'` came first, the cycle of its edge, which runs from `u'` down the wire to `H.original p`,
+would pass through the later endpoint, which lies on another cycle.
+
+## Main results
+
+* `SupportSubdivision.no_ghost_before_endpoint`: the wire of `p` is not
+  `[H.original (parent p), u', v, H.original p]` with `u'` the ghost donor of an edge with target
+  `p` and `v` an endpoint of another non-tree edge.
+-/
+
 @[expose] public section
 
 namespace Camus.SupportSubdivision
 
 variable {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
 
-/-- A ghost donor cannot precede another cycle endpoint on its wire. Its cycle
-continues to the original vertex, so the later endpoint would lie on both cycles. -/
+/-- Let `d` be a non-tree edge whose pair has target `p`, and let `v` be an endpoint of another
+non-tree edge `f`. Then the wire of `p` is not `[H.original (parent p), d.1, v, H.original p]`.
+Otherwise the tail of `d` lies inside the wire of `p`, so its pair `(u, w)` has `u = p = lca(u, w)`
+(a ghost pair) and `p` lies on `γ(u, w)`. The cycle of `d` then contains the switching path from
+`H.original p` to `d.1`, which passes through `v`, and `v` lies on the cycle of `f`. -/
 theorem no_ghost_before_endpoint (H : SupportSubdivision t N S)
     (hN : N.RootedBinaryLevelOne) {e f : ℕ × ℕ}
     (he : e ∈ N.edges \ S) (hf : f ∈ N.edges \ S) (hef : e ≠ f)

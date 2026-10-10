@@ -2,12 +2,37 @@ module
 
 public import Camus.Restriction.Defs
 
+/-!
+# Section 2.4: the knapsack over the hanging subtrees
+
+In the gall case of the recurrence (`BudgetDP.cases`), the budget left after the edge with target
+`v` is distributed over the subtrees hanging off its cycle. This file shows that the knapsack
+`BudgetDP.forest`, which keeps only the maximum after each convolution, loses nothing: its values
+are values of distributions (`forest_sound`) and dominate all of them (`forest_upper`). It then
+lifts this to families of added edges: every value of the knapsack row is attained by feasible
+families in the hanging subtrees with the right total size (`forest_attainable`), and any feasible
+families in the hanging subtrees are dominated by a value of the row of their total size
+(`forest_dominates`).
+
+## Main results
+
+* `BudgetDP.mem_allocations`: the values of `allocations` are the sums over the distributions of
+  the budget.
+* `BudgetDP.forest_sound`, `BudgetDP.forest_upper`: `forest` is contained in `allocations` and
+  dominates it.
+* `BudgetDP.forest_attainable`, `BudgetDP.forest_dominates`: the same for feasible edge families.
+* `BudgetDP.card_gall`: the edge with target `v` and the families below it have `1 + Σ` edges.
+-/
+
 @[expose] public section
 
 namespace Camus.BudgetDP
 
 open DynamicProgramming
 
+/-- For a list `rs` without repetition, the values of `allocations M rs k` are the sums
+`Σ_{r ∈ rs} s r` over the budgets `b` with `Σ_{r ∈ rs} b r = k` and the choices
+`s r ∈ M r (b r)`. -/
  theorem mem_allocations {M : Address → ℕ → Finset ℕ} {rs : List Address}
     (hrs : rs.Nodup) {k z : ℕ} : z ∈ allocations M rs k ↔
       ∃ b s : Address → ℕ,
@@ -63,6 +88,7 @@ open DynamicProgramming
       · exact (ih htail).mpr ⟨b,s,rfl,rfl,fun x hx=>hm x (by simp [hx])⟩
       · simpa [List.toFinset_cons,Finset.sum_insert hrnot] using hs
 
+/-- Every value of the knapsack row is the value of a distribution of the budget. -/
  theorem forest_sound {M : Address → ℕ → Finset ℕ} {rs : List Address}
     {k z : ℕ} (hz : z ∈ forest M rs k) : z ∈ allocations M rs k := by
   induction rs generalizing k z with
@@ -71,6 +97,8 @@ open DynamicProgramming
     obtain ⟨i,j,a,b,hij,ha,hb,hab⟩ := mem_convolution.mp (mem_best.mp hz).1
     exact mem_convolution.mpr ⟨i,j,a,b,hij,ha,ih hb,hab⟩
 
+/-- The value of every distribution of the budget is at most a value of the knapsack row: keeping
+only the maximum after each convolution loses no maximum. -/
  theorem forest_upper {M : Address → ℕ → Finset ℕ} {rs : List Address}
     {k z : ℕ} (hz : z ∈ allocations M rs k) : ∃ m ∈ forest M rs k, z ≤ m := by
   induction rs generalizing k z with
@@ -83,6 +111,10 @@ open DynamicProgramming
     obtain ⟨m,hm,hle⟩ := exists_best_ge hcandidate
     exact ⟨m,hm,hab ▸ (Nat.add_le_add_left hbc a).trans hle⟩
 
+/-- Attainment for the knapsack. Assume that every value `z` of a row `M[r][k]` of a subtree `r`
+hanging off the cycle of `e` is the value of a feasible family of exactly `k` edges below `r`. Then
+every value `z` of row `k` of the knapsack is the total value of feasible families `F r` below the
+hanging subtrees `r`, with `k` edges in total. -/
  theorem forest_attainable {t : PhyloTree} {M : Address → ℕ → Finset ℕ}
     {e : Pair} (_he : EdgeAbove.Admissible t e) (w : Pair → ℕ)
     (hM : ∀ r ∈ hanging t e, ∀ k z, z ∈ M r k →
@@ -104,6 +136,10 @@ open DynamicProgramming
     (Finset.sum_congr rfl (fun r hr=>(hF r hr).2.1)).trans hb,
     (Finset.sum_congr rfl (fun r hr=>(hF r hr).2.2)).trans hs⟩
 
+/-- Domination for the knapsack. Assume that every feasible family below a subtree `r` hanging off
+the cycle of `e` has value at most some value of the row of `r` of its size. Then any feasible
+families `F r` below the hanging subtrees have total value at most some value of the knapsack row
+of their total size. -/
  theorem forest_dominates {t : PhyloTree} {M : Address → ℕ → Finset ℕ}
     {e : Pair} (_he : EdgeAbove.Admissible t e) (w : Pair → ℕ)
     (hM : ∀ r ∈ hanging t e, ∀ F, FeasibleBelow t r F →
@@ -124,11 +160,15 @@ open DynamicProgramming
   obtain ⟨z,hz,hle⟩ := forest_upper ha
   exact ⟨z,hz,(Finset.sum_le_sum (fun r hr=>(hs r hr).2)).trans hle⟩
 
+/-- Feasible families below distinct hanging subtrees are disjoint, so their union has
+`Σ_r |F r|` edges. -/
  theorem card_forest {t : PhyloTree} {e : Pair} (he : EdgeAbove.Admissible t e)
     (F : Address → Finset Pair) (hF : ∀ r ∈ hanging t e, FeasibleBelow t r (F r)) :
     ((hanging t e).biUnion F).card = ∑ r ∈ hanging t e, (F r).card := by
   exact Finset.card_biUnion (forest_disjoint (EdgeAbove.footprint_region t e he) F hF)
 
+/-- The edge `e` together with feasible families `F r` below the subtrees hanging off its cycle has
+`1 + Σ_r |F r|` edges. -/
  theorem card_gall {t : PhyloTree} {e : Pair} (he : EdgeAbove.Admissible t e)
     (F : Address → Finset Pair) (hF : ∀ r ∈ hanging t e, FeasibleBelow t r (F r)) :
     (insert e ((hanging t e).biUnion F)).card = 1 + ∑ r ∈ hanging t e, (F r).card := by

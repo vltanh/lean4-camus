@@ -4,12 +4,31 @@ public import Camus.Network.Code
 public import Mathlib.Logic.Equiv.Fintype
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
 
+/-!
+# Renaming the vertices of a network
+
+Auxiliary to `RootedNetwork.Iso.displays_iff` (isomorphic networks display the same quartets).
+Vertices of networks are natural numbers, and a permutation `f` of `ℕ` renames them;
+`RootedNetwork.renameEdges f S` is the image of an arc set `S`. Renaming preserves indegrees, so it
+maps switchings to switchings. It is an isomorphism of underlying undirected graphs, before and
+after deleting an edge, so it preserves the separation of the two pairs of a quartet.
+
+## Main results
+
+* `RootedNetwork.displays_of_rename`: if `f` maps the vertices, arcs, root and labelled leaves of
+  `N` onto those of `P`, every quartet displayed by `N` is displayed by `P`.
+* `RootedNetwork.renameEdges_count`: renaming preserves indegrees.
+* `RootedNetwork.displays_of_edges_subset`: adding arcs to a network keeps its displayed quartets.
+* `Quartet.sides_subset_taxa`: the two sides of a quartet consist of its taxa.
+-/
+
 @[expose] public section
 
 namespace Camus
 
 namespace Quartet
 
+/-- Both sides of the split of a quartet are sets of its taxa. -/
 theorem sides_subset_taxa (q : Quartet) : q.sides.1 ⊆ q.taxa ∧ q.sides.2 ⊆ q.taxa := by
   simp only [sides]
   split_ifs <;> simp [taxa, Finset.subset_iff]
@@ -18,21 +37,26 @@ end Quartet
 
 namespace RootedNetwork
 
-/-- Reuse a switching when adding edges without changing vertices, root, or labels. -/
+/-- Adding arcs keeps displayed quartets. If `S ⊆ N.edges` and the network `N` with arc set `S`
+displays `q`, then `N` displays `q`: a switching of `S` is a switching of `N`. -/
 theorem displays_of_edges_subset {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
     (h : S ⊆ N.edges) (q : Quartet) :
     ({N with edges := S}).DisplaysQuartet q → N.DisplaysQuartet q := by
   rintro ⟨hqt,R,hR,e,he,hsep⟩
   exact ⟨hqt,R,⟨hR.1.trans h,hR.2⟩,e,he,hsep⟩
 
+/-- The image of an arc set `S` under a renaming `f` of the vertices (a permutation of `ℕ`). -/
 noncomputable def renameEdges (f : ℕ ≃ ℕ) (S : Finset (ℕ × ℕ)) : Finset (ℕ × ℕ) :=
   S.image fun e => (f e.1, f e.2)
 
+/-- `(f u, f v)` is a renamed arc if and only if `(u, v)` is an arc of `S`. -/
 theorem renameEdges_mem (f : ℕ ≃ ℕ) (S : Finset (ℕ × ℕ)) (u v : ℕ) :
     (f u, f v) ∈ renameEdges f S ↔ (u,v) ∈ S := by
   classical
   simp [renameEdges, Prod.ext_iff]
 
+/-- Renaming preserves indegrees: `renameEdges f S` has as many arcs entering `f v` as `S` has arcs
+entering `v`. -/
 theorem renameEdges_count (f : ℕ ≃ ℕ) (S : Finset (ℕ × ℕ)) (v : ℕ) :
     ((renameEdges f S).filter (fun e => e.2 = f v)).card =
       (S.filter (fun e => e.2 = v)).card := by
@@ -45,6 +69,8 @@ theorem renameEdges_count (f : ℕ ≃ ℕ) (S : Finset (ℕ × ℕ)) (v : ℕ) 
   · exact f.injective (congrArg Prod.fst h)
   · exact f.injective (congrArg Prod.snd h)
 
+/-- `f` is an isomorphism from the underlying undirected graph of `S` to that of
+`renameEdges f S`. -/
 noncomputable def renamedUnderlyingIso (f : ℕ ≃ ℕ) (N P : RootedNetwork)
     (S : Finset (ℕ × ℕ)) :
     ({N with edges := S}).underlying ≃g
@@ -55,6 +81,8 @@ noncomputable def renamedUnderlyingIso (f : ℕ ≃ ℕ) (N P : RootedNetwork)
     change (f u ≠ f v ∧ _) ↔ (u ≠ v ∧ _)
     simp only [f.injective.ne_iff, renameEdges_mem]
 
+/-- `f` is still an isomorphism after deleting the edge `{u, v}` from the underlying graph of `S`
+and the edge `{f u, f v}` from that of `renameEdges f S`. -/
 noncomputable def renamedCutIso (f : ℕ ≃ ℕ) (N P : RootedNetwork)
     (S : Finset (ℕ × ℕ)) (u v : ℕ) :
     (({N with edges := S}).underlying.deleteEdges {s(u,v)}) ≃g
@@ -69,8 +97,11 @@ noncomputable def renamedCutIso (f : ℕ ≃ ℕ) (N P : RootedNetwork)
     rw [hadj]
     simp only [f.injective.eq_iff]
 
-/-- A bijective renaming transports the chosen incoming edges and the quartet's
-edge-separation witness. This lemma makes no optimization or attribution assumption. -/
+/-- Renaming transports displayed quartets. Let `f` be a permutation of `ℕ` that maps the vertices
+of `N` onto those of `P`, the arcs of `N` onto those of `P`, the root to the root and each labelled
+leaf of `N` to the leaf of `P` with the same label (`N` and `P` having the same taxa). Then every
+quartet displayed by `N` is displayed by `P`: `f` maps the switching to a switching of `P` and the
+deleted edge to an edge whose deletion separates the same pairs. -/
 theorem displays_of_rename {N P : RootedNetwork} (f : ℕ ≃ ℕ)
     (hvertices : ∀ v, v ∈ N.vertices ↔ f v ∈ P.vertices)
     (hedges : ∀ u v, (u,v) ∈ N.edges ↔ (f u,f v) ∈ P.edges)

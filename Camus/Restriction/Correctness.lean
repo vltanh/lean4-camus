@@ -2,17 +2,42 @@ module
 
 public import Camus.Restriction.Forest
 
+/-!
+# Section 2.4: correctness of the recurrence
+
+An array `M` satisfying the recurrence of `Camus/Restriction/Defs.lean` is correct at every vertex
+`v` (`BudgetDP.Correct`): every value of the row `M[v][k]` is the value of a feasible family of
+exactly `k` added edges with targets in `T_v` (attainment), and every such family has value at most
+a value of the row of its size (domination). The proof is a strong induction from the leaves up,
+with the two cases of the proof of Theorem 1: no edge of the family has target `v`, and the family
+splits between the two children (`DynamicProgramming.fork_partition`); or an edge `e` has target
+`v`, which is then the only one (Lemma 2), and the other edges lie below the subtrees hanging off
+the cycle of `e` (`DynamicProgramming.gall_partition`).
+
+## Main results
+
+* `BudgetDP.array_correct`: attainment and domination at every vertex.
+* `BudgetDP.exact_optimal`: every value `z` of `M[v][k]` is the value of a feasible family of
+  exactly `k` edges below `v`, and no feasible family of exactly `k` edges below `v` has a larger
+  value.
+-/
+
 @[expose] public section
 
 namespace Camus.BudgetDP
 
 open DynamicProgramming
 
+/-- Correctness of the rows at `v`. Attainment: every value `z` of `M[v][k]` is the value
+`Σ_{e ∈ F} w e` of a feasible family `F` of exactly `k` edges with targets in `T_v`. Domination:
+every feasible family `F` with targets in `T_v` has value at most some value of `M[v][|F|]`. -/
 def Correct (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
     (v : Address) : Prop :=
   (∀ k z, z ∈ M v k → ∃ F, FeasibleBelow t v F ∧ F.card=k ∧ value w F=z) ∧
   (∀ F, FeasibleBelow t v F → ∃ z ∈ M v F.card, value w F ≤ z)
 
+/-- Attainment at `v`, given correctness strictly below `v`: every candidate value of
+`cases t w M v k` is the value of a feasible family of exactly `k` edges with targets in `T_v`. -/
  theorem cases_attainable (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
     {v : Address} (hv : v ∈ t.nodes)
     (ih : ∀ r ∈ t.nodes, v <+: r → v ≠ r → Correct t w M r)
@@ -32,6 +57,7 @@ def Correct (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset �
       ih _ (PhyloTree.child_mem_nodes hnode b) (List.prefix_append _ _) (by simp)
     simp only [cases,hnode] at hz
     rcases Finset.mem_union.mp hz with hfork | hgall
+    -- no edge with target `v`: join families attaining the two children's rows
     · obtain ⟨i,j,a,b,hij,ha,hb,hab⟩ := mem_convolution.mp hfork
       obtain ⟨L,hL,hLc,hLv⟩ := (hchild false).1 i a ha
       obtain ⟨R,hR,hRc,hRv⟩ := (hchild true).1 j b hb
@@ -39,6 +65,8 @@ def Correct (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset �
       · rw [Finset.card_union_of_disjoint (fork_disjoint hL hR),hLc,hRc,hij]
       · rw [value,Finset.sum_union (fork_disjoint hL hR)]
         exact (congrArg₂ (·+·) hLv hRv).trans hab
+    -- an edge `e` with target `v`: add it to families attaining the knapsack row of the subtrees
+    -- hanging off its cycle
     · split_ifs at hgall with hk
       · exact (Finset.notMem_empty _ hgall).elim
       · obtain ⟨e,he,hz⟩ := Finset.mem_biUnion.mp hgall
@@ -54,6 +82,8 @@ def Correct (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset �
           omega
         · rw [value_gall hae w F hF,hFv,hcz]
 
+/-- Domination at `v`, given correctness strictly below `v`: every feasible family `F` with targets
+in `T_v` has value at most some candidate value of `cases t w M v |F|`. -/
  theorem cases_dominates (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
     {v : Address} (hv : v ∈ t.nodes)
     (ih : ∀ r ∈ t.nodes, v <+: r → v ≠ r → Correct t w M r)
@@ -70,6 +100,8 @@ def Correct (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset �
     have hchild (b : Bool) : Correct t w M (v++[b]) :=
       ih _ (PhyloTree.child_mem_nodes hnode b) (List.prefix_append _ _) (by simp)
     by_cases hroot : ∃ e ∈ F, EdgeAbove.target e=v
+    -- an edge `e` of `F` has target `v`: it is the only one (Lemma 2), and the other edges lie
+    -- below the subtrees hanging off its cycle
     · obtain ⟨e,he,het⟩ := hroot
       have hae := (Finset.mem_filter.mp (hF.1.1 he)).2
       let branches := fun r => restrictBelow r (F.erase e)
@@ -95,6 +127,7 @@ def Correct (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset �
       · conv_lhs => rw [hpart]
         rw [value_gall hae w branches hbranches]
         exact Nat.add_le_add_left hcle _
+    -- no edge of `F` has target `v`: `F` splits between the two children
     · have hno : ∀ e ∈ F, EdgeAbove.target e ≠ v := by
         intro e he ht
         exact hroot ⟨e,he,ht⟩
@@ -113,9 +146,8 @@ def Correct (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset �
       · rw [hpart,value,Finset.sum_union (fork_disjoint hL hR)]
         exact Nat.add_le_add haL hbR
 
-/-- Strong induction with exact-count knapsack allocations. Attainment proves
-backtracking produces a feasible edge family; domination proves optimality.
-The fork/gall partition and target uniqueness are the paper's proof route. -/
+/-- Section 2.4: if `M` satisfies the recurrence, its rows are correct (`Correct`) at every vertex
+of `T`. Strong induction from the leaves up, with the two cases of the proof of Theorem 1. -/
  theorem array_correct (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
     (hM : Array t w M) {v : Address} (hv : v ∈ t.nodes) : Correct t w M v := by
   generalize hn : remainingDepth t v = n
@@ -132,8 +164,9 @@ The fork/gall partition and target uniqueness are the paper's proof route. -/
       obtain ⟨m,hm,hzm⟩ := exists_best_ge hz
       exact ⟨m,by rw [hM v hv F.card]; exact hm,hlez.trans hzm⟩
 
-/-- Every retained exact-budget score is attained and is maximal among all
-feasible extensions with precisely that many reticulations. -/
+/-- Section 2.4, for families of added edges: if `M` satisfies the recurrence, every value `z` of
+`M[v][k]` is the value of a feasible family `E` of exactly `k` edges with targets in `T_v`, and
+every feasible family of exactly `k` edges with targets in `T_v` has value at most `z`. -/
  theorem exact_optimal (t : PhyloTree) (w : Pair → ℕ) (M : Address → ℕ → Finset ℕ)
     (hM : Array t w M) {v : Address} (hv : v ∈ t.nodes) {k z : ℕ} (hz : z ∈ M v k) :
     ∃ E, FeasibleBelow t v E ∧ E.card=k ∧ value w E=z ∧

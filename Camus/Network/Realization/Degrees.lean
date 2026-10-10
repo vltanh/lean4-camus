@@ -4,6 +4,29 @@ public import Camus.Network.Realization.Support
 public import Camus.DP.Packing
 public import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 
+/-!
+# The canonical network of an edge family: degree laws
+
+This file computes the indegree and the outdegree of every vertex of `Realization.graph t E`,
+for a family `E` of admissible pairs. The root has indegree `0`. Every other vertex of `T` has
+indegree `1`. A vertex of `T` has as many outgoing edges as children in `T`: `0` at a leaf, `2`
+at an internal vertex. For `(u, w) ∈ E`, the donor `u′` has indegree `1` and outdegree `2`, and
+the recipient `w′` has indegree `2` and outdegree `1`. So the reticulations of the network are
+the recipients `w′`, as Definition 3 says of the bottom vertex of `γ(u, w)`. The proofs count
+separately the support edges, which lie on the wires (paths without repetition), and the added
+edges.
+
+## Main results
+
+* `Realization.graph_root_indegree`: the root has indegree `0`.
+* `Realization.graph_indegree_code`: a non-root vertex of `T` has indegree `1`.
+* `Realization.graph_outdegree_code`, `Realization.graph_outdegree_leaf`,
+  `Realization.graph_outdegree_fork`: the outdegree of a vertex of `T` is its number of
+  children, `0` at a leaf and `2` at an internal vertex.
+* `Realization.endpoint_degrees`: `u′` has indegree `1` and outdegree `2`; `w′` has indegree `2`
+  and outdegree `1`.
+-/
+
 @[expose] public section
 
 namespace Camus.Realization
@@ -21,6 +44,8 @@ theorem edge_first_mem_dropLast {L : List ℕ} {e : ℕ × ℕ} (he : e ∈ wire
       · simp
       · exact List.mem_cons_of_mem _ (ih he)
 
+/-- On a path `L` without repetition, one edge of `L` starts at `v` if `v` is in `L` without
+its last vertex, and none otherwise. -/
 theorem outgoing_wire_card (L : List ℕ) (hL : L.Nodup) (v : ℕ) :
     ((wireEdges L).filter (fun e => e.1 = v)).card = if v ∈ L.dropLast then 1 else 0 := by
   classical
@@ -83,6 +108,7 @@ theorem mem_code_dropLast_iff {t : PhyloTree} {E : Finset Pair} {p q : Address}
       (Finset.mem_image.mpr ⟨q, hq, rfl⟩)
   simp [hno, Address.code_injective.eq_iff]
 
+/-- No support edge ends at the root. -/
 theorem support_root_incoming_empty (t : PhyloTree) (E : Finset Pair) :
     (supportEdges t E).filter (fun e => e.2 = Address.code []) = ∅ := by
   classical
@@ -103,6 +129,7 @@ theorem added_incoming_code_empty (t : PhyloTree) (E : Finset Pair)
   obtain ⟨f, hf, rfl⟩ := Finset.mem_image.mp he
   exact recipient_ne_code f hp heq
 
+/-- The root of `Realization.graph t E` has indegree `0`. -/
 theorem graph_root_indegree (t : PhyloTree) (E : Finset Pair) :
     (graph t E).indegree (graph t E).root = 0 := by
   classical
@@ -112,6 +139,8 @@ theorem graph_root_indegree (t : PhyloTree) (E : Finset Pair) :
     added_incoming_code_empty t E t.root_mem_nodes]
   simp
 
+/-- For a family of admissible pairs, a non-root vertex of `T` has indegree `1` in
+`Realization.graph t E`. -/
 theorem graph_indegree_code (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ []) :
     (graph t E).indegree (Address.code p) = 1 := by
@@ -123,6 +152,8 @@ theorem graph_indegree_code (t : PhyloTree) (E : Finset Pair)
   · exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨p, hp, rfl⟩)
   · exact fun h => hp0 (Address.code_injective h)
 
+/-- For a family of admissible pairs, the number of support edges starting at a vertex `p` of
+`T` is the number of children of `p` in `T`. -/
 theorem support_outgoing_code (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {p : Address} (hp : p ∈ t.nodes) :
     ((supportEdges t E).filter (fun e => e.1 = Address.code p)).card =
@@ -147,6 +178,7 @@ theorem support_outgoing_code (t : PhyloTree) (E : Finset Pair)
 theorem parent_append_singleton (p : Address) (b : Bool) : parent (p ++ [b]) = p := by
   simp [parent]
 
+/-- The non-root address `q` has parent `p` iff `q` is `p ++ [false]` or `p ++ [true]`. -/
 theorem parent_eq_iff {p q : Address} (hq : q ≠ []) :
     parent q = p ↔ q = p ++ [false] ∨ q = p ++ [true] := by
   constructor
@@ -196,6 +228,8 @@ theorem added_outgoing_code_empty (t : PhyloTree) (E : Finset Pair)
   obtain ⟨f, hf, rfl⟩ := Finset.mem_image.mp he
   exact donor_ne_code f hp heq
 
+/-- For a family of admissible pairs, the outdegree of a vertex `p` of `T` in
+`Realization.graph t E` is the number of children of `p` in `T`. -/
 theorem graph_outdegree_code (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {p : Address} (hp : p ∈ t.nodes) :
     (graph t E).outdegree (Address.code p) =
@@ -206,12 +240,16 @@ theorem graph_outdegree_code (t : PhyloTree) (E : Finset Pair)
   rw [Finset.filter_union, added_outgoing_code_empty t E hp, Finset.union_empty]
   exact support_outgoing_code t E hE hp
 
+/-- For a family of admissible pairs, a leaf of `T` has outdegree `0` in
+`Realization.graph t E`. -/
 theorem graph_outdegree_leaf {t : PhyloTree} {E : Finset Pair}
     (hE : E ⊆ EdgeAbove.candidates t) {p : Address} {a : ℕ}
     (hp : t.nodeAt p = some (.leaf a)) : (graph t E).outdegree (Address.code p) = 0 := by
   rw [graph_outdegree_code t E hE ((t.mem_nodes_iff p).mpr ⟨_, hp⟩), children_filter_leaf hp]
   rfl
 
+/-- For a family of admissible pairs, an internal vertex of `T` has outdegree `2` in
+`Realization.graph t E`. -/
 theorem graph_outdegree_fork {t l r : PhyloTree} {E : Finset Pair}
     (hE : E ⊆ EdgeAbove.candidates t) {p : Address}
     (hp : t.nodeAt p = some (.fork l r)) : (graph t E).outdegree (Address.code p) = 2 := by
@@ -242,6 +280,8 @@ theorem support_outgoing_eq_wire (t : PhyloTree) (E : Finset Pair)
   · rintro ⟨he, heq⟩
     exact ⟨⟨p, ⟨hp0, hp⟩, he⟩, heq⟩
 
+/-- For a family of admissible pairs, exactly one support edge starts at a vertex inside a
+wire. -/
 theorem support_outgoing_interior_card (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ [])
     {v : ℕ} (hv : v ∈ wireInterior (wire t E p)) :
@@ -300,6 +340,10 @@ theorem added_outgoing_donor_singleton (t : PhyloTree) (E : Finset Pair)
   · rintro rfl
     exact ⟨Finset.mem_image.mpr ⟨e, he, rfl⟩, rfl⟩
 
+/-- For `(u, w)` in a family `E` of admissible pairs, in `Realization.graph t E` the donor
+`u′` has indegree `1` and outdegree `2` (to the vertex after it on its wire, and to `w′`), and
+the recipient `w′` has indegree `2` (from the vertex before it on its wire, and from `u′`) and
+outdegree `1`. -/
 theorem endpoint_degrees (t : PhyloTree) (E : Finset Pair)
     (hE : E ⊆ EdgeAbove.candidates t) {e : Pair} (he : e ∈ E) :
     (graph t E).indegree (donor t e) = 1 ∧

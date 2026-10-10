@@ -2,12 +2,48 @@ module
 
 public import Camus.Preliminaries.Lemma1.Switches
 
+/-!
+# Lemma 1, uniqueness
+
+This file proves the uniqueness part of Lemma 1 (`RootedNetwork.novel_edge_unique`): let `N` be a
+rooted binary level-1 network built on `T`, and `q` a quartet that `T` does not induce; then `T + d`
+displays `q` for at most one non-tree edge `d` of `N`. The argument uses that the cycles of `N` are
+vertex-disjoint; it does not use Observation 2. The paper derives all of Lemma 1 from Observation 2
+(see `lemma1`).
+
+## Main results
+
+* `RootedNetwork.novel_edge_unique`: uniqueness in Lemma 1.
+* `RootedNetwork.nonbaseline_pair_paths_intersect`: if `T` does not induce `q = ab|cd`, the paths
+  from `a` to `b` and from `c` to `d` in the subdivided `T` meet.
+* `RootedNetwork.single_novel_pair_vertex_on_cycle`: a common vertex of these paths lies on the
+  cycle of every non-tree edge `d` such that `T + d` displays `q`.
+
+## Proof
+
+1. Write `q = ab|cd` (`Quartet.sides_pairs`).
+2. In the subdivided `T`, the path from `a` to `b` and the path from `c` to `d` meet. Otherwise one
+   edge of `T` separates them (`disjoint_paths_separating_edge`), and `T` induces `q`
+   (`RootedNetwork.nonbaseline_pair_paths_intersect`).
+3. Let `v` be a common vertex, and `d` a non-tree edge such that `T + d` displays `q`. Then
+   `{N with edges := insert d S}` displays `q`: a switching `K` and an edge of `K` whose deletion
+   separates `q`. The edges of `S` missing from `K` and the deleted edge lie on the cycle of `d`
+   (`RootedNetwork.single_switch_missing_on_cycle`, `RootedNetwork.single_raw_novel_cut_on_cycle`).
+   If `v` were not on that cycle, it would remain connected to `a` or `b` and to `c` or `d`
+   (`path_outside_region_reachable`), and `q` would not be separated. So `v` lies on the cycle of
+   `d` (`RootedNetwork.single_novel_pair_vertex_on_cycle`).
+4. Two such edges have cycles through `v`. The cycles of distinct non-tree edges of `N` are
+   vertex-disjoint (`RootedNetwork.fundamentalCycles_disjoint`), so the edges are equal.
+-/
+
 @[expose] public section
 
 namespace Camus
 
 namespace Quartet
 
+/-- Every quartet is `ab|cd` for some labels `a, b, c, d`: its two sides are `{a, b}` and
+`{c, d}`. -/
 theorem sides_pairs (q : Quartet) :
     ∃ a b c d, q.sides = ({a,b}, {c,d}) := by
   unfold sides
@@ -20,6 +56,8 @@ end Quartet
 
 namespace RootedNetwork
 
+/-- A graph `G` separates `q = ab|cd` (on the leaves of `N`) if `a` and `b` are connected, `c` and
+`d` are connected, and `a` and `c` are not. -/
 theorem separates_of_pair_connections (N : RootedNetwork) (q : Quartet)
     {a b c d : ℕ} (hs : q.sides = ({a,b},{c,d})) (G : SimpleGraph ℕ)
     (hab : G.Reachable (N.leaf a) (N.leaf b))
@@ -41,7 +79,9 @@ theorem separates_of_pair_connections (N : RootedNetwork) (q : Quartet)
     fun x hx y hy => (hsecond x hx).trans (hsecond y hy).symm,
     fun x hx y hy h => hac ((hfirst x hx).symm.trans (h.trans (hsecond y hy)))⟩
 
-/-- The two within-pair paths of a nonbaseline quartet must intersect. -/
+/-- Let `T` not induce `q = ab|cd`. Then a walk from `a` to `b` and a walk from `c` to `d` in the
+subdivided `T` (`{N with edges := S}`) have a common vertex: otherwise one edge of the tree
+separates `{a, b}` from `{c, d}` (`disjoint_paths_separating_edge`), and `T` induces `q`. -/
 theorem nonbaseline_pair_paths_intersect {t : PhyloTree} (ht : t.WellLabelled)
     {N : RootedNetwork} (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)}
     (H : SupportSubdivision t N S) (q : Quartet) (hqt : q.taxa ⊆ N.taxa)
@@ -69,6 +109,8 @@ theorem nonbaseline_pair_paths_intersect {t : PhyloTree} (ht : t.WellLabelled)
     (Realization.levelOne t ht ∅ hbase) q).mp hraw
   exact hnot ((Realization.baseline_displays_iff t ht q).mp hbaseq)
 
+/-- A vertex lies on the cycle of the non-tree edge `d` iff it lies on the path of `S` joining the
+ends of `d`. -/
 theorem fundamentalCycle_support_iff {N : RootedNetwork} (hN : N.RootedBinaryLevelOne)
     {S : Finset (ℕ × ℕ)} (hS : N.Switching S) {d : ℕ × ℕ}
     (hd : d ∈ N.edges \ S) (v : ℕ) :
@@ -81,8 +123,11 @@ theorem fundamentalCycle_support_iff {N : RootedNetwork} (hN : N.RootedBinaryLev
     · exact h
   · exact Or.inr
 
-/-- A shared vertex of the two pair paths belongs to every cycle that produces
-this novel quartet. The proof uses the support tree, not an attribution law. -/
+/-- Let `T` not induce `q = ab|cd`, let `p` and `r` be the paths from `a` to `b` and from `c` to `d`
+in the subdivided `T`, and let `v` be a common vertex of `p` and `r`. If `e` is a non-tree edge such
+that `{N with edges := insert e S}` displays `q`, then `v` lies on the cycle of `e`. Otherwise the
+edges deleted by the witness for `q` all lie on that cycle, `v` stays connected to `a` or `b` and to
+`c` or `d`, and `q` is not separated. -/
 theorem single_novel_pair_vertex_on_cycle {t : PhyloTree} (ht : t.WellLabelled)
     {N : RootedNetwork} (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)}
     (H : SupportSubdivision t N S) (q : Quartet) (hnot : q.induced t ≠ true)
@@ -150,8 +195,10 @@ theorem single_novel_pair_vertex_on_cycle {t : PhyloTree} (ht : t.WellLabelled)
   obtain ⟨y,hy,hyv⟩ := hside2
   exact hsep.2.2 x hx y hy (hxv.trans hyv.symm)
 
-/-- Uniqueness in Lemma 1: two distinct cycles cannot both contain the shared
-vertex of the two pair paths of a nonbaseline quartet. -/
+/-- Uniqueness in Lemma 1. Let `N` be a rooted binary level-1 network built on a well-labelled tree
+`T`, with support subdivision `H` whose edges are `S`, and let `T` not induce `q`. If `T + e` and
+`T + f` (`Realization.graph t {H.pairOf e}`, `Realization.graph t {H.pairOf f}`) both display `q`,
+for non-tree edges `e, f ∈ N.edges \ S`, then `e = f`. -/
 theorem novel_edge_unique {t : PhyloTree} (ht : t.WellLabelled)
     {N : RootedNetwork} (hN : N.RootedBinaryLevelOne) {S : Finset (ℕ × ℕ)}
     (H : SupportSubdivision t N S) (q : Quartet) (hnot : q.induced t ≠ true)
@@ -159,6 +206,7 @@ theorem novel_edge_unique {t : PhyloTree} (ht : t.WellLabelled)
     (hqe : (Realization.graph t {H.pairOf e}).DisplaysQuartet q)
     (hqf : (Realization.graph t {H.pairOf f}).DisplaysQuartet q) : e = f := by
   classical
+  -- `T + e` and `T + f` are subdivided in `N` with the other non-tree edges deleted.
   have hExtract := H.extracted_separated hN
   have hsingle (g : ℕ × ℕ) (hg : g ∈ N.edges \ S) :
       EdgeAbove.CycleSeparated t {H.pairOf g} := by
@@ -170,6 +218,7 @@ theorem novel_edge_unique {t : PhyloTree} (ht : t.WellLabelled)
   have hrawE := (De.displays_iff (Realization.levelOne t ht _ (hsingle e he)) q).mpr hqe
   have hrawF := (Df.displays_iff (Realization.levelOne t ht _ (hsingle f hf)) q).mpr hqf
   have hqt : q.taxa ⊆ N.taxa := hrawE.1
+  -- Write `q = ab|cd` and take the paths from `a` to `b` and from `c` to `d` in `T`.
   obtain ⟨a,b,c,d,hs⟩ := q.sides_pairs
   have ha : a ∈ N.taxa := hqt (q.sides_subset_taxa.1 (by rw [hs]; simp))
   have hb : b ∈ N.taxa := hqt (q.sides_subset_taxa.1 (by rw [hs]; simp))
@@ -179,9 +228,12 @@ theorem novel_edge_unique {t : PhyloTree} (ht : t.WellLabelled)
     (hN.2.2.2.2.2.2.2.1 x hx).1
   obtain ⟨p,hp,_⟩ := switching_existsUnique_path hN H.switching (hleaf a ha) (hleaf b hb)
   obtain ⟨r,hr,_⟩ := switching_existsUnique_path hN H.switching (hleaf c hc) (hleaf d hd)
+  -- The two paths meet at a vertex `v`, since `T` does not induce `q`.
   obtain ⟨v,hvp,hvr⟩ := nonbaseline_pair_paths_intersect ht hN H q hqt hnot hs p r
+  -- `v` lies on the cycle of `e` and on the cycle of `f`.
   have hve := single_novel_pair_vertex_on_cycle ht hN H q hnot hs p hp r hr hvp hvr he hrawE
   have hvf := single_novel_pair_vertex_on_cycle ht hN H q hnot hs p hp r hr hvp hvr hf hrawF
+  -- The cycles of distinct non-tree edges are vertex-disjoint, so `e = f`.
   by_contra hef
   exact Finset.disjoint_left.mp (fundamentalCycles_disjoint hN H.switching he hf hef)
     (List.mem_toFinset.mpr hve) (List.mem_toFinset.mpr hvf)

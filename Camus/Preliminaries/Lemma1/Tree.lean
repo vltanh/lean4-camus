@@ -2,12 +2,28 @@ module
 
 public import Camus.Network.Completeness.Admissible
 
+/-!
+# Paths in a tree, for the uniqueness part of Lemma 1
+
+Two facts about paths in an acyclic graph, applied in `Preliminaries/Lemma1/Unique.lean` to the
+subdivided tree `T` inside a network built on `T`, in the proof of uniqueness in Lemma 1.
+
+## Main results
+
+* `disjoint_paths_separating_edge`: if the path from `a` to `b` and the path from `c` to `d` have no
+  common vertex, deleting one edge keeps `a, b` connected and `c, d` connected and disconnects `a`
+  from `c`. If the two pairs of a quartet had disjoint paths in `T`, `T` would induce the quartet.
+* `path_outside_region_reachable`: deleting edges inside a connected region does not cut a vertex
+  outside the region off from both ends of a path through it.
+-/
+
 @[expose] public section
 
 namespace Camus
 
-/-- A path through a vertex outside a connected region remains connected to
-that vertex from at least one endpoint after cuts confined to the region. -/
+/-- Let `G` be acyclic, `C` a set of vertices any two of which are joined by a path inside `C`, and
+`B` a set of edges with both ends in `C`. If a path from `a` to `b` passes through a vertex `v ∉ C`,
+then after deleting `B`, `v` is still connected to `a` or to `b`. -/
 theorem path_outside_region_reachable {G : SimpleGraph ℕ} (hG : G.IsAcyclic)
     (C : Set ℕ)
     (hC : ∀ x ∈ C, ∀ y ∈ C, ∃ w : G.Walk x y, w.IsPath ∧ ∀ z ∈ w.support, z ∈ C)
@@ -48,7 +64,7 @@ theorem path_outside_region_reachable {G : SimpleGraph ℕ} (hG : G.IsAcyclic)
           (Or.inl (l.dropUntil x hx).end_mem_support)
       exact False.elim (hvC (hwC v (heq ▸ hvq)))
 
-/-- A walk from a region to its complement has a boundary edge. -/
+/-- A walk from a vertex in `C` to a vertex outside `C` uses an edge from `C` to its complement. -/
 theorem walk_boundary_edge {G : SimpleGraph ℕ} (C : Set ℕ) {a b : ℕ}
     (p : G.Walk a b) (ha : a ∈ C) (hb : b ∉ C) :
     ∃ u v, s(u,v) ∈ p.edges ∧ u ∈ C ∧ v ∉ C := by
@@ -60,7 +76,7 @@ theorem walk_boundary_edge {G : SimpleGraph ℕ} (C : Set ℕ) {a b : ℕ}
       exact ⟨x,y,List.mem_cons_of_mem _ hxy,hx,hy⟩
     · exact ⟨a,v,List.mem_cons_self,ha,hv⟩
 
-/-- Every edge on the unique tree path is necessary for endpoint connectivity. -/
+/-- In an acyclic graph, deleting an edge of the path from `a` to `b` disconnects `a` from `b`. -/
 theorem acyclic_path_cut_not_reachable {G : SimpleGraph ℕ} (hG : G.IsAcyclic)
     {a b : ℕ} (p : G.Walk a b) (hp : p.IsPath) {e : Sym2 ℕ} (he : e ∈ p.edges) :
     ¬(G.deleteEdges {e}).Reachable a b := by
@@ -76,7 +92,10 @@ theorem acyclic_path_cut_not_reachable {G : SimpleGraph ℕ} (hG : G.IsAcyclic)
   rw [SimpleGraph.edgeSet_deleteEdges] at hcut
   exact hcut.2 (Set.mem_singleton e)
 
-/-- Two disjoint pair paths in a tree are separated by one tree edge. -/
+/-- In an acyclic graph, let `p` be a walk from `a` to `b` and `r` a walk from `c` to `d` with no
+common vertex, and `w` a path from `a` to `c`. Some edge `e` of the graph is such that deleting it
+keeps `a, b` connected and `c, d` connected and disconnects `a` from `c`: the first edge of `w`
+leaving the vertices of `p`. -/
 theorem disjoint_paths_separating_edge {G : SimpleGraph ℕ} (hG : G.IsAcyclic)
     {a b c d : ℕ} (p : G.Walk a b) (r : G.Walk c d)
     (hd : p.support.Disjoint r.support)

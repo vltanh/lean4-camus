@@ -3,13 +3,37 @@ module
 public import Camus.Network.Subdivision.Switching
 public import Camus.Network.Isomorphism.Invariance
 
+/-!
+# Cut edges through a subdivision
+
+Auxiliary to `GraphSubdivision.displays_iff`. A network displays a quartet when, for some
+switching, deleting one edge of its underlying undirected graph separates the two pairs of the
+quartet (`RootedNetwork.DisplaysQuartet`). Let `N` be a subdivision of `P` and `B` a set of arcs of
+`N`. Deleting one arc on the wire of an edge `e` of `P` from `B` separates a quartet in `N` if and
+only if deleting `e` from the active edges separates it in `P`. Comparing undirected edges needs `N`
+to have no two antiparallel arcs `u → v`, `v → u`; this holds since `P` is acyclic.
+`SubdivisionCounterexample.antiparallel_cut_counterexample` shows the comparison fails otherwise.
+
+## Main results
+
+* `GraphSubdivision.separates_iff`: `B` separates a quartet in `N` if and only if the active edges
+  separate it in `P`.
+* `GraphSubdivision.separates_cut_iff`: the same after deleting an arc on the wire of `e` from `B`
+  and `e` from the active edges.
+* `GraphSubdivision.reverse_arc_not_mem`: a subdivision of an acyclic network has no antiparallel
+  arcs.
+-/
+
 @[expose] public section
 
 namespace Camus
 
+/-- The arcs of `B` whose underlying undirected edge is not `edge`. -/
 noncomputable def eraseArc (B : Finset (ℕ × ℕ)) (edge : Sym2 ℕ) : Finset (ℕ × ℕ) :=
   B.filter (fun arc => s(arc.1,arc.2) ≠ edge)
 
+/-- Deleting an undirected edge from the underlying graph of an arc set `B` gives the underlying
+graph of `eraseArc B edge`. -/
 theorem underlying_eraseArc (N : RootedNetwork) (B : Finset (ℕ × ℕ)) (edge : Sym2 ℕ) :
     ({N with edges := B}).underlying.deleteEdges {edge} = ({N with edges := eraseArc B edge}).underlying := by
   classical
@@ -20,6 +44,7 @@ theorem underlying_eraseArc (N : RootedNetwork) (B : Finset (ℕ × ℕ)) (edge 
   rw [hswap]
   tauto
 
+/-- Every edge of the underlying undirected graph of a network comes from one of its arcs. -/
 theorem edgeSet_arc_exists (N : RootedNetwork) {edge : Sym2 ℕ}
     (hedge : edge ∈ N.underlying.edgeSet) : ∃ arc ∈ N.edges, s(arc.1,arc.2) = edge := by
   induction edge using Sym2.inductionOn with
@@ -28,6 +53,8 @@ theorem edgeSet_arc_exists (N : RootedNetwork) {edge : Sym2 ℕ}
     · exact ⟨(u,v), he, rfl⟩
     · exact ⟨(v,u), he, Sym2.eq_swap⟩
 
+/-- In a rooted binary level-1 network `P`, deleting the undirected edge of an arc `e` from a set
+`R ⊆ P.edges` removes `e` only: `P` is acyclic, so the reverse arc of `e` is not in `P`. -/
 theorem source_eraseArc {P : RootedNetwork} (hP : P.RootedBinaryLevelOne)
     {R : Finset (ℕ × ℕ)} (hR : R ⊆ P.edges) {e : ℕ × ℕ} (he : e ∈ P.edges) :
     eraseArc R s(e.1,e.2) = R.erase e := by
@@ -52,6 +79,8 @@ namespace GraphSubdivision
 
 variable {P N : RootedNetwork}
 
+/-- If the source of an arc on the wire of `e` is the image of a vertex of `P`, it is
+`H.original e.1`. -/
 theorem wire_source_original (H : GraphSubdivision P N) {e arc : ℕ × ℕ}
     (he : e ∈ P.edges) (harc : arc ∈ wireEdges (H.wire e))
     (horig : arc.1 ∈ P.vertices.image H.original) : arc.1 = H.original e.1 := by
@@ -60,6 +89,8 @@ theorem wire_source_original (H : GraphSubdivision P N) {e arc : ℕ × ℕ}
   · obtain ⟨u, hu, h⟩ := Finset.mem_image.mp horig
     exact (H.interior_not_original he hinner hu h.symm).elim
 
+/-- If the target of an arc on the wire of `e` is the image of a vertex of `P`, it is
+`H.original e.2`. -/
 theorem wire_target_original (H : GraphSubdivision P N) {e arc : ℕ × ℕ}
     (he : e ∈ P.edges) (harc : arc ∈ wireEdges (H.wire e))
     (horig : arc.2 ∈ P.vertices.image H.original) : arc.2 = H.original e.2 := by
@@ -68,6 +99,9 @@ theorem wire_target_original (H : GraphSubdivision P N) {e arc : ℕ × ℕ}
   · obtain ⟨u, hu, h⟩ := Finset.mem_image.mp horig
     exact (H.interior_not_original he hinner hu h.symm).elim
 
+/-- If `P` is a rooted binary level-1 network, its subdivision `N` has no two antiparallel arcs: an
+arc of `N` and its reverse would lie on the same wire, impossible along a path, or on the wires of
+two antiparallel edges of `P`, impossible since `P` is acyclic. -/
 theorem reverse_arc_not_mem (H : GraphSubdivision P N) (hP : P.RootedBinaryLevelOne)
     {arc : ℕ × ℕ} (harc : arc ∈ N.edges) : arc.swap ∉ N.edges := by
   classical
@@ -117,6 +151,8 @@ theorem reverse_arc_not_mem (H : GraphSubdivision P N) (hP : P.RootedBinaryLevel
       · exact h
     exact same_impossible (H.interior_unique he hf hin₁ hin₂)
 
+/-- If `P` is a rooted binary level-1 network, two arcs of `N` with the same underlying undirected
+edge lie on the wire of the same edge of `P`. -/
 theorem sym_owner_unique (H : GraphSubdivision P N) (hP : P.RootedBinaryLevelOne)
     {e f a b : ℕ × ℕ} (he : e ∈ P.edges) (hf : f ∈ P.edges)
     (ha : a ∈ wireEdges (H.wire e)) (hb : b ∈ wireEdges (H.wire f))
@@ -128,6 +164,8 @@ theorem sym_owner_unique (H : GraphSubdivision P N) (hP : P.RootedBinaryLevelOne
     have hba : b = a.swap := by simpa using (congrArg Prod.swap hab).symm
     exact (H.reverse_arc_not_mem hP haN (hba ▸ hbN)).elim
 
+/-- If `P` is a rooted binary level-1 network, deleting from `B` the undirected edge of an arc on
+the wire of `e` makes `e` inactive and leaves the other active edges active. -/
 theorem active_eraseArc (H : GraphSubdivision P N) (hP : P.RootedBinaryLevelOne)
     {B : Finset (ℕ × ℕ)} {e arc : ℕ × ℕ}
     (he : e ∈ P.edges) (harc : arc ∈ wireEdges (H.wire e)) :
@@ -150,6 +188,10 @@ theorem active_eraseArc (H : GraphSubdivision P N) (hP : P.RootedBinaryLevelOne)
     intro hsym
     exact hfe (H.sym_owner_unique hP hf he ha harc hsym)
 
+/-- Let `B ⊆ N.edges` and let `q` be a quartet on taxa of `P`. The underlying graph of `B` separates
+the two pairs of `q` in `N` if and only if the underlying graph of the active edges separates them
+in `P`. The labelled leaves of `N` are the images of those of `P`, and connectivity between images
+is connectivity by active edges (`GraphSubdivision.reachable_iff`). -/
 theorem separates_iff (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
     (hB : B ⊆ N.edges) (q : Quartet) (hq : q.taxa ⊆ P.taxa) :
     N.Separates ({N with edges := B}).underlying q ↔
@@ -171,6 +213,10 @@ theorem separates_iff (H : GraphSubdivision P N) {B : Finset (ℕ × ℕ)}
       fun a ha b hb => (reach a b (hsecond a ha) (hsecond b hb)).mpr (hBB a ha b hb),
       fun a ha b hb h => hAB a ha b hb ((reach a b (hfirst a ha) (hsecond b hb)).mp h)⟩
 
+/-- Cut comparison. Let `P` be a rooted binary level-1 network, `B ⊆ N.edges`, `e` an edge of `P`,
+`arc` an arc on the wire of `e`, and `q` a quartet on taxa of `P`. Deleting the undirected edge of
+`arc` from the underlying graph of `B` separates `q` in `N` if and only if deleting `e` from the
+underlying graph of the active edges separates `q` in `P`. -/
 theorem separates_cut_iff (H : GraphSubdivision P N) (hP : P.RootedBinaryLevelOne)
     {B : Finset (ℕ × ℕ)} (hB : B ⊆ N.edges) {e arc : ℕ × ℕ}
     (he : e ∈ P.edges) (harc : arc ∈ wireEdges (H.wire e))
