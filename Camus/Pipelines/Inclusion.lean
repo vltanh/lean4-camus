@@ -10,9 +10,10 @@ public import Camus.Pipelines.Uniqueness
 
 The corrected recovery theorem (`recovery`) assumes that the true network `N` is identifiable under
 inclusion: every network built on `t` that displays all the quartets of `N`, with no more
-reticulations, is isomorphic to `N`. This hypothesis fails in general, even when every cycle has at
-least five vertices (the condition under which Warnow, Tabatabaee and Evans recover a level-1
-network from its quartets), and the tie-break toward the fewest reticulations does not help.
+reticulations, is isomorphic to `N`. This hypothesis fails in general (the report's E7), even when
+every cycle has at least five vertices (the condition under which Warnow, Tabatabaee and Evans
+recover a level-1 network from its quartets), and the tie-break toward the fewest reticulations does
+not help.
 
 Take the six-leaf tree `T = ((A,B),(C,(F,(D,E))))` (`Counterexamples.donorTree`), and add one edge
 from above the cherry `(D,E)` to above `A` (`shallowNet`), or from above `D` to above `A`

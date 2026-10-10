@@ -26,7 +26,7 @@ at the root of `N`. The proof of the latter follows the wires: the wire above `C
 * `Counterexamples.rootAboveNet_not_iso_graph`, `Counterexamples.camus_output_not_rootAboveNet`:
   no network obtained from `T` by adding edges, in particular no output of CAMUS on `T`, is
   isomorphic to `N`, although `T` is a tree of `N` (Section 3.2 says that any tree of `N` can be
-  used as its basis).
+  used as its basis; the report's E8).
 -/
 
 @[expose] public section

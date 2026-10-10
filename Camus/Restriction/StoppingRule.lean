@@ -10,7 +10,8 @@ Section 2.4 of the paper computes the array `M[v, k]` "in order of increasing k,
 new columns to our matrix, until we no longer get an improvement in score", where `m` is "the
 number of reticulations after which the score does not improve". Read as the claim that the score
 does not improve after the first `k` at which it stops improving, this is false, both for exact
-numbers of reticulations (as the array computes them) and for "at most k" reticulations.
+numbers of reticulations (as the array computes them) and for "at most k" reticulations (the
+report's E6).
 
 Let `T = (A,(B,(C,(D,(E,(F,(G,H)))))))` be the caterpillar on eight leaves (`A = 0`, …, `H = 7`,
 `Counterexamples.caterpillar`) and `Q = {AF|CG, AF|CG, AC|BD, AE|DF, AH|FG}`
