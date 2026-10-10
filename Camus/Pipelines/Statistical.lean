@@ -38,7 +38,7 @@ and that the probability that the support of `observations k` is the set of quar
 probability that `selected k` is equivalent to `truth` tends to 1.
 
 The paper's step, that the true network "is the unique network that can satisfy all the quartets
-in Q(N_r)", is false (the report's E6); identifiability under inclusion and the tie-break replace
+in Q(N_r)", is false (the report's E7); identifiability under inclusion and the tie-break replace
 it. -/
 theorem correctedStatisticalConsistency {α N Ω : Type*} [DecidableEq α]
     [MeasurableSpace Ω] (C : Finset N) (displayed : N → Finset α)

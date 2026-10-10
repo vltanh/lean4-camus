@@ -9,7 +9,7 @@ Section 3.2 of the paper argues that the SNP pipeline recovers the true network 
 constraint tree `t` is one of `N`'s displayed trees and `Q` is a multiset version of `Q(N_r)`,
 "CAMUS will add the correct reticulations and return N, since this is the unique network that can
 satisfy all the quartets in Q(N_r), and hence N will be the unique solution to CAMUS'
-optimization problem". This is false (the report's E6): a network that displays more quartets
+optimization problem". This is false (the report's E7): a network that displays more quartets
 than `N` ties it, since the objective only counts the quartets of `Q`.
 
 ## Main results
@@ -42,7 +42,7 @@ namespace Camus
 
 open DynamicProgramming
 
-/-- Section 3.2's uniqueness claim is false (the report's E6). Take for `t` and for the true
+/-- Section 3.2's uniqueness claim is false (the report's E7). Take for `t` and for the true
 network the five-leaf tree `(O,((B,A),(D,C)))`, and for `Q` its five quartets. The network obtained
 by adding one edge above `(A, C)` is built on `t`, displays the five quartets, and so is optimal,
 but it has one reticulation and the true network none, so the two are not isomorphic. -/

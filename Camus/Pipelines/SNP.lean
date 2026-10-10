@@ -22,7 +22,7 @@ three steps:
 3. "When Q is a multi-set version of Q(Nr), then CAMUS will add the correct reticulations and
    return N, since this is the unique network that can satisfy all the quartets in Q(Nr)".
 
-Step 3 is false (the report's E6). This file proves its corrected form inside WTE's model: if `N`
+Step 3 is false (the report's E7). This file proves its corrected form inside WTE's model: if `N`
 is built on `t` and identifiable under inclusion, every network built on `t` that is optimal for
 `Q_m` with the fewest reticulations among the optimal networks is isomorphic to `N`, with
 probability tending to 1 (`snp_recovery_tendsto`); this is `correctedStatisticalConsistency`
@@ -43,7 +43,7 @@ in `Camus/Pipelines/SNPCondition.lean`). The model assumes `p(e, s, s) > 0` on t
   reticulations.
 * `snp_correctedStatisticalConsistency`: `correctedStatisticalConsistency` for the SNP multisets,
   without the hypothesis `support_convergence`.
-* `snp_deeperDonor_tendsto`: E6 in WTE's model.
+* `snp_deeperDonor_tendsto`: E7 in WTE's model.
 
 ## Proof
 
@@ -71,7 +71,7 @@ network built on `t`, and has the fewest reticulations among those, is isomorphi
 to 1.
 
 Departure from the paper: the paper concludes that CAMUS returns `N` because `N` "is the unique
-network that can satisfy all the quartets in Q(Nr)", which is false (the report's E6,
+network that can satisfy all the quartets in Q(Nr)", which is false (the report's E7,
 `snp_deeperDonor_tendsto`); identifiability under inclusion and the tie-break toward the fewest
 reticulations replace that step, as in `recovery`. The constraint tree is `t` itself: that ASTRAL
 returns `t` is step 1 (`astral_maximizer_tendsto`), formalized up to the determination of a tree
@@ -157,7 +157,7 @@ theorem snp_correctedStatisticalConsistency {Net : Type*} (N : RootedNetwork)
   ext q
   rw [Multiset.mem_toFinset, hω q, truth_displayed q]
 
-/-- Section 3.2, E6 in WTE's model: the conclusion "CAMUS will add the correct reticulations and
+/-- Section 3.2, E7 in WTE's model: the conclusion "CAMUS will add the correct reticulations and
 return N" fails with probability tending to 1, even with the tie-break toward the fewest
 reticulations. Take for the true network `Counterexamples.shallowNet`, built on the six-leaf tree
 `Counterexamples.donorTree`, any site model on it with at least two states, and independent sites

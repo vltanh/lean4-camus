@@ -9,7 +9,7 @@ public import Camus.Preliminaries.Lemmas
 
 Section 3.2 of the paper concludes that CAMUS returns the true network `N` when `Q` is a multiset
 version of `Q(N_r)`, "since this is the unique network that can satisfy all the quartets in
-Q(N_r)". This is false (the report's E6). Take the five-leaf tree `T = (O,((B,A),(D,C)))`
+Q(N_r)". This is false (the report's E7). Take the five-leaf tree `T = (O,((B,A),(D,C)))`
 (`Counterexamples.constraint`, with `A = 0`, `B = 1`, `C = 2`, `D = 3`, `O = 4`) as the true
 network, and its five quartets as `Q` (`Counterexamples.data`). The network obtained by adding one
 edge above `(A, C)` (`extraPair`) is built on `T`, so it displays the quartets of `T`
@@ -30,7 +30,7 @@ namespace Camus.Counterexamples
 
 open DynamicProgramming
 
-/-- E6: the pair `(A, C)` of `T = (O,((B,A),(D,C)))`. The edge added above it has target
+/-- E7: the pair `(A, C)` of `T = (O,((B,A),(D,C)))`. The edge added above it has target
 `((B,A),(D,C))`, and its cycle has five vertices. -/
 def extraPair : Pair := ([true, false, true], [true, true, true])
 
@@ -59,7 +59,7 @@ theorem graphData_exact : DynamicProgramming.repertoire data (Realization.graph 
     exact ⟨hq, (Realization.baseline_displays_iff constraint constraint_wellLabelled q).mpr
       ((data_is_exact q).mpr (Multiset.mem_toFinset.mp hq))⟩
 
-/-- E6 (Section 3.2): the tree `T = (O,((B,A),(D,C)))`, as a network with no added edge, and the
+/-- E7 (Section 3.2): the tree `T = (O,((B,A),(D,C)))`, as a network with no added edge, and the
 network obtained from `T` by adding one edge above `(A, C)` are both built on `T`, have zero and one
 reticulations, and display all five quartets of `data`, the quartets of `T`. So the true network
 `T` is not the unique network that displays all of `Q(N_r)`. -/

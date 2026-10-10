@@ -33,7 +33,7 @@ network, is optimal for `Q_m` with the fewest reticulations among the optimal ne
   support switching are induced by `t`.
 * `Realization.lowTransfer`: a site model on `Realization.graph t E`.
 * `Realization.exists_mostProbable`: under it, `t` induces the most probable quartets.
-* `Counterexamples.deeperDonor_meets_hypotheses`: E6 under every hypothesis of the paper's
+* `Counterexamples.deeperDonor_meets_hypotheses`: E7 under every hypothesis of the paper's
   argument.
 -/
 
@@ -306,7 +306,7 @@ end Realization
 
 namespace Counterexamples
 
-/-- Section 3.2, E6 under every hypothesis of the paper's consistency argument. Take for the true
+/-- Section 3.2, E7 under every hypothesis of the paper's consistency argument. Take for the true
 network `shallowNet`, built on the tree `donorTree`, and a site model on it with two states under
 which `donorTree` induces the most probable quartet on every four taxa (it exists by
 `Realization.exists_mostProbable`). Then, for independent sites with the law of this model

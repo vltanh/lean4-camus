@@ -12,10 +12,10 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 A recursive description of rooted binary galled (level-1) networks by their blocks, with their
 displayed trees `T(N)` (Definition 1), their displayed and satisfied quartets, their reticulations
 and their leaf labels. Displayed trees are computed gall by gall, so statements about a given
-network can be checked by evaluation. The grammar is used for the checked examples E5 and E6 of
+network can be checked by evaluation. The grammar is used for the checked examples E5 and E7 of
 the report (`Camus/Galled/Counterexamples.lean`). It is separate from the directed-graph networks
 `RootedNetwork` of the rest of the formalization; no theorem relates the two. The graph versions of
-E5 and E6 are in `Camus/Restriction/Witness.lean` and `Camus/Pipelines/Counterexample.lean`.
+E5 and E7 are in `Camus/Restriction/Witness.lean` and `Camus/Pipelines/Counterexample.lean`.
 
 ## Main definitions
 

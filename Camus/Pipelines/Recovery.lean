@@ -8,7 +8,7 @@ public import Mathlib.Order.Filter.AtTopBot.Basic
 
 Section 3.2 of the paper argues that when `Q` is a multiset version of `Q(N_r)`, "CAMUS will add the
 correct reticulations and return N, since this is the unique network that can satisfy all the
-quartets in Q(N_r)". The uniqueness is false (the report's E6,
+quartets in Q(N_r)". The uniqueness is false (the report's E7,
 `Counterexamples.graph_uniqueness_counterexample`): a network that displays a superset of the true
 network's quartets ties it. This file proves a corrected statement, for a finite family `C` of
 candidate networks, each with a finite set of displayed quartets and a number of reticulations,
@@ -62,7 +62,7 @@ version of `Q(N_r)`), that `truth` is identifiable under inclusion in `C` (`iden
 of `C` with the best score (`tie_break`). Then `selected` is equivalent to `truth`.
 
 The paper concludes this because the true network "is the unique network that can satisfy all the
-quartets in Q(N_r)", which is false (the report's E6,
+quartets in Q(N_r)", which is false (the report's E7,
 `Counterexamples.graph_uniqueness_counterexample`); `identifiable` and `tie_break` replace that
 step. -/
 theorem correctedConsistency (C : Finset N) (displayed : N → Finset α)

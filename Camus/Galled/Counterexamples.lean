@@ -8,7 +8,7 @@ public import Mathlib.Tactic.FinCases
 public import Mathlib.Data.Fintype.Fin
 
 /-!
-# Checked examples in the block grammar: E3, E5 and E6
+# Checked examples in the block grammar: E3, E5 and E7
 
 Three findings of the report, on concrete networks of the block grammar `GalledNetwork`, checked by
 evaluation. Labels: `A = 0`, `B = 1`, `C = 2`, `D = 3`, and the outgroup `O = 4`.
@@ -21,12 +21,12 @@ evaluation. Labels: `A = 0`, `B = 1`, `C = 2`, `D = 3`, and the outgroup `O = 4`
   reticulations displays `AC|BD`, and every valid four-leaf network built on `T` with three
   reticulations displays no quartet of `Q` (`exact_budget_nonmonotone`): the best score for an
   exact number of reticulations can decrease.
-* E6, Section 3.2. The five-leaf tree `T = (O,((B,A),(D,C)))` (`truth`) and the network obtained by
+* E7, Section 3.2. The five-leaf tree `T = (O,((B,A),(D,C)))` (`truth`) and the network obtained by
   adding one edge above `(A, C)` (`extra`) are both built on `T` and both display the five quartets
   of `T`, with zero and one reticulations (`uniqueness_counterexample`): the true network is not the
   unique optimum.
 
-The directed-graph versions of E5 and E6 are `Counterexamples.graph_exact_budget_nonmonotone` and
+The directed-graph versions of E5 and E7 are `Counterexamples.graph_exact_budget_nonmonotone` and
 `Counterexamples.graph_uniqueness_counterexample`, which also use `smallConstraint`, `oneQuartet`,
 `constraint` and `data` from this file.
 -/
@@ -46,22 +46,22 @@ def q0134 (s : Fin 3) : Quartet := ⟨0, 1, 3, 4, by decide, by decide, by decid
 def q0234 (s : Fin 3) : Quartet := ⟨0, 2, 3, 4, by decide, by decide, by decide, s⟩
 def q1234 (s : Fin 3) : Quartet := ⟨1, 2, 3, 4, by decide, by decide, by decide, s⟩
 
-/-- E6: the five-leaf tree `T = (O,((B,A),(D,C)))`. Its child order is that of a tree displayed by
+/-- E7: the five-leaf tree `T = (O,((B,A),(D,C)))`. Its child order is that of a tree displayed by
 `extra`, since `Extends` compares plane trees. -/
 def constraint : PhyloTree :=
   .fork (.leaf 4) (.fork (.fork (.leaf 1) (.leaf 0)) (.fork (.leaf 3) (.leaf 2)))
 
-/-- E6: the true network, the tree `T` itself, with no reticulation. -/
+/-- E7: the true network, the tree `T` itself, with no reticulation. -/
 def truth : GalledNetwork :=
   .fork (.leaf 4) (.fork (.fork (.leaf 1) (.leaf 0)) (.fork (.leaf 3) (.leaf 2)))
 
-/-- E6: `T` with one edge added above `(A, C)`. Its cycle has five vertices: `((B,A),(D,C))` at the
+/-- E7: `T` with one edge added above `(A, C)`. Its cycle has five vertices: `((B,A),(D,C))` at the
 top, `(B,A)` and the subdivision vertex above `A` on one path, `(D,C)` on the other, and the
 reticulation above `C`. The outgroup `O` is outside the cycle. -/
 def extra : GalledNetwork :=
   .fork (.leaf 4) (.gall [.leaf 1, .leaf 0] [.leaf 3] (.leaf 2))
 
-/-- E6: the five quartets of `T`, one for each set of four of its taxa: `AB|CD`, `AB|CO`, `AB|DO`,
+/-- E7: the five quartets of `T`, one for each set of four of its taxa: `AB|CD`, `AB|CO`, `AB|DO`,
 `AO|CD` and `BO|CD`. -/
 def data : Multiset Quartet :=
   {q0123 0, q0124 0, q0134 0, q0234 2, q1234 2}
@@ -75,7 +75,7 @@ def novelRepertoire (Q : Multiset Quartet) (n : GalledNetwork)
     (t : PhyloTree) : Finset Quartet :=
   Q.toFinset.filter (fun q => n.satisfies t q = true)
 
-/-- E6: `data` is the set of quartets induced by `T`, so `Q = data` is a multiset version of
+/-- E7: `data` is the set of quartets induced by `T`, so `Q = data` is a multiset version of
 `Q(N_r)` for the true network `N = T`. -/
 theorem data_is_exact (q : Quartet) :
     q.induced constraint = true ↔ q ∈ data := by
@@ -101,7 +101,7 @@ theorem data_is_exact (q : Quartet) :
       rcases hq with rfl | rfl | rfl | rfl | rfl <;> exact ht (by decide)
     simp [Quartet.induced, ht, hq]
 
-/-- E6 (Section 3.2): `truth` and `extra` are phylogenetic networks built on `T`, with zero and one
+/-- E7 (Section 3.2): `truth` and `extra` are phylogenetic networks built on `T`, with zero and one
 reticulations; both display all five quartets of `data`, and neither satisfies any (they are all
 quartets of `T`). No network displays more than the five quartets, so both are optimal
 (`witnesses_globally_optimal`) and the true network is not the unique optimum. -/
@@ -120,7 +120,7 @@ theorem uniqueness_counterexample :
   simp only [Phylogenetic, ht, he, htl, hel, true_and]
   decide +kernel
 
-/-- E6: every block network displays at most as many quartets of `data` as `truth` and as `extra`,
+/-- E7: every block network displays at most as many quartets of `data` as `truth` and as `extra`,
 which display all of them. -/
 theorem witnesses_globally_optimal (n : GalledNetwork) :
     score data (repertoire data n) ≤ score data (repertoire data truth) ∧
