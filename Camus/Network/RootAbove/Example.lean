@@ -1,6 +1,8 @@
 module
 
 public import Camus.Network.RootAbove.Main
+public import Camus.Network.RootAbove.Transport
+public import Camus.DP.Theorem1
 
 /-!
 # A network built on `T` whose root lies above the root of `T`
@@ -21,6 +23,10 @@ at the root of `N`. The proof of the latter follows the wires: the wire above `C
 * `Counterexamples.rootAboveNet_builtOn`: `N` is built on `T` in the sense of Definition 1.
 * `Counterexamples.rootAboveNet_not_anchored`: `N` is not built on `T` with the root kept.
 * `Counterexamples.builtOn_not_anchored`: the class of Definition 1 is larger.
+* `Counterexamples.rootAboveNet_not_iso_graph`, `Counterexamples.camus_output_not_rootAboveNet`:
+  no network obtained from `T` by adding edges, in particular no output of CAMUS on `T`, is
+  isomorphic to `N`, although `T` is a tree of `N` (Section 3.2 says that any tree of `N` can be
+  used as its basis).
 -/
 
 @[expose] public section
@@ -383,6 +389,36 @@ of Definition 1, and not with the root kept. -/
 theorem builtOn_not_anchored :
     ∃ (t : PhyloTree) (N : RootedNetwork), t.WellLabelled ∧ N.BuiltOn t ∧ ¬N.AnchoredExtension t :=
   ⟨cherryTree, rootAboveNet, by decide, rootAboveNet_builtOn, rootAboveNet_not_anchored⟩
+
+/-- `rootAboveNet` is not isomorphic to any network obtained from `((A,B),C)` by adding edges above
+the pairs of a cycle-separated family (Definition 3). Such a network is built on `((A,B),C)` with
+the root kept (`Realization.levelOne`, `Realization.support`), and so would be `rootAboveNet`
+(`RootedNetwork.AnchoredExtension.of_iso`), against `rootAboveNet_not_anchored`. -/
+theorem rootAboveNet_not_iso_graph (E : Finset Realization.Pair)
+    (hE : EdgeAbove.CycleSeparated cherryTree E) :
+    IsEmpty (rootAboveNet.Iso (Realization.graph cherryTree E)) := by
+  refine ⟨fun i => rootAboveNet_not_anchored ?_⟩
+  have ht : cherryTree.WellLabelled := by decide
+  exact RootedNetwork.AnchoredExtension.of_iso rootAboveNet_levelOne i
+    ⟨Realization.levelOne cherryTree ht E hE, _, ⟨Realization.support cherryTree ht E hE⟩⟩
+
+open DynamicProgramming in
+/-- Section 3.2: "any tree t ∈ Q(N_r) can be used as the basis for N (i.e. N can be obtained by
+adding reticulate edges to t)", with `t` a displayed tree of `N` (Definition 1), fails when the root
+of `N` has a reticulation child. The tree `((A,B),C)` is a tree of `rootAboveNet`
+(`rootAboveNet_builtOn`), but for every multiset `Q`, every array `M` satisfying the recurrence of
+Section 2.2 on `((A,B),C)` and every backtracking trace `E` from the root, the network that CAMUS
+outputs, `Realization.graph cherryTree E`, is not isomorphic to `rootAboveNet`. The output is
+built on `((A,B),C)` with the root kept (`theorem1`); by `RootedNetwork.BuiltOn.exists_anchored`
+it can still display the quartets of `rootAboveNet` with as many reticulations. -/
+theorem camus_output_not_rootAboveNet (Q : Multiset Quartet) (M : Address → ℕ)
+    (hM : Array cherryTree (edgeWeight cherryTree Q) M) (E : Finset Pair)
+    (trace : Trace cherryTree (edgeWeight cherryTree Q) M [] E) :
+    IsEmpty (rootAboveNet.Iso (Realization.graph cherryTree E)) := by
+  refine ⟨fun i => rootAboveNet_not_anchored ?_⟩
+  have ht : cherryTree.WellLabelled := by decide
+  exact RootedNetwork.AnchoredExtension.of_iso rootAboveNet_levelOne i
+    (theorem1 cherryTree ht Q M hM E trace).1
 
 end Counterexamples
 
