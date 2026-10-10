@@ -9,12 +9,12 @@ public import Camus.Network.RootAbove.Pairs
 ASTRAL returns an unrooted tree, and the pipelines of Section 3 root it "on the edge leading to the
 outgroup". The library's trees are rooted (`PhyloTree`) and stand for their unrooted forms: the
 quartets `Q(T)` that a tree induces (`Quartet.induced`) are those of its unrooted form. This file
-roots a tree `T` on the edge leading to its leaf `z` (`PhyloTree.reroot`): the root of the new tree
-has the leaf `z` and the rest of `T` as children, and the new tree has the taxa and the induced
-quartets of `T` (`PhyloTree.reroot_spec`), hence its quartet support score
-(`PhyloTree.quartetSupport_reroot`). Clades become complements: the clade of a vertex on the path
-from `z` to the root of `T` is replaced by its complement in the taxa, which cuts the same quartets
-(`Quartet.cutBy_complement`).
+roots a tree `T` on the edge leading to its leaf `z` (`PhyloTree.reroot`): the root of the rooted
+tree has the leaf `z` and the rest of `T` as children, and the rooted tree has the taxa and the
+induced quartets of `T` (`PhyloTree.reroot_spec`), hence its quartet support score
+(`PhyloTree.quartetSupport_reroot`). The clade of a vertex on the path from `z` to the root of `T`
+is replaced by its complement in the taxa, which cuts the same quartets
+(`Quartet.cutBy_complement`); the other clades stay.
 
 ## Main results
 

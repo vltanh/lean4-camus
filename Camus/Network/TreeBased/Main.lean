@@ -15,17 +15,17 @@ rooted binary level-1 network `N` (one incoming edge kept at every vertex other 
 `RootedNetwork.Switching`) is a subdivision of a well-labelled tree `t` on the taxa of `N`, the tree
 obtained from `S` by suppressing the vertices with one child: `N` is built on `t` in the sense of
 Definition 1, through `S` (`RootedNetwork.exists_displayedSubdivision`). So every such network is
-tree-based (`RootedNetwork.treeBased`), and Section 2.4's "it is known that a level-1 phylogenetic
-network on n leaves will not have more than n−1 reticulations" holds for every rooted binary
-level-1 network (`RootedNetwork.reticulationCount_le`).
+tree-based (`RootedNetwork.treeBased`; Section 3.2: "the network N is tree-based (which follows
+directly from being level-1)"), and Section 2.4's "it is known that a level-1 phylogenetic network
+on n leaves will not have more than n−1 reticulations" holds for every rooted binary level-1
+network (`RootedNetwork.reticulationCount_le`).
 
 ## Main results
 
 * `RootedNetwork.exists_branch_subdivision`: the part of `S` below each vertex is a subdivision of
   a well-labelled tree.
 * `RootedNetwork.exists_displayedSubdivision`: every switching is a subdivision of a well-labelled
-  tree on the taxa of `N`, with the root wire from the root of `N` to the first vertex of `S` with
-  two children.
+  tree on the taxa of `N`, below a directed path from the root of `N` (Definition 1).
 * `RootedNetwork.builtOn_of_switching`, `RootedNetwork.treeBased`: `N` is built on the tree of
   each of its switchings, in the sense of Definition 1.
 * `RootedNetwork.reticulationCount_le`: Section 2.4's bound of `n − 1` reticulations.
@@ -121,9 +121,10 @@ theorem exists_displayedSubdivision (hN : N.RootedBinaryLevelOne) (hS : N.Switch
     (belowEdges_root hN hS) hS
   exact ⟨t, ht, H'.taxa_preserved.symm, ⟨H'⟩⟩
 
-/-- Section 2.1: a rooted binary level-1 network `N` is built, in the sense of Definition 1, on the
-tree of each of its switchings: "N can be constructed by taking one of the trees t∈𝒯 and adding
-reticulations (edges) to t". -/
+/-- Section 2.1: "N can be constructed by taking one of the trees t∈𝒯 and adding reticulations
+(edges) to t". For every switching `S` of a rooted binary level-1 network `N`, `N` is built, in the
+sense of Definition 1, on a well-labelled tree on its taxa: the tree of `S`
+(`RootedNetwork.exists_displayedSubdivision`). -/
 theorem builtOn_of_switching (hN : N.RootedBinaryLevelOne) (hS : N.Switching S) :
     ∃ t : PhyloTree, t.WellLabelled ∧ t.taxa = N.taxa ∧ N.BuiltOn t := by
   obtain ⟨t, ht, htaxa, hH⟩ := exists_displayedSubdivision hN hS
