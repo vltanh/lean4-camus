@@ -28,8 +28,8 @@ then applies (`NMSC.nmsc_recovery` for any network of CAMUS that displays the qu
   appears.
 * `NMSC.nmsc_filterQuartets_support`: almost surely, eventually the support of the output of
   Quartet Filtering is Q(N_r).
-* `NMSC.nmsc_filterQuartets_graph`: the same, with Q(N_r) the quartet trees displayed by the graph
-  of `N`.
+* `NMSC.nmsc_filterQuartets_graph`, `NMSC.nmsc_filterQuartets_graph_genes`: the same, with Q(N_r)
+  the quartet trees displayed by the graph of `N`.
 * `NMSC.nmsc_recovery`, `NMSC.nmsc_recovery_graph`: with Section 3.2's corrected recovery
   theorem.
 -/
@@ -170,13 +170,27 @@ theorem nmsc_filterQuartets_graph {N : Brooqs.Net L} (hN : N.WellFormed)
   filter_upwards [hω] with n hn q
   rw [hn q, graph_displaysQuartet_iff hN htaxa q]
 
+/-- Sections 3.3 and 3.4, for gene trees that exist: the hypotheses of
+`NMSC.nmsc_filterQuartets_graph` hold for the coordinates of `N.genes hN`, the product law of
+independent gene trees under the NMSC on `N` (`Brooqs.Net.genes`). -/
+theorem nmsc_filterQuartets_graph_genes {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) (hna : NoAnomaly N) {t : ℝ} (ht : 0 < t)
+    (ht₀ : t < threshold N) :
+    ∀ᵐ ω ∂(N.genes hN), ∀ᶠ n in atTop, ∀ q,
+      q ∈ filterQuartets t (geneQuartets (fun i => ω i) n) ↔
+        (Realization.graph (baseTree N) (pairs N)).DisplaysQuartet q :=
+  nmsc_filterQuartets_graph hN htaxa hna (fun n (ω : ℕ → Finset (Finset L)) => ω n)
+    (N.genes_iIndepFun hN) (N.genes_identDistrib hN) (N.genes_law hN) ht ht₀
+
 open DynamicProgramming in
 /-- **Sections 3.2 to 3.4 under the NMSC, in the graph representation.** Let the gene trees be
 independent, each with the law of the NMSC on a metric level-1 network `N` with distinct leaf
 labels on the taxa `L`, without the anomalous configuration, and let `0 < t < t₀(N)`. Let `T` be
-the base tree of `N` and `Nr = Realization.graph T (pairs N)` the graph of `N`, a rooted binary
-level-1 network built on `T` that displays the quartet trees of `N` (`NMSC.graph_anchoredExtension`,
-`NMSC.graph_displaysQuartet_iff`), and assume, as `recovery` does, that `Nr` is identifiable under
+the base tree of `N`, a displayed tree of `N` (`NMSC.displaysTree_baseTree`), and
+`Nr = Realization.graph T (pairs N)` the graph of `N`, a rooted binary level-1 network built on `T`
+that displays the quartet trees of `N` (`NMSC.graph_anchoredExtension`,
+`NMSC.graph_displaysQuartet_iff`) and has one reticulation for each cycle of `N`
+(`NMSC.graph_reticulationCount`), and assume, as `recovery` does, that `Nr` is identifiable under
 inclusion among the networks built on `T`. Almost surely, for all large numbers `n` of genes,
 every network built on `T` that has the best score for the output `Q` of Quartet Filtering on the
 quartet trees of the first `n` gene trees, with the fewest reticulations among the networks with
