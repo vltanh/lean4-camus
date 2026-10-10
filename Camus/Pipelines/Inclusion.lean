@@ -21,10 +21,10 @@ from above the cherry `(D,E)` to above `A` (`shallowNet`), or from above `D` to 
 displays, and three more (`AD|BE`, `AD|CE` and `AD|EF`). Of the 45 quartets on the six taxa, `T`
 induces 15, `shallowNet` displays 22 and `deepNet` 25 (`induced_shallowQuartets`,
 `mem_shallowQuartets`, `mem_deepQuartets`). Both networks have one reticulation, and their cycles
-have six and seven vertices (`shallow_cycle_card`, `deep_cycle_card`). So if `Q` is a multiset version of `Q(N_r)` for the true
-network `N = shallowNet`, the network `deepNet` displays all of `Q` with the fewest reticulations
-possible, and is not isomorphic to `N`. The dynamic program itself may return `deepNet` on such an
-input (`Counterexamples.camus_may_return_deep`).
+have six and seven vertices (`shallow_cycle_card`, `deep_cycle_card`). So if `Q` is a multiset
+version of `Q(N_r)` for the true network `N = shallowNet`, the network `deepNet` displays all of
+`Q` with the fewest reticulations possible, and is not isomorphic to `N`. The dynamic program
+itself may return `deepNet` on such an input (`Counterexamples.camus_may_return_deep`).
 
 ## Main results
 
