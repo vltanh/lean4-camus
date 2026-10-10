@@ -9,8 +9,10 @@ project:
     over every finite directed rooted binary level-1 network built on T in the sense of
     Definition 1), Lemmas 1 and 2, the running time and memory of Section 2.3 for CAMUS written as
     a program in a cost semantics, the reticulation-restricted dynamic program of Section 2.4 with
-    its backtracking, and the steps of the statistical arguments of Sections 3.2 and 3.4 inside the
-    models they use, by the paper's arguments. It also proves Observation 2 of Warnow, Tabatabaee
+    its backtracking, that every level-1 network is built on one of its trees, and the steps of the
+    statistical arguments of Sections 3.2 to 3.4 inside the models they use (the site model of
+    Warnow, Tabatabaee and Evans, the multispecies coalescent and the network multispecies
+    coalescent), by the paper's arguments. It also proves Observation 2 of Warnow, Tabatabaee
     and Evans (2025), on which Lemma 1 rests and which its authors state without proof, and the
     convergence of the quartets of SNPs under their site model, which needs a hypothesis that their
     model omits; the formalization is unconditional.
@@ -20,9 +22,11 @@ project:
     as k grows, and the stopping rule can stop before a better score (Section 2.4); the true network
     need not be the unique optimal network, even with the fewest reticulations and long cycles, so
     that CAMUS can return another network under every hypothesis of the SNP pipeline's consistency
-    argument; and a tree of a network need not be a basis for it (Section 3.2). A corrected
-    recovery theorem holds under identifiability under inclusion and a tie-break toward the fewest
-    reticulations.
+    argument; and a tree of a network need not be a basis for it (Section 3.2). Under the network
+    coalescent, in an anomalous configuration known from the literature, Quartet Filtering keeps a
+    quartet that the network does not display and drops the one it does (Sections 3.3 and 3.4). A
+    corrected recovery theorem holds under identifiability under inclusion and a tie-break toward
+    the fewest reticulations.
   authors: ["The-Anh Vu-Le"]
   license: "Apache-2.0"
   responsible_maintainers: ["The-Anh Vu-Le"]
@@ -55,6 +59,22 @@ sources:
     relationship: "background"
     note: "Its four-taxon distributions of unrooted gene trees under the multispecies coalescent, from the Lean formalization lean4-adr11 (a dependency), give the motivation of Algorithm 1 (Section 3.4)."
     author_endorsement: "not-contacted"
+  - title: "Anomalous networks under the multispecies coalescent: theory and prevalence"
+    authors: ["Cécile Ané", "John Fogg", "Elizabeth S. Allman", "Hector Baños", "John A. Rhodes"]
+    id: "doi:10.1007/s00285-024-02050-7"
+    type: "article"
+    location: "https://doi.org/10.1007/s00285-024-02050-7"
+    relationship: "background"
+    note: "Cited by the paper for ASTRAL; its anomalous 3-cycle is formalized in Camus/External/NMSC and makes Quartet Filtering keep the wrong quartets (the report's E9)."
+    author_endorsement: "not-contacted"
+  - title: "Identifying species network features from gene tree quartets under the coalescent model"
+    authors: ["Hector Baños"]
+    id: "doi:10.1007/s11538-018-0485-4"
+    type: "article"
+    location: "https://doi.org/10.1007/s11538-018-0485-4"
+    relationship: "background"
+    note: "The quartet concordance factors of the components of a cycle under the network coalescent, through the maintainer's formalization of BROOQS, copied into Camus/External/NMSC."
+    author_endorsement: "not-contacted"
 related_formalizations:
   - id: "https://github.com/vltanh/lean4-adr11"
     relationship: "builds-on"
@@ -62,22 +82,26 @@ related_formalizations:
 status:
   scope: >-
     Unconditional. Proves Lemmas 1 and 2 and Theorem 1 over every network built on the constraint
-    tree in the sense of Definition 1 (whose root may lie above the root of the tree), the running
-    time O(n^2 (|Q| + n)) and memory O(n^4) of Section 2.3 for CAMUS written as a program in a
-    unit-cost semantics, with the quartet test in constant time, the four properties of the
-    networks of Section 2.4 for the networks returned by backtracking and the running time
-    O(n^2 (|Q| + m^3 n)) of the modified program, the bound of n - 1 reticulations, Observation 2
-    of Warnow, Tabatabaee and Evans and the convergence of the quartets of SNPs under their site
-    model, the ASTRAL step and the corrected final step of Section 3.2 in probability, and
-    Algorithm 1's test and its motivation under the multispecies coalescent. Refutes Section 2.4's
-    monotonicity claim for exact numbers of reticulations and its stopping rule, and Section 3.2's
-    uniqueness claim (also with the fewest-reticulation tie-break, and in the site model under every
-    hypothesis of its argument) and its claim that any tree of a network is a basis for it, and
-    proves corrected versions. Equation (1) is read over distinct quartets and Pairs(v) restricted
-    to pairs that give a network. Not formalized: that the quartets of a binary tree determine it
-    (ASTRAL's tree is proved to have the quartets of t), the composition of Section 3.2's
-    probabilistic steps into one statement, the network multispecies coalescent of Section 3.3,
-    peak memory, and the experiments.
+    tree in the sense of Definition 1 (whose root may lie above the root of the tree), that every
+    level-1 network is built on one of its trees with at most n - 1 reticulations, the running time
+    O(n^2 (|Q| + n)) and the peak memory O(n^4) of Section 2.3 for CAMUS written as a program in a
+    cost semantics with time and space, with the quartet test in constant time, the four properties
+    of the networks of Section 2.4 for the networks returned by backtracking with the running time
+    O(n^2 (|Q| + m^3 n)) of the program that computes them, Observation 2 of Warnow, Tabatabaee and
+    Evans and the convergence of the quartets of SNPs under their site model, Section 3.2's argument
+    as one statement about the SNP pipeline (ASTRAL's tree equals the true tree up to the order of
+    children, by Steel's theorem that quartets determine a tree), and Algorithm 1's test and its
+    motivation under the multispecies coalescent and the network multispecies coalescent. Refutes
+    Section 2.4's monotonicity claim for exact numbers of reticulations and its stopping rule, and
+    Section 3.2's uniqueness claim (also with the fewest-reticulation tie-break, and in the site
+    model under every hypothesis of its argument) and its claim that any tree of a network is a
+    basis for it, and proves corrected versions; shows that Quartet Filtering keeps a quartet the
+    network does not display under the network coalescent, in an anomalous configuration of Ané et
+    al. (2024). Equation (1) is read over distinct quartets and Pairs(v) restricted to pairs that
+    give a network. Not formalized: recovery under the network coalescent through displayed trees
+    other than the base tree, the symmetry of that model under exchanging the two sides of a cycle,
+    the parameters for which the anomalous configuration defeats Quartet Filtering, and the
+    experiments.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -123,8 +147,22 @@ automation:
         spend_usd: "not tracked"
         hardware: "local machine (Lean builds); model API"
       prompting_notes: "The maintainer asked to formalize what the second round left out (\"I think there is a proof of running time complexity? Add counterexamples. Do 1-4.\"): backtracking in Section 2.4, Section 3.2 inside the model of Warnow, Tabatabaee and Evans, Definition 1's networks whose root lies above the root of T, Algorithm 1's motivation from the coalescent, a cost semantics for Section 2.3, and the counterexamples."
+    - method: "agent"
+      models: ["claude-opus-5-5"]
+      framework: "Claude Code 2.1.296"
+      tool_setup: >-
+        Fourth round (10 October 2026): formalize-math-paper skill 2.2.0
+        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 5
+        sub-agents (at most 5 at once), four of them working in separate git worktrees on
+        tree-basedness, trees determined by their quartets with the SNP pipeline, backtracking time
+        with peak memory, and the network coalescent, and one reviewing the files of the pipeline.
+      cost:
+        wall_time: "3.24 hours to the audited report; 5.5 hours of sub-agent working time"
+        spend_usd: "not tracked"
+        hardware: "local machine (Lean builds); model API"
+      prompting_notes: "The maintainer chose the items that remained (\"1-3 seem ok. the first 2 points of 4 seems ok.\"), asked to copy the network coalescent of the formalization of BROOQS into the project, declined a shared library for now, and asked why the round took so long (\"Why are we taking so long? Are we trying to prove new results?\"), after which the network-coalescent work was wrapped up."
   spend_usd: "not tracked"
-  notes: "Three rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
+  notes: "Four rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
 fidelity:
   divergences: >-
     Equation (1) is read over the distinct quartets of Q, with their multiplicities as weights,
@@ -135,13 +173,16 @@ fidelity:
     (the paper describes only the meaning of M[v,k]); its stopping rule is read as the claim that
     the score does not improve after the column where the rule stops, and refuted. Section 2.3's
     bounds are proved for a program in a unit-cost semantics (one unit per table access,
-    arithmetic operation, comparison and loop iteration). Section 3.2 is formalized inside the site
+    arithmetic operation, comparison and loop iteration), with a space component for peak memory
+    (one unit per integer held). Section 3.2 is formalized inside the site
     model of Warnow, Tabatabaee and Evans, with p(e, s, s) > 0 on the tree edges added to their
     constraints, which the step of their Theorem 6 needs; "the most probable quartet tree" is read
     as strictly the most probable; ASTRAL's output is an exact maximizer of the quartet support
-    score, proved to have the quartets of t. Section 3.4's motivation is proved for a positive
-    threshold. The monotonicity claim of Section 2.4 is refuted for exact numbers of reticulations
-    and proved for at most k; the uniqueness claim of Section 3.2 is refuted, and recovery is
+    score, which has the quartets of t, hence equals t up to the order of children. Section 3.4's
+    motivation is proved for a positive threshold, and under the network coalescent for networks
+    without the anomalous configuration, which the paper's design overlooks. The monotonicity
+    claim of Section 2.4 is refuted for exact numbers of reticulations and proved for at most k;
+    the uniqueness claim of Section 3.2 is refuted, and recovery is
     proved under identifiability under inclusion and a fewest-reticulation tie-break. Every proof
     follows the paper's, except two steps: uniqueness in Lemma 1, which the paper derives from
     Observation 2, which gives only existence (the formalization proves it from the
@@ -150,8 +191,8 @@ fidelity:
     them to networks obtained by adding edges, with the same quartets and reticulations).
 review:
   status: "agent-reviewed"
-  reviewers: ["Independent Codex review agents (first round)", "Independent Claude review agents (second and third rounds)"]
-  notes: "Statements checked against the published JATS source by agents other than their writers, in each round; proofs compared with the paper's; the report's findings and account of the literature checked against their sources. No person has reviewed the proofs."
+  reviewers: ["Independent Codex review agents (first round)", "Independent Claude review agents (second to fourth rounds)"]
+  notes: "Statements checked against the published JATS source by agents other than their writers in the first three rounds, and in the fourth only those of the SNP pipeline; proofs compared with the paper's; the report's findings and account of the literature checked against their sources in the second and third rounds. No person has reviewed the proofs."
 alignment:
   namespace: "Camus.Challenge"
   statements:

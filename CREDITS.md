@@ -5,19 +5,21 @@ How this formalization was made, from the run logs and the session transcripts.
 ## Who
 
 - **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose its scope (the
-  directed-graph model of networks, the corrected statements of Sections 2.4 and 3.2) and asked for
-  the second and third rounds.
-- **Formalization:** two AI systems, in three rounds. The first formalization was made by OpenAI's
+  directed-graph model of networks, the corrected statements of Sections 2.4 and 3.2), asked for
+  the second, third and fourth rounds, and approved copying the network multispecies coalescent
+  from their formalization of BROOQS.
+- **Formalization:** two AI systems, in four rounds. The first formalization was made by OpenAI's
   `gpt-6.1-sol` in Codex CLI 0.162.0-alpha.2, from an empty project, with three sub-agents. The
-  second round, a restyle with a new audit, and the third, which formalized what the second had left
-  out, were made by Claude Opus 5.5 (`claude-opus-5-5`, Anthropic) in Claude Code 2.1.296 (VS Code
-  extension), in one session with sub-agents.
+  second round, a restyle with a new audit, and the third and fourth, which formalized what the
+  second had left out, were made by Claude Opus 5.5 (`claude-opus-5-5`, Anthropic) in Claude Code
+  2.1.296 (VS Code extension), in one session with sub-agents.
 - **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill,
-  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in all three rounds.
-- **Review:** no person has reviewed the proofs. In each round, agents other than the provers
-  reviewed the statements against the paper and compared the proofs with the paper's; in the second
-  and third rounds, other agents also checked the report's findings and its account of the
-  literature against their sources.
+  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in all four rounds.
+- **Review:** no person has reviewed the proofs. In the first three rounds, agents other than the
+  provers reviewed the statements against the paper and compared the proofs with the paper's; in
+  the second and third rounds, other agents also checked the report's findings and its account of
+  the literature against their sources. In the fourth round, an agent other than the prover
+  reviewed only the files of the SNP pipeline.
 
 ## The first formalization (8 October 2026)
 
@@ -79,7 +81,7 @@ How it was made:
   the paper's versions.
 - **The audit.** The main session rewrote the audit script, the routes of the paper's proofs, CI,
   and wrote [`REPORT.md`](REPORT.md) and [`README.md`](README.md), renumbering the findings in the paper's order and adding
-  three (E1, E2 and the typos, E9 since the third round). A sub-agent
+  three (E1, E2 and the typos, E10 since the fourth round). A sub-agent
   checked every finding of the report and every summary of another work against its source, and the
   main session applied its corrections.
 
@@ -150,3 +152,56 @@ report of this round (`f08c4ba`, 13:16 CDT), taken from the session's transcript
 
 The figures leave out the work after the report: the wrapping of long lines, the credits, and the
 final checks of the packaging.
+
+## The fourth round (10 October 2026)
+
+Asked whether the formalization went too far, and what of the paper it still left out, Claude
+listed the items that remained in the third round's report. The author chose: "1-3 seem ok. the
+first 2 points of 4 seems ok. for the NMSC model, would @../lean4-brooqs helps?", and on the
+network multispecies coalescent of their formalization of BROOQS: "Maybe you can copy it to here.
+This paper is published, so should be fine to make the public library." A library shared with the
+author's other formalizations was put off.
+
+How it was made:
+
+- **The plan.** The main session wrote a brief for the round and started three sub-agents at once,
+  each in its own git worktree: tree-basedness, with Figure 1 and the totality of the pipeline;
+  trees determined by their quartets, with the SNP pipeline of Section 3.2 as one statement; and
+  the time of backtracking in Section 2.4, with peak memory. After the author's answer, it copied
+  the network multispecies coalescent of the formalization of BROOQS (commit `1c2eede`) into
+  [`Camus/External/NMSC/`](Camus/External/NMSC) and started a fourth sub-agent on Sections 3.3 and 3.4 under that model.
+- **The work.** The sub-agents proved:
+  - that every level-1 network is built on one of its trees, with at most `n − 1` reticulations,
+    and which quartet trees the network of Figure 1 displays;
+  - that two trees with the same quartets are equal up to the order of their children (Steel's
+    theorem, through lean4-adr11), and the SNP pipeline as one statement in the site model, with
+    an outgroup;
+  - the time of backtracking in Section 2.4, `O(n²(|Q| + m³n))`, and the peak memory of the
+    programs of Sections 2.3 and 2.4, in a cost semantics with a space component;
+  - Quartet Filtering under the network coalescent: the pattern of the quartet concordance factors
+    outside the anomalous configuration, the consistency of the filter there, and the anomalous
+    3-cycle of Ané et al. (2024), under which the filter keeps a quartet tree that the network does
+    not display (E9).
+- **Integration.** The main session merged the four branches, removed two modules that duplicated
+  others, wrapped long lines, updated the audit, and rewrote the report with the new finding.
+- **Review.** A read-only sub-agent, started by the sub-agent of the pipeline, reviewed its new
+  files; that sub-agent, resumed, applied the findings. The author asked why the round took so long
+  ("Why are we taking so long? Are we trying to prove new results?"); the main session explained
+  that the network coalescent goes beyond the paper, and asked the fourth sub-agent to wrap up,
+  after about three hours.
+
+Figures, from 10 October 2026, 13:42 CDT (the author's request), to the commit that completes the
+report of this round (`e96eedd`, 16:56 CDT), taken from the session's transcript with the skill's
+`session_stats.py`:
+
+- **Elapsed time:** 3.24 hours (3 hours 14 minutes).
+- **Sub-agents:** 5: four workstreams and the reviewer that one of them started; at most 5 running
+  at once; one resumed once; 5.5 hours of working time in all.
+- **Tool calls and tokens:** the sub-agents made 832 tool calls, with 4.17 million input tokens and
+  312 million cache reads; the main session made 74 tool calls, with 0.13 million output tokens,
+  1.13 million input tokens and 59 million cache reads. As in the earlier rounds, the sub-agents'
+  recorded 0.01 million output tokens is a lower bound.
+- **Model calls:** 885, all to Claude Opus 5.5 (80 by the main session, 805 by the sub-agents).
+
+The figures leave out the work after the report: the credits, and the final checks of the
+packaging.
