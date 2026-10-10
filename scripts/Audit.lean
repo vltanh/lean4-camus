@@ -97,10 +97,12 @@ import all Camus.Pipelines.Astral
 import all Camus.Pipelines.Coalescent
 import all Camus.Pipelines.Coalescent.Frequencies
 import all Camus.Pipelines.Coalescent.Quartets
+import all Camus.Pipelines.Coalescent.Sampling
 import all Camus.Pipelines.Coalescent.Topology
 import all Camus.Pipelines.Counterexample
 import all Camus.Pipelines.Filtering
 import all Camus.Pipelines.Inclusion
+import all Camus.Pipelines.InclusionOutgroup
 import all Camus.Pipelines.Recovery
 import all Camus.Pipelines.SNP
 import all Camus.Pipelines.SNPCondition
@@ -213,13 +215,17 @@ meta def paperResults : List (String × Name) :=
    ("Sec 3.2, the ASTRAL step", ``Camus.astral_maximizer_tendsto),
    ("Sec 3.2, corrected, in the site model", ``Camus.snp_recovery_tendsto),
    ("Sec 3.2, corrected, in probability", ``Camus.snp_correctedStatisticalConsistency),
-   ("Sec 3.2, E7 in the site model", ``Camus.Counterexamples.deeperDonor_meets_hypotheses),
+   ("Sec 3.2, E7 in the site model", ``Camus.snp_deeperDonor_tendsto),
+   ("Sec 3.2, E7 under every hypothesis, with an outgroup",
+    ``Camus.Counterexamples.deeperDonor_meets_hypotheses),
    ("Sec 3.2, a tree of N need not be a basis (E8)",
     ``Camus.Counterexamples.camus_output_not_rootAboveNet),
    ("Sec 3.4, Algorithm 1", ``Camus.Algorithm1.filterQuartets_mono),
    ("Sec 3.4, threshold as a ratio", ``Camus.retainSecond_iff_ratio),
-   ("Sec 3.4, the MSC pattern", ``Camus.Coalescent.msc_pattern),
+   ("Sec 3.3, the MSC pattern", ``Camus.Coalescent.msc_pattern),
    ("Sec 3.4, filtering under the MSC", ``Camus.Coalescent.msc_filterQuartets),
+   ("Sec 3.4, filtering under the MSC, for sampled gene trees",
+    ``Camus.Coalescent.msc_filterQuartets_genes),
    ("Sec 3.4, filtering keeps q2 when p2 > p3", ``Camus.Coalescent.filterBlock_keeps_second)]
 
 /-- The theorems that Palomar's comparator checks (`theorem_names` of `comparator.json`). -/

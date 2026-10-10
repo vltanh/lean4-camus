@@ -56,7 +56,7 @@ reticulation. The general facts about switchings are in
 (Section 4.3.2).
 
 **Statement.** Each site picks a tree contained in `N`, each reticulation inheriting from one of
-its parents with a transmission probability `j(e)` (`0 < j(e) < 1`, summing to 1 at each
+its parents with a transmission probability `κ(e)` (`0 < κ(e) < 1`, summing to 1 at each
 reticulation), and evolves down it under a substitution model with a positive distribution at the
 root, `p(e, s, s') > 0` for `s ≠ s'` on the tree edges and no change on the reticulation edges. An
 Oracle selects the SNPs, the sites that change state exactly once. Theorem 6 states that

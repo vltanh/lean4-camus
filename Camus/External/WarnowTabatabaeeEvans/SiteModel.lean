@@ -13,7 +13,7 @@ displayed by the network `N` and evolves down it. This file defines that model o
 level-1 network `N`, with any finite set of states `σ` (WTE use the four nucleotides). Its
 parameters, with the constraints that WTE list (`External.SiteParameters`), are WTE's designation
 of reticulation edges (at least one of the two edges into each reticulation; the other edges are
-tree edges); a positive transmission probability `j(e)` on each edge `e` into a reticulation,
+tree edges); a positive transmission probability `κ(e)` on each edge `e` into a reticulation,
 summing to 1 at each reticulation; a positive distribution of the state at the root; and
 substitution probabilities `p(e, s, s')`, a stochastic matrix on each edge, with
 `p(e, s, s') > 0` for `s ≠ s'` on the tree edges and no change on the reticulation edges. The
@@ -60,7 +60,7 @@ not vacuous.
 WTE's argument, adapted to quartets: if `N` displays `q`, some switching `S` has an edge `(x, y)`
 into a vertex of indegree 1 whose clade below `y` cuts `q`
 (`RootedNetwork.displays_iff_treeEdge_cladeBelow`). WTE: "the probability of a character
-evolving down T is strictly positive, since 0 < j(e) < 1 for all reticulation edges"; "it is easy
+evolving down T is strictly positive, since 0 < κ(e) < 1 for all reticulation edges"; "it is easy
 to see that the probability that c changes on e and no other edge in T is strictly positive";
 and "if c evolves down T and changes only on edge e, then c is two-state and homoplasy-free, and
 hence is an SNP". The history that follows `S`, takes one state above `(x, y)` and another below
@@ -276,7 +276,7 @@ WTE list.
   reticulate node be designated as a reticulation edge". So the reticulation edges are edges into
   reticulations (vertices of indegree 2), at least one into each, and the other edges are the
   tree edges.
-* `transmission e` is the transmission probability j(e) of an edge `e` into a reticulation,
+* `transmission e` is the transmission probability κ(e) of an edge `e` into a reticulation,
   reticulation edge or tree edge: positive, and summing to 1 over the edges into each reticulation
   (so also below 1, as WTE ask).
 * `root s` is the probability of the state `s` at the root, positive for every state.
@@ -516,7 +516,7 @@ open Switchings
 variable {N : RootedNetwork} {σ : Type*} [Fintype σ]
 
 /-- The probability of the history `h` = (S, states) under the model `M`: the product of the
-transmission probabilities j(e) of the edges `e` of `S` into reticulations (the probability that
+transmission probabilities κ(e) of the edges `e` of `S` into reticulations (the probability that
 the site evolves down `S`), the probability of the state at the root, and the substitution
 probabilities p(e, s, s') along the edges of `S`. -/
 noncomputable def weight (M : SiteParameters N σ) (h : SiteHistory N σ) : ℝ≥0 :=
