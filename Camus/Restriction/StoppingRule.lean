@@ -89,7 +89,9 @@ def StopsAt (s : ℕ → ℕ) (m : ℕ) : Prop :=
 computes them: for every well-labelled tree `T` and multiset `Q`, if the rule stops at `m` on the
 best scores with exactly `k` reticulations, then the score does not improve after `m`: no network
 built on `T` with `j ≥ m` reticulations displays more quartets of `Q` than the best network with
-exactly `m`. -/
+exactly `m`. For a fixed `T` the number of quartets of `Q` displayed and the number satisfied
+differ by the number of quartets of `Q` that `T` induces, so the claim reads the same for
+either. -/
 def ExactStoppingRule : Prop :=
   ∀ t : PhyloTree, t.WellLabelled → ∀ (Q : Multiset Quartet) (m : ℕ),
     StopsAt (bestExact t Q) m → ∀ j, m ≤ j → bestExact t Q j ≤ bestExact t Q m
@@ -288,6 +290,12 @@ theorem stop_baseline_repertoire :
   rw [hnot q hq.1] at hd
   exact Bool.false_ne_true hd
 
+/-- The quartets of `Q` satisfied by a network are those it displays, since `T` displays none of
+them: for `T` and `Q`, the numbers of quartets satisfied and displayed are the same. -/
+theorem stop_novel_eq (N : RootedNetwork) :
+    novel caterpillar stopQuartets N = repertoire stopQuartets N := by
+  rw [novel, stop_baseline_repertoire, Finset.sdiff_empty]
+
 /-- The canonical network of a cycle-separated family `E` of pairs of `T` is built on `T`, has
 `|E|` reticulations, and displays as many quartets of `Q` as the value of `E`: by Lemma 1, the
 quartets of `Q` it satisfies, as `T` displays none. -/
@@ -362,7 +370,8 @@ theorem stop_light_family :
   decide +kernel
 
 /-- The best scores for `T = (A,(B,(C,(D,(E,(F,(G,H)))))))` and
-`Q = {AF|CG, AF|CG, AC|BD, AE|DF, AH|FG}`, counted with multiplicity:
+`Q = {AF|CG, AF|CG, AC|BD, AE|DF, AH|FG}`, counted with multiplicity. Since `T` displays no quartet
+of `Q`, the quartets of `Q` displayed by a network are those it satisfies (`stop_novel_eq`).
 * `T` itself displays no quartet of `Q`, and neither does any network built on `T` with no
   reticulation;
 * some network built on `T` with exactly one reticulation displays `2`;
