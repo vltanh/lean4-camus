@@ -11,17 +11,18 @@ Section 3.2 of the paper argues that its SNP pipeline is statistically consisten
 of Warnow, Tabatabaee and Evans (2025), Section 4.2 ("WTE"), in which every site picks a tree
 displayed by the network `N` and evolves down it. This file defines that model on a rooted binary
 level-1 network `N`, with any finite set of states `σ` (WTE use the four nucleotides). Its
-parameters (`External.SiteModel`) are a positive transmission probability `j(e)` on each edge `e`
-into a reticulation, summing to 1 at each reticulation; a positive distribution of the state at
-the root; and substitution probabilities `p(e, s, s')`, a stochastic matrix on each edge, with
-`p(e, s, s') > 0` for `s ≠ s'` on the tree edges (the edges into vertices of indegree 1) and no
-change on the reticulation edges. A site history (`External.SiteHistory`) is a switching `S` of
-`N` (the tree the site evolves down, before the clean-up of Definition 1) and a state at every
-vertex. Its probability (`External.SiteModel.weight`) is the product of the transmission
-probabilities of the edges of `S` into reticulations, the probability of the root state, and the
-substitution probabilities along the edges of `S`; these probabilities sum to 1
-(`External.SiteModel.weight_sum`), which makes the model a distribution on histories
-(`External.SiteModel.pmf`).
+parameters, with the constraints that WTE list (`External.SiteParameters`), are a positive
+transmission probability `j(e)` on each edge `e` into a reticulation, summing to 1 at each
+reticulation; a positive distribution of the state at the root; and substitution probabilities
+`p(e, s, s')`, a stochastic matrix on each edge, with `p(e, s, s') > 0` for `s ≠ s'` on the tree
+edges (the edges into vertices of indegree 1) and no change on the reticulation edges. The model
+(`External.SiteModel`) also asks `p(e, s, s) > 0` on the tree edges, as WTE's Theorem 7 does. A
+site history (`External.SiteHistory`) is a switching `S` of `N` (the tree the site evolves down,
+before the clean-up of Definition 1) and a state at every vertex. Its probability
+(`External.SiteParameters.weight`) is the product of the transmission probabilities of the edges
+of `S` into reticulations, the probability of the root state, and the substitution probabilities
+along the edges of `S`; these probabilities sum to 1 (`External.SiteParameters.weight_sum`),
+which makes the model a distribution on histories (`External.SiteParameters.pmf`).
 
 An SNP, in WTE's sense (the sites that their Oracle selects), is a history whose state changes on
 exactly one edge `(x, y)` of its switching (`External.SiteHistory.IsSNP`). Its quartets are the
@@ -36,10 +37,13 @@ not vacuous.
 
 ## Main results
 
-* `External.SiteModel`: the parameters of WTE's single site model (Section 4.2).
+* `External.SiteParameters`: the parameters of WTE's single site model, with the constraints of
+  their Section 4.2.
+* `External.SiteModel`: the model, with `p(e, s, s) > 0` on the tree edges.
 * `External.SiteHistory`: a switching and a state at every vertex.
-* `External.SiteModel.weight`, `External.SiteModel.weight_sum`, `External.SiteModel.pmf`,
-  `External.SiteModel.law`: the probability of a history, and the law of a site.
+* `External.SiteParameters.weight`, `External.SiteParameters.weight_sum`,
+  `External.SiteParameters.pmf`, `External.SiteParameters.law`: the probability of a history, and
+  the law of a site.
 * `External.SiteHistory.IsSNP`, `External.SiteHistory.quartets`: WTE's SNPs and the quartets
   they contribute to `Q`.
 * `External.SiteHistory.quartets_eq_pattern`: these are the quartets of the paper's pipeline,
@@ -58,12 +62,14 @@ evolving down T is strictly positive, since 0 < j(e) < 1 for all reticulation ed
 to see that the probability that c changes on e and no other edge in T is strictly positive";
 and "if c evolves down T and changes only on edge e, then c is two-state and homoplasy-free, and
 hence is an SNP". The history that follows `S`, takes one state above `(x, y)` and another below
-it, has positive probability: the transmission and root probabilities are positive, the
+it (`External.SiteHistory.snp`), has positive probability
+(`External.SiteModel.weight_snp_pos`): the transmission and root probabilities are positive, the
 substitution on `(x, y)` is a change on a tree edge, and on every other edge of `S` the state
 stays the same, which has probability 1 on a reticulation edge and `p(f, s, s)` on a tree edge
 `f`. WTE's list of constraints does not make `p(f, s, s)` positive, which their "it is easy to
-see" needs (with `p(f, s, s) = 0` the state must change on `f`); their Theorem 7 assumes it
-(`0 < p_on ≤ p(e, s, s)`), and so does `External.SiteModel` (`stay_pos`).
+see" needs: with `p(f, s, s) = 0` the state must change on `f`, and the step fails
+(`External.theorem6_step_needs_stay`). Their Theorem 7 assumes it (`0 < p_on ≤ p(e, s, s)`), and
+so does `External.SiteModel` (`stay_pos`).
 
 The probabilities sum to 1: for a fixed switching, the substitution part is a Markov chain on a
 rooted tree, and summing out the state of a deepest vertex removes its edge
@@ -258,20 +264,21 @@ theorem markov_tree_sum (E : Finset (V × V)) (r : V) (rank : V → ℕ)
 
 end MarkovTree
 
-/-- WTE's single site model (their Section 4.2) on the network `N`, with states in the finite
-type `σ` (WTE use the four nucleotides). A tree edge is an edge into a vertex of indegree 1, a
-reticulation edge an edge into a vertex of indegree 2.
+/-- The parameters of WTE's single site model (their Section 4.2) on the network `N`, with
+states in the finite type `σ` (WTE use the four nucleotides), and exactly the constraints that
+WTE list. A tree edge is an edge into a vertex of indegree 1, a reticulation edge an edge into a
+vertex of indegree 2.
 * `transmission e` is the transmission probability j(e) of an edge `e` into a reticulation:
   positive, and summing to 1 over the edges into each reticulation (so also below 1, as WTE ask).
 * `root s` is the probability of the state `s` at the root, positive for every state.
 * `substitution e s s'` is the probability p(e, s, s') of the state `s'` at the head of `e` given
   the state `s` at its tail: each row sums to 1, a change `s ≠ s'` has positive probability on a
   tree edge, and probability 0 on a reticulation edge.
-* `stay_pos`: no change, p(e, s, s), has positive probability on a tree edge. WTE's list of
-  constraints does not state this, but the proof of their Theorem 6 needs it ("it is easy to see
-  that the probability that c changes on e and no other edge in T is strictly positive"), and
-  their Theorem 7 assumes it (`0 < p_on ≤ p(e, s, s)`). -/
-structure SiteModel (N : RootedNetwork) (σ : Type*) [Fintype σ] where
+
+These constraints do not give the step of the proof of WTE's Theorem 6 that every clade, or
+quartet, of `N` comes from an SNP of positive probability
+(`External.theorem6_step_needs_stay`); `External.SiteModel` adds the missing one. -/
+structure SiteParameters (N : RootedNetwork) (σ : Type*) [Fintype σ] where
   transmission : ℕ × ℕ → ℝ≥0
   transmission_pos : ∀ e ∈ N.edges, N.indegree e.2 = 2 → 0 < transmission e
   transmission_sum : ∀ v ∈ N.vertices, N.indegree v = 2 →
@@ -282,8 +289,16 @@ structure SiteModel (N : RootedNetwork) (σ : Type*) [Fintype σ] where
   substitution : ℕ × ℕ → σ → σ → ℝ≥0
   substitution_sum : ∀ e ∈ N.edges, ∀ s, ∑ s', substitution e s s' = 1
   change_pos : ∀ e ∈ N.edges, N.indegree e.2 = 1 → ∀ s s', s ≠ s' → 0 < substitution e s s'
-  stay_pos : ∀ e ∈ N.edges, N.indegree e.2 = 1 → ∀ s, 0 < substitution e s s
   no_change : ∀ e ∈ N.edges, N.indegree e.2 = 2 → ∀ s s', s ≠ s' → substitution e s s' = 0
+
+/-- WTE's single site model (their Section 4.2) on the network `N`: the parameters of
+`External.SiteParameters`, and `stay_pos`: no change, p(e, s, s), has positive probability on a
+tree edge. WTE's list of constraints does not state this, but the proof of their Theorem 6 needs
+it ("it is easy to see that the probability that c changes on e and no other edge in T is
+strictly positive"; without it the step fails, `External.theorem6_step_needs_stay`), and their
+Theorem 7 assumes it (`0 < p_on ≤ p(e, s, s)`). -/
+structure SiteModel (N : RootedNetwork) (σ : Type*) [Fintype σ] extends SiteParameters N σ where
+  stay_pos : ∀ e ∈ N.edges, N.indegree e.2 = 1 → ∀ s, 0 < substitution e s s
 
 /-- A site history on `N`: the switching `S` of `N` that the site evolves down (WTE: "each
 character essentially picks a tree in T_N down which to evolve"), and a state at every vertex.
@@ -471,7 +486,7 @@ theorem sum_prod (hN : N.RootedBinaryLevelOne) (ω : ℕ × ℕ → ℝ≥0) :
 
 end Switchings
 
-namespace SiteModel
+namespace SiteParameters
 
 open Switchings
 
@@ -481,14 +496,14 @@ variable {N : RootedNetwork} {σ : Type*} [Fintype σ]
 transmission probabilities j(e) of the edges `e` of `S` into reticulations (the probability that
 the site evolves down `S`), the probability of the state at the root, and the substitution
 probabilities p(e, s, s') along the edges of `S`. -/
-noncomputable def weight (M : SiteModel N σ) (h : SiteHistory N σ) : ℝ≥0 :=
+noncomputable def weight (M : SiteParameters N σ) (h : SiteHistory N σ) : ℝ≥0 :=
   (∏ e ∈ h.switching.filter (fun e => N.indegree e.2 = 2), M.transmission e) *
     M.root (h.state N.root) *
     ∏ e ∈ h.switching, M.substitution e (h.state e.1) (h.state e.2)
 
 /-- For a fixed switching, the root and substitution part of `weight` sums to 1 over the states
 of the vertices: a Markov chain on the tree `S` (`markov_tree_sum`). -/
-theorem substitution_sum_states (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
+theorem substitution_sum_states (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne)
     (S : {S // N.Switching S}) :
     ∑ f : N.vertices → σ, M.root (SiteHistory.extend (root_mem_vertices hN) f N.root) *
       ∏ e ∈ S.1, M.substitution e (SiteHistory.extend (root_mem_vertices hN) f e.1)
@@ -541,7 +556,7 @@ theorem substitution_sum_states (M : SiteModel N σ) (hN : N.RootedBinaryLevelOn
 /-- The probability of the history with switching `S` and states `f`: the product of the
 transmission probabilities of the edges of `S` into reticulations, and the root and substitution
 part. -/
-theorem weight_equivProd_symm (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
+theorem weight_equivProd_symm (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne)
     (S : {S // N.Switching S}) (f : N.vertices → σ) :
     M.weight ((SiteHistory.equivProd (root_mem_vertices hN)).symm (S, f)) =
       (∏ e ∈ S.1.filter (fun e => N.indegree e.2 = 2), M.transmission e) *
@@ -555,7 +570,7 @@ theorem weight_equivProd_symm (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
   ring
 
 /-- The probabilities of the histories of a rooted binary level-1 network sum to 1. -/
-theorem weight_sum (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
+theorem weight_sum (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) :
     ∑ h, M.weight h = 1 := by
   classical
   rw [← (SiteHistory.equivProd (σ := σ) (root_mem_vertices hN)).symm.sum_comp,
@@ -595,7 +610,7 @@ theorem weight_sum (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
 
 /-- The probability that a site evolves down the switching `S₀`: the product of the transmission
 probabilities of the edges of `S₀` into reticulations. -/
-theorem sum_weight_switching (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
+theorem sum_weight_switching (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne)
     {S₀ : Finset (ℕ × ℕ)} (hS₀ : N.Switching S₀) :
     ∑ h ∈ Finset.univ.filter (fun h : SiteHistory N σ => h.switching = S₀), M.weight h =
       ∏ e ∈ S₀.filter (fun e => N.indegree e.2 = 2), M.transmission e := by
@@ -616,12 +631,12 @@ theorem sum_weight_switching (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
     exact absurd (Finset.mem_univ _) h
 
 /-- The distribution of a site under the model `M`, on a rooted binary level-1 network. -/
-noncomputable def pmf (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
+noncomputable def pmf (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) :
     PMF (SiteHistory N σ) :=
   PMF.ofFintype (fun h => (M.weight h : ℝ≥0∞)) (by
     rw [← ENNReal.ofNNReal_finsetSum, M.weight_sum hN, ENNReal.coe_one])
 
-end SiteModel
+end SiteParameters
 
 namespace SiteHistory
 
@@ -635,22 +650,22 @@ instance : DiscreteMeasurableSpace (SiteHistory N σ) :=
 
 end SiteHistory
 
-namespace SiteModel
+namespace SiteParameters
 
 variable {N : RootedNetwork} {σ : Type*} [Fintype σ]
 
 /-- The law of a site under the model `M`, as a probability measure on the histories. -/
-noncomputable def law (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
+noncomputable def law (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) :
     MeasureTheory.Measure (SiteHistory N σ) :=
   (M.pmf hN).toMeasure
 
-instance (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) :
+instance (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) :
     MeasureTheory.IsProbabilityMeasure (M.law hN) := by
   unfold law
   infer_instance
 
 /-- The law of a set of histories is the sum of their probabilities. -/
-theorem law_apply (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) (A : Set (SiteHistory N σ))
+theorem law_apply (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) (A : Set (SiteHistory N σ))
     [DecidablePred (· ∈ A)] :
     M.law hN A = ((∑ h ∈ Finset.univ.filter (· ∈ A), M.weight h : ℝ≥0) : ℝ≥0∞) := by
   rw [law, PMF.toMeasure_apply_fintype, ENNReal.ofNNReal_finsetSum, Finset.sum_filter]
@@ -660,7 +675,7 @@ theorem law_apply (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) (A : Set (S
   · simp [hA]
 
 /-- On a reticulation edge the state stays the same with probability 1. -/
-theorem stay_eq_one (M : SiteModel N σ) {e : ℕ × ℕ} (he : e ∈ N.edges)
+theorem stay_eq_one (M : SiteParameters N σ) {e : ℕ × ℕ} (he : e ∈ N.edges)
     (h2 : N.indegree e.2 = 2) (s : σ) : M.substitution e s s = 1 := by
   rw [← M.substitution_sum e he s]
   exact (Finset.sum_eq_single s (fun b _ hb => M.no_change e he h2 s b (Ne.symm hb))
@@ -673,10 +688,16 @@ theorem indegree_head (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈
   rcases hN.2.2.2.2.2.2.2.2.2.1 e.2 hv hr with h | h | h
   exacts [Or.inl h.1, Or.inl h.1, Or.inr h.1]
 
+end SiteParameters
+
+namespace SiteModel
+
+variable {N : RootedNetwork} {σ : Type*} [Fintype σ]
+
 /-- On every edge of a rooted binary level-1 network, no change has positive probability. -/
 theorem stay_pos_edge (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ}
     (he : e ∈ N.edges) (s : σ) : 0 < M.substitution e s s := by
-  rcases indegree_head hN he with h | h
+  rcases SiteParameters.indegree_head hN he with h | h
   · exact M.stay_pos e he h s
   · rw [M.stay_eq_one he h s]
     exact one_pos
@@ -934,6 +955,24 @@ theorem snp_isSNP (hs : s₀ ≠ s₁) : (snp hN hS hxy s₀ s₁).IsSNP := by
 
 end SiteHistory
 
+namespace SiteParameters
+
+variable {N : RootedNetwork} {σ : Type*} [Fintype σ] [DecidableEq σ]
+
+/-- The probability that a site contributes the quartet `q` to `Q`: the total probability of the
+histories whose quartets contain `q`. -/
+noncomputable def quartetProb (M : SiteParameters N σ) (q : Quartet) : ℝ≥0 :=
+  ∑ h ∈ Finset.univ.filter (fun h : SiteHistory N σ => q ∈ h.quartets), M.weight h
+
+/-- The law of the set of histories that contribute `q` is `quartetProb q`. -/
+theorem law_quartets (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) (q : Quartet) :
+    M.law hN {h | q ∈ h.quartets} = (M.quartetProb q : ℝ≥0∞) := by
+  classical
+  rw [law_apply]
+  rfl
+
+end SiteParameters
+
 namespace SiteModel
 
 open Relation
@@ -950,7 +989,7 @@ theorem weight_snp_pos (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
     {S : Finset (ℕ × ℕ)} (hS : N.Switching S) {x y : ℕ} (hxy : (x, y) ∈ S)
     (hy : N.indegree y = 1) {s₀ s₁ : σ} (hs : s₀ ≠ s₁) :
     0 < M.weight (SiteHistory.snp hN hS hxy s₀ s₁) := by
-  simp only [weight, SiteHistory.snp_switching]
+  simp only [SiteParameters.weight, SiteHistory.snp_switching]
   refine mul_pos (mul_pos ?_ (M.root_pos _)) ?_
   · refine Finset.prod_pos fun e he => ?_
     obtain ⟨heS, h2⟩ := Finset.mem_filter.mp he
@@ -983,24 +1022,12 @@ theorem exists_snp (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) [Nontrivia
   rw [SiteHistory.snp_quartets hN hS hxy hs]
   exact Finset.mem_filter.mpr ⟨Quartet.mem_onTaxa.mpr hqt, hcut⟩
 
-/-- The probability that a site contributes the quartet `q` to `Q`: the total probability of the
-histories whose quartets contain `q`. -/
-noncomputable def quartetProb (M : SiteModel N σ) (q : Quartet) : ℝ≥0 :=
-  ∑ h ∈ Finset.univ.filter (fun h : SiteHistory N σ => q ∈ h.quartets), M.weight h
-
 /-- A quartet displayed by `N` is contributed by a site with positive probability. -/
 theorem quartetProb_pos (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) [Nontrivial σ]
     {q : Quartet} (hq : N.DisplaysQuartet q) : 0 < M.quartetProb q := by
   obtain ⟨h, hpos, -, hqh⟩ := M.exists_snp hN hq
   exact lt_of_lt_of_le hpos (Finset.single_le_sum (fun _ _ => zero_le)
     (Finset.mem_filter.mpr ⟨Finset.mem_univ h, hqh⟩))
-
-/-- The law of the set of histories that contribute `q` is `quartetProb q`. -/
-theorem law_quartets (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) (q : Quartet) :
-    M.law hN {h | q ∈ h.quartets} = (M.quartetProb q : ℝ≥0∞) := by
-  classical
-  rw [law_apply]
-  rfl
 
 end SiteModel
 

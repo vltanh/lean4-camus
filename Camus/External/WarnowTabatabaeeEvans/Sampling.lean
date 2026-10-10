@@ -112,7 +112,7 @@ theorem support_tendsto (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) [Nont
     intro q m
     rw [hind.measure_inter_preimage_eq_mul (Finset.range m)
       (fun _ _ => MeasurableSet.of_discrete)]
-    simp only [hlawn, prob_compl_eq_one_sub MeasurableSet.of_discrete, SiteModel.law_quartets,
+    simp only [hlawn, prob_compl_eq_one_sub MeasurableSet.of_discrete, SiteParameters.law_quartets,
       Finset.prod_const, Finset.card_range, p]
   -- if `Q_m` misses a quartet displayed by `N`, some quartet on the taxa of `N` is missed by
   -- every site; the union bound
@@ -186,7 +186,7 @@ theorem frequency_tendsto (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
     simp only [Pi.one_apply]
     rw [setIntegral_const, smul_eq_mul, mul_one, measureReal_def,
       ← Measure.map_apply_of_aemeasurable (hid 0).aemeasurable_fst MeasurableSet.of_discrete,
-      hlaw, SiteModel.law_quartets, ENNReal.coe_toReal]
+      hlaw, SiteParameters.law_quartets, ENNReal.coe_toReal]
   have h := strong_law_ae_real (fun n => φ ∘ X n) hint
     (fun i j hij => (hind.indepFun hij).comp hφ hφ) (fun i => (hid i).comp hφ)
   filter_upwards [h] with ω hω
