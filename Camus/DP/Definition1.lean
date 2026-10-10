@@ -8,13 +8,14 @@ public import Camus.Restriction.Optimality
 
 Theorem 1 and the optimality of the networks of Section 2.4 compare the output of the dynamic
 program with the networks built on `T` with the root of `T` at the root
-(`RootedNetwork.AnchoredExtension`), the class over which the dynamic program optimizes. Definition
-1 also calls `N` built on `T` when its root lies above the root of `T` (`RootedNetwork.BuiltOn`).
-Every such network has the same number of reticulations and displays the same quartets as a
-network built on `T` with the root kept (`RootedNetwork.BuiltOn.exists_anchored`), so both results
-hold over Definition 1's class. A quartet satisfied by `N` is one that `N` displays and `T` does
-not induce (`DynamicProgramming.novel t Q N`); this depends on `T`, and not on the position of the
-root of `T` in `N`.
+(`RootedNetwork.AnchoredExtension`), the class over which the dynamic program optimizes.
+Definition 1 also calls `N` built on `T` when its root lies above the root of `T`
+(`RootedNetwork.BuiltOn`). Every such network has the same number of reticulations and displays
+the same quartets as a network built on `T` with the root kept
+(`RootedNetwork.BuiltOn.exists_anchored`), so both results hold over Definition 1's class. A
+quartet satisfied by `N` is one that `N` displays and `T` does not induce
+(`DynamicProgramming.novel t Q N`); this depends on `T`, and not on the position of the root of
+`T` in `N`.
 
 ## Main results
 
