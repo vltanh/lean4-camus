@@ -10,15 +10,18 @@ consider integers to require O(1) memory. All other data structures needed for t
 as the precomputed LCAs, etc., can be stored in O(n²); hence the total memory usage is O(n⁴)." The
 cost monad `Complexity.Timed` of `Camus/Complexity/Timed.lean` counts time only. This file adds
 memory: a value of `Spaced α` is a program `run : Timed α`, with its result and its running time,
-together with the memory it uses, in cells. `Camus/Complexity/PeakMemory.lean` writes the programs
-of Sections 2.3 and 2.4 with their memory and bounds it.
+together with the memory it uses, in cells. `Camus/Complexity/PeakMemory.lean` and
+`Camus/Complexity/PeakMemoryBudget.lean` write the programs of Sections 2.2 to 2.4 with their
+memory and bound it.
 
 ## The memory model
 
 A cell holds a constant number of integers and vertex names: one entry of a table, one element of
 a list (a vertex, or a pair of vertices, with its link), or the frame of a call of a recursive
-function. Memory is counted in cells above the memory in use when the program starts, so the input
-`T` and `Q` are not part of it. A program reports two numbers:
+function. The integers, Booleans and vertex names held in the variables of a program are not
+charged: outside recursive calls a program has a constant number of variables, and the variables
+of a recursive call are in its frame. Memory is counted in cells above the memory in use when the
+program starts, so the input `T` and `Q` are not part of it. A program reports two numbers:
 
 * `kept`: the cells it allocated and still holds at its end (its result, and what it built before
   it);
@@ -44,10 +47,10 @@ stores, and each declaration is to be checked against the program it wraps:
 
 Tables are written in place. Every table of the programs is threaded through them and no older
 version of a table is read after it was written, except in the knapsack of Section 2.4, which reads
-the previous row while it writes the next one and is charged for two rows. So the model charges at
-least what an implementation stores that keeps the tables as arrays of the declared sizes and the
-lists as linked cells, and releases every structure at the end of the scope that built it, or
-earlier.
+the previous row while it writes the next one and is charged for two rows. So, up to the constant
+number of variables, the model charges at least what an implementation stores that keeps the tables
+as arrays of the declared sizes and the lists as linked cells, and releases every structure at the
+end of the scope that built it, or earlier.
 
 ## Main results
 
@@ -246,6 +249,7 @@ theorem loopPeak_le_sum (f : σ → α → Spaced σ) (c : α → ℕ) (p : ℕ)
 def maxList (f : α → Spaced ℕ) (l : List α) : Spaced ℕ :=
   forList (fun acc a => do let x ← f a; op (Timed.step (max acc x))) l 0
 
+/-- The program of `maxList f l` is the loop `Timed.maxList`. -/
 theorem run_maxList (f : α → Spaced ℕ) (l : List α) :
     (maxList f l).run = Timed.maxList (fun a => (f a).run) l := rfl
 

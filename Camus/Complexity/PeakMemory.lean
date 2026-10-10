@@ -81,6 +81,7 @@ def visitS : PhyloTree → Address → Address → ℕ → List Entry → Spaced
       let acc ← visitS l pl p d' acc
       Spaced.withAlloc 1 (Spaced.op (step (⟨p, par, d, .fork pl pr⟩ :: acc))))
 
+/-- The program of `visitS` is `visit`. -/
 theorem run_visitS : ∀ (sub : PhyloTree) (p par : Address) (d : ℕ) (acc : List Entry),
     (visitS sub p par d acc).run = visit sub p par d acc
   | .leaf a, p, par, d, acc => rfl
@@ -121,6 +122,7 @@ def preprocessS (t : PhyloTree) : Spaced (Tables × List Address) :=
     let T ← Spaced.op (lcaTable pre T)
     pure (T, pre))
 
+/-- The program of `preprocessS` is `preprocess`. -/
 theorem run_preprocessS (t : PhyloTree) : (preprocessS t).run = preprocess t := by
   simp only [preprocessS, preprocess, Spaced.run_scope, Spaced.run_bind, run_visitS,
     Spaced.run_withAlloc, Spaced.run_op, Spaced.run_build, Spaced.run_pure]
@@ -156,6 +158,7 @@ def visitPairS (T : Tables) (Q : Multiset Quartet) (S : Buckets) (e : Address ×
     pure (B, W)
   else pure S
 
+/-- The program of `visitPairS` is `visitPair`. -/
 theorem run_visitPairS (T : Tables) (Q : Multiset Quartet) (S : Buckets) (e : Address × Address) :
     (visitPairS T Q S e).run = visitPair T Q S e := by
   unfold visitPairS visitPair
@@ -164,6 +167,7 @@ theorem run_visitPairS (T : Tables) (Q : Multiset Quartet) (S : Buckets) (e : Ad
   funext ok
   cases ok <;> rfl
 
+/-- A pair of the enumeration keeps at most one cell, and holds no more than it keeps. -/
 theorem visitPairS_memory (T : Tables) (Q : Multiset Quartet) (S : Buckets)
     (e : Address × Address) :
     (visitPairS T Q S e).kept ≤ 1 ∧ (visitPairS T Q S e).peak ≤ (visitPairS T Q S e).kept := by
@@ -177,10 +181,12 @@ def enumerateS (T : Tables) (Q : Multiset Quartet) (pre : List Address) : Spaced
   Spaced.withAlloc (pre.length + pre.length ^ 2)
     (Spaced.forList (visitPairS T Q) (pairList pre) (fun _ => [], fun _ => 0))
 
+/-- The program of `enumerateS` is `enumerate`. -/
 theorem run_enumerateS (T : Tables) (Q : Multiset Quartet) (pre : List Address) :
     (enumerateS T Q pre).run = enumerate T Q pre := by
   simp only [enumerateS, enumerate, Spaced.run_withAlloc, Spaced.run_forList, run_visitPairS]
 
+/-- There are `N²` pairs of `N` vertices. -/
 theorem length_pairList (l : List Address) : (pairList l).length = l.length ^ 2 := by
   simp only [pairList, List.length_flatMap, List.length_map, List.map_const', List.sum_replicate,
     smul_eq_mul]
@@ -237,6 +243,7 @@ def fillS (T : Tables) (B : Address → List (Address × Address)) (W : Address 
     (order : List Address) : Spaced (Address → ℕ) :=
   Spaced.withAlloc order.length (Spaced.forList (solveVertexS T B W) order (fun _ => 0))
 
+/-- The program of `solveVertexS` is `solveVertex`. -/
 theorem run_solveVertexS (T : Tables) (B : Address → List (Address × Address))
     (W : Address × Address → ℕ) (M : Address → ℕ) (v : Address) :
     (solveVertexS T B W M v).run = solveVertex T B W M v := by
@@ -246,6 +253,7 @@ theorem run_solveVertexS (T : Tables) (B : Address → List (Address × Address)
   funext k
   cases k <;> rfl
 
+/-- The program of `fillS` is `fill`. -/
 theorem run_fillS (T : Tables) (B : Address → List (Address × Address))
     (W : Address × Address → ℕ) (order : List Address) :
     (fillS T B W order).run = fill T B W order := by
@@ -403,6 +411,7 @@ def findPairS (T : Tables) (W : Address × Address → ℕ) (M : Address → ℕ
       let ok ← Spaced.op (step (decide (x = target)))
       if ok then pure (some e) else findPairS T W M target es
 
+/-- The program of `findPairS` is `findPair`. -/
 theorem run_findPairS (T : Tables) (W : Address × Address → ℕ) (M : Address → ℕ)
     (target : ℕ) : ∀ (l : List (Address × Address)),
       (findPairS T W M target l).run = findPair T W M target l
@@ -456,6 +465,7 @@ def backtrackS (T : Tables) (B : Address → List (Address × Address)) (W : Add
                 Spaced.withAlloc 1
                   (Spaced.forList (fun acc r => backtrackS T B W M n r acc) L (e :: acc))))
 
+/-- The program of `backtrackS` is `backtrack`. -/
 theorem run_backtrackS (T : Tables) (B : Address → List (Address × Address))
     (W : Address × Address → ℕ) (M : Address → ℕ) :
     ∀ (n : ℕ) (v : Address) (acc : List (Address × Address)),
@@ -691,6 +701,7 @@ def camusNetworkS (t : PhyloTree) (Q : Multiset Quartet) : Spaced (List (Address
   let N ← Spaced.op (forList (fun c _ => step (c + 1)) P.2 0)
   backtrackS P.1 S.1 S.2 M N [] []
 
+/-- The program of `camusNetworkS` is `camusNetwork`: same result, same running time. -/
 theorem run_camusNetworkS (t : PhyloTree) (Q : Multiset Quartet) :
     (camusNetworkS t Q).run = camusNetwork t Q := by
   simp only [camusNetworkS, camusNetwork, Spaced.run_bind, run_preprocessS, run_enumerateS,

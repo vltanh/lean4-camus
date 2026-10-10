@@ -12,7 +12,7 @@ This file writes the matrix of `Complexity.camusBudget` and the backtracking of
 `Camus/Complexity/BudgetBacktracking.lean`) with their memory, in the semantics of
 `Camus/Complexity/Space.lean`, and bounds the peak of a run: `O(n² + m n)` cells besides the input
 (`Complexity.peak_camusBudgetS`, `Complexity.peak_camusBudgetNetworksS`), so `O(n⁴ + m n)` with
-the input, and `O(n⁴)` for `m ≤ n − 1`, the only budgets with networks
+the input, and `O(n⁴)` for `m ≤ n − 1`, the budgets whose rows at the root are nonempty
 (`BudgetDP.root_row_nonempty_iff_le`).
 
 What is charged, in cells, besides what `Camus/Complexity/PeakMemory.lean` charges for the
@@ -26,11 +26,15 @@ preprocessing, the enumeration and the reverse of the preorder:
 * the backtracking (`Complexity.budgetBacktrackS`): a frame per call, one cell per pair found; the
   test of each pair of a bucket as in the cell (`Complexity.gallTestS`); in a call that adds an
   edge, the list of the hanging subtrees and the table of their budgets, held while the
-  backtracking continues there, and, while the budgets are found, the knapsack table,
-  `(|L| + 1)(k)` cells for `|L|` hanging subtrees, and the reverse of the list, released once the
-  budgets are found;
+  backtracking continues there, and, while the budgets are found (`Complexity.budgetsS`), the
+  knapsack table, `(|L| + 1) k` cells for `|L|` hanging subtrees, and the reverse of the list,
+  released once the budgets are found;
 * the families returned (`Complexity.budgetNetworksS`): a table of `m + 1` entries, and the pairs
   found for each budget.
+
+The matrix, the knapsack table and the table of the budgets are written at the keys of their arrays
+(`Complexity.budgetFill_support`, `Complexity.knapsackTable_support`,
+`Complexity.knapsackBack_support`).
 
 ## Main results
 
@@ -69,6 +73,7 @@ def budgetCellS (T : Tables) (B : Address → List (Address × Address))
           let s ← Spaced.op (steps 2 (W e))
           Spaced.op (steps 2 (acc ⊔ ((s : WithBot ℕ) + f))))) b c
 
+/-- The program of `budgetCellS` is `budgetCell`. -/
 theorem run_budgetCellS (T : Tables) (B : Address → List (Address × Address))
     (W : Address × Address → ℕ) (R : Address × ℕ → WithBot ℕ) (v : Address) (k : ℕ) :
     (budgetCellS T B W R v k).run = budgetCell T B W R v k := by
@@ -134,6 +139,7 @@ def budgetFillS (T : Tables) (B : Address → List (Address × Address))
       let x ← budgetCellS T B W R v k
       Spaced.op (step (Function.update R (v, k) x))) order R) (List.range (m + 1)) fun _ => ⊥)
 
+/-- The program of `budgetFillS` is `budgetFill`. -/
 theorem run_budgetFillS (T : Tables) (B : Address → List (Address × Address))
     (W : Address × Address → ℕ) (m : ℕ) (order : List Address) :
     (budgetFillS T B W m order).run = budgetFill T B W m order := by
@@ -194,6 +200,7 @@ def camusBudgetS (t : PhyloTree) (Q : Multiset Quartet) (m : ℕ) :
   let R ← budgetFillS P.1 S.1 S.2 m order
   pure fun v k => if k ≤ m then toRow (R (v, k)) else ∅
 
+/-- The program of `camusBudgetS` is `camusBudget`: same result, same running time. -/
 theorem run_camusBudgetS (t : PhyloTree) (Q : Multiset Quartet) (m : ℕ) :
     (camusBudgetS t Q m).run = camusBudget t Q m := by
   simp only [camusBudgetS, camusBudget, Spaced.run_bind, run_preprocessS, run_enumerateS,
@@ -265,6 +272,7 @@ def gallTestS (T : Tables) (W : Address × Address → ℕ) (R : Address × ℕ 
     let s ← Spaced.op (step (W e))
     Spaced.op (steps 2 (decide ((s : WithBot ℕ) + c = x))))
 
+/-- The program of `gallTestS` is `gallTest`. -/
 theorem run_gallTestS (T : Tables) (W : Address × Address → ℕ) (R : Address × ℕ → WithBot ℕ)
     (x : WithBot ℕ) (j : ℕ) (e : Address × Address) :
     (gallTestS T W R x j e).run = gallTest T W R x j e := rfl
@@ -292,6 +300,8 @@ def budgetsS (R : Address × ℕ → WithBot ℕ) (L : List Address) (j : ℕ) :
     let p ← Spaced.op (forList (fun c _ => step (c + 1)) L 0)
     Spaced.withAlloc L.length (Spaced.op (knapsackBack R F Lr p j fun _ => 0)))
 
+/-- The program of `budgetsS`: the knapsack table, the reverse of `L`, its length, and the
+backtracking through the knapsack table. -/
 theorem run_budgetsS (R : Address × ℕ → WithBot ℕ) (L : List Address) (j : ℕ) :
     (budgetsS R L j).run = (do
       let F ← knapsackTable R L j
@@ -349,6 +359,7 @@ def budgetBacktrackS (T : Tables) (B : Address → List (Address × Address))
                       let b ← Spaced.op (step (bud r))
                       budgetBacktrackS T B W R n r b acc) L (e :: acc))))
 
+/-- The program of `budgetBacktrackS` is `budgetBacktrack`. -/
 theorem run_budgetBacktrackS (T : Tables) (B : Address → List (Address × Address))
     (W : Address × Address → ℕ) (R : Address × ℕ → WithBot ℕ) :
     ∀ (n : ℕ) (v : Address) (k : ℕ) (acc : List (Address × Address)),
@@ -616,6 +627,69 @@ theorem budgetBacktrackS_memory {t : PhyloTree} {T : Tables} (hT : T.Correct t)
             Spaced.peak_withAlloc, Spaced.peak_forList, max_le_iff, ← hLdef, hbk]
           omega
 
+/-! ### The tables are written at the keys of their arrays -/
+
+/-- The matrix is written at the keys `(v, k)` with `v` in `order` and `k ≤ m`: the
+`(m + 1) |order|` cells allocated for it by `budgetFillS`. -/
+theorem budgetFill_support (T : Tables) (B : Address → List (Address × Address))
+    (W : Address × Address → ℕ) (m : ℕ) (order : List Address) :
+    SupportedIn (budgetFill T B W m order).val ⊥ (order.toFinset ×ˢ Finset.range (m + 1)) := by
+  intro x hx
+  simp only [budgetFill, val_forList]
+  refine foldl_invariant (List.range (m + 1)) _
+    (fun _ (R : Address × ℕ → WithBot ℕ) => R x = ⊥) rfl ?_
+  intro K k K' R hsplit hR
+  have hk : k ∈ Finset.range (m + 1) := by
+    rw [Finset.mem_range, ← List.mem_range, hsplit]; simp
+  refine foldl_invariant order _ (fun _ (R : Address × ℕ → WithBot ℕ) => R x = ⊥) hR ?_
+  intro V v V' U hsplit' hU
+  have hv : v ∈ order.toFinset := by rw [List.mem_toFinset, hsplit']; simp
+  have hne : x ≠ (v, k) := fun h => hx (h ▸ Finset.mem_product.mpr ⟨hv, hk⟩)
+  simp only [val_bind, val_step]
+  rw [Function.update_of_ne hne]
+  exact hU
+
+/-- The knapsack table over `L` up to the budget `j` is written at the keys `(i, b)` with
+`i ≤ |L|` and `b ≤ j`: the `(|L| + 1)(j + 1)` cells allocated for it by `budgetsS`. -/
+theorem knapsackTable_support (R : Address × ℕ → WithBot ℕ) (L : List Address) (j : ℕ) :
+    SupportedIn (knapsackTable R L j).val ⊥
+      (Finset.range (L.length + 1) ×ˢ Finset.range (j + 1)) := by
+  intro x hx
+  simp only [knapsackTable, val_bind, val_forList, val_steps, val_pure, val_step]
+  have h0 : ((List.range (j + 1)).foldl (fun (F : ℕ × ℕ → WithBot ℕ) b =>
+      Function.update F (0, b) (if b = 0 then (0 : WithBot ℕ) else ⊥)) fun _ => ⊥) x = ⊥ ∨
+      (x.1 = 0 ∧ x.2 ≤ j) := by
+    rw [foldl_update_row]
+    by_cases h : x.1 = 0 ∧ x.2 ≤ j
+    · exact Or.inr h
+    · left
+      simp only [h, ↓reduceIte]
+  -- the rows written so far are those of the subtrees processed
+  refine (foldl_invariant L _ (fun (P : List Address) (S : ℕ × (ℕ × ℕ → WithBot ℕ)) =>
+      S.1 = P.length ∧ (S.2 x = ⊥ ∨ (x.1 ≤ P.length ∧ x.2 ≤ j))) ⟨rfl, h0.imp_right
+        fun h => ⟨by simp [h.1], h.2⟩⟩ ?_).2.resolve_right ?_
+  · intro P r P' S hsplit hS
+    obtain ⟨hS1, hS2⟩ := hS
+    refine ⟨by simp [hS1], ?_⟩
+    dsimp only
+    rw [foldl_update_row]
+    by_cases h : x.1 = S.1 + 1 ∧ x.2 ≤ j
+    · exact Or.inr ⟨by simp [h.1, hS1], h.2⟩
+    · simp only [h, ↓reduceIte]
+      rcases hS2 with h' | h'
+      · exact Or.inl h'
+      · exact Or.inr ⟨by simp; omega, h'.2⟩
+  · rintro ⟨h1, h2⟩
+    exact hx (Finset.mem_product.mpr ⟨Finset.mem_range.mpr (by omega),
+      Finset.mem_range.mpr (by omega)⟩)
+
+/-- The table of the budgets found by backtracking through the knapsack is written at the
+subtrees of `rs`: the `|L|` cells allocated for it by `budgetsS`. -/
+theorem knapsackBack_support (R : Address × ℕ → WithBot ℕ) (F : ℕ × ℕ → WithBot ℕ)
+    (rs : List Address) (i j : ℕ) :
+    SupportedIn (knapsackBack R F rs i j fun _ => 0).val 0 rs.toFinset := fun x hx =>
+  knapsackBack_of_not_mem R F rs i j _ x (fun h => hx (List.mem_toFinset.mpr h))
+
 /-! ### The networks `N_k` -/
 
 /-- The backtracking from the root for every budget `k ≤ m` (`budgetNetworks`), with its memory:
@@ -632,6 +706,7 @@ def budgetNetworksS (T : Tables) (B : Address → List (Address × Address))
         Spaced.op (step (Function.update E k Ek))
       else pure E) (List.range (m + 1)) fun _ => [])
 
+/-- The program of `budgetNetworksS` is `budgetNetworks`. -/
 theorem run_budgetNetworksS (T : Tables) (B : Address → List (Address × Address))
     (W : Address × Address → ℕ) (R : Address × ℕ → WithBot ℕ) (N m : ℕ) :
     (budgetNetworksS T B W R N m).run = budgetNetworks T B W R N m := by
@@ -687,6 +762,8 @@ def camusBudgetNetworksS (t : PhyloTree) (Q : Multiset Quartet) (m : ℕ) :
   let N ← Spaced.op (forList (fun c _ => step (c + 1)) P.2 0)
   budgetNetworksS P.1 S.1 S.2 R N m
 
+/-- The program of `camusBudgetNetworksS` is `camusBudgetNetworks`: same result, same running
+time. -/
 theorem run_camusBudgetNetworksS (t : PhyloTree) (Q : Multiset Quartet) (m : ℕ) :
     (camusBudgetNetworksS t Q m).run = camusBudgetNetworks t Q m := by
   simp only [camusBudgetNetworksS, camusBudgetNetworks, Spaced.run_bind, run_preprocessS,

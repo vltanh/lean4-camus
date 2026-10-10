@@ -220,11 +220,13 @@ def splitTest (A B : ℕ → WithBot ℕ) (x : WithBot ℕ) (k i : ℕ) : Timed 
 def findSplit (A B : ℕ → WithBot ℕ) (x : WithBot ℕ) (k : ℕ) : Timed (Option ℕ) :=
   findList (splitTest A B x k) (List.range (k + 1))
 
+/-- The split found attains the value `x`. -/
 theorem findSplit_sound {A B : ℕ → WithBot ℕ} {x : WithBot ℕ} {k i : ℕ}
     (h : (findSplit A B x k).val = some i) : i ≤ k ∧ A i + B (k - i) = x := by
   obtain ⟨hi, hp⟩ := findList_sound _ _ i h
   exact ⟨Nat.lt_succ_iff.mp (List.mem_range.mp hi), by simpa using hp⟩
 
+/-- If some split attains the value `x`, a split is found. -/
 theorem findSplit_complete {A B : ℕ → WithBot ℕ} {x : WithBot ℕ} {k : ℕ}
     (h : ∃ i ≤ k, A i + B (k - i) = x) : ∃ i, (findSplit A B x k).val = some i := by
   obtain ⟨i, hik, hi⟩ := h
@@ -239,6 +241,7 @@ theorem findSplit_complete_sup {A B : ℕ → WithBot ℕ} {k : ℕ} {x : WithBo
     ⟨0, by simp⟩ fun i => A i + B (k - i)
   exact findSplit_complete ⟨i, Nat.lt_succ_iff.mp (Finset.mem_range.mp hi), (hx.trans hsup).symm⟩
 
+/-- The search for a split takes at most `6 (k + 1)` operations, as `convAt`. -/
 theorem time_findSplit (A B : ℕ → WithBot ℕ) (x : WithBot ℕ) (k : ℕ) :
     (findSplit A B x k).time ≤ 6 * (k + 1) := by
   unfold findSplit
@@ -283,10 +286,10 @@ def knapsackTable (R : Address × ℕ → WithBot ℕ) (L : List Address) (j : �
   let F₀ ← forList (fun F b => steps 2 (Function.update F (0, b)
     (if b = 0 then (0 : WithBot ℕ) else ⊥))) (List.range (j + 1)) fun _ => ⊥
   let S ← forList (fun (S : ℕ × (ℕ × ℕ → WithBot ℕ)) r => do
+      let i ← step (S.1 + 1)
       let F ← forList (fun F b => do
           let c ← convAt (fun i => R (r, i)) (fun i => S.2 (S.1, i)) b
-          step (Function.update F (S.1 + 1, b) c)) (List.range (j + 1)) S.2
-      let i ← step (S.1 + 1)
+          step (Function.update F (i, b) c)) (List.range (j + 1)) S.2
       pure (i, F)) L (0, F₀)
   pure S.2
 
@@ -799,11 +802,11 @@ theorem time_knapsackTable (R : Address × ℕ → WithBot ℕ) (L : List Addres
     rw [time_forList_eq _ _ _ (fun _ => 2) (fun _ _ _ => rfl)]
     simp only [sum_map_const_nat, List.length_range]
     ring
-  have hrow : ∀ (S : ℕ × (ℕ × ℕ → WithBot ℕ)) (r : Address), (forList (fun F b => do
+  have hrow : ∀ (S : ℕ × (ℕ × ℕ → WithBot ℕ)) (r : Address) (i : ℕ), (forList (fun F b => do
       let c ← convAt (fun i => R (r, i)) (fun i => S.2 (S.1, i)) b
-      step (Function.update F (S.1 + 1, b) c)) (List.range (j + 1)) S.2).time ≤
+      step (Function.update F (i, b) c)) (List.range (j + 1)) S.2).time ≤
         (j + 1) * (6 * j + 8) := by
-    intro S r
+    intro S r i
     calc
       _ ≤ ((List.range (j + 1)).map fun _ => (6 * j + 7) + 1).sum := by
         apply time_forList_le
@@ -813,18 +816,18 @@ theorem time_knapsackTable (R : Address × ℕ → WithBot ℕ) (L : List Addres
         nlinarith
       _ = _ := by simp only [sum_map_const_nat, List.length_range]
   have hmain : ∀ S : ℕ × (ℕ × ℕ → WithBot ℕ), (forList (fun (S : ℕ × (ℕ × ℕ → WithBot ℕ)) r => do
+      let i ← step (S.1 + 1)
       let F ← forList (fun F b => do
           let c ← convAt (fun i => R (r, i)) (fun i => S.2 (S.1, i)) b
-          step (Function.update F (S.1 + 1, b) c)) (List.range (j + 1)) S.2
-      let i ← step (S.1 + 1)
+          step (Function.update F (i, b) c)) (List.range (j + 1)) S.2
       pure (i, F)) L S).time ≤ L.length * (2 + (j + 1) * (6 * j + 8)) := by
     intro S
     calc
       _ ≤ (L.map fun _ => ((j + 1) * (6 * j + 8) + 1) + 1).sum := by
         apply time_forList_le
         intro S' r _
-        simp only [time_bind, time_step, time_pure]
-        have := hrow S' r
+        simp only [time_bind, time_step, time_pure, val_step]
+        have := hrow S' r (S'.1 + 1)
         omega
       _ = _ := by simp only [sum_map_const_nat]; ring
   simp only [knapsackTable, time_bind, time_pure]
