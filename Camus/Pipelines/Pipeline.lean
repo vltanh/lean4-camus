@@ -58,8 +58,9 @@ the true network (`pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypothes
 4. "CAMUS will add the correct reticulations and return N": false as stated (E7); with
    identifiability under inclusion and the tie-break, `recovery`.
 
-Steps 1 and 3 hold together, almost surely for all large numbers of sites, so their probability
-tends to 1 (`External.tendsto_measure_of_ae_eventually`); no measurability of the events is needed.
+The events of steps 1 and 3 hold together, almost surely for all large numbers of sites, so the
+probability of their intersection tends to 1 (`External.tendsto_measure_of_ae_eventually`); no
+measurability of the events is needed.
 -/
 
 @[expose] public section
@@ -78,12 +79,13 @@ def AstralOutput (Q : Multiset Quartet) (X : Finset ℕ) (T : PhyloTree) : Prop 
   T.WellLabelled ∧ T.taxa = X ∧ ∀ T' : PhyloTree, T'.WellLabelled → T'.taxa = X →
     quartetSupport Q T' ≤ quartetSupport Q T
 
-/-- Sections 2.2 and 2.4: `P` is a network that CAMUS may return on the constraint tree `T` and
-the multiset `Q`, with the tie-break toward the fewest reticulations: `P` is built on `T`, displays
-as many quartets of `Q` (with multiplicity) as any network built on `T`, and has the fewest
-reticulations among the networks built on `T` that do. For a fixed `T`, the number of quartets of
-`Q` displayed and the number satisfied (Theorem 1) differ by the number of quartets of `Q` that `T`
-induces, so both objectives have the same optimal networks. -/
+/-- Section 2.2: `P` is a network that CAMUS may return on the constraint tree `T` and the
+multiset `Q`, with ties broken toward the fewest reticulations, as the correction of Section 3.2
+requires (the report's E7, `recovery`): `P` is built on `T`, displays as many quartets of `Q` (with
+multiplicity) as any network built on `T` (Theorem 1), and has the fewest reticulations among the
+networks built on `T` that do. For a fixed `T`, the number of quartets of `Q` displayed and the
+number satisfied differ by the number of quartets of `Q` that `T` induces, so both objectives have
+the same optimal networks. -/
 def CamusOutput (Q : Multiset Quartet) (T : PhyloTree) (P : RootedNetwork) : Prop :=
   P.AnchoredExtension T ∧
     (∀ R : RootedNetwork, R.AnchoredExtension T →
@@ -338,8 +340,9 @@ theorem ae_eventually_mostFrequent (M : External.SiteModel N σ) (hN : N.RootedB
   filter_upwards [hev] with m hm q hq s hs
   exact hm q (hK q hq) s (Finset.mem_filter.mpr ⟨Finset.mem_univ s, hs⟩)
 
-/-- Section 3.2, "according to the theory given in Warnow et al. (2025)": almost surely, for all
-large numbers `m` of sites, the quartets of `Q_m` are exactly those displayed by `N`. Every
+/-- Section 3.2, "according to the theory given in Warnow et al. (2025)", in the almost sure form
+of `External.support_tendsto`: almost surely, for all large numbers `m` of sites, the quartets of
+`Q_m` are exactly those displayed by `N`. Every
 quartet displayed by `N` is contributed by a site with positive probability
 (`External.SiteModel.quartetProb_pos`), so its frequency in `Q_m` converges almost surely to a
 positive limit (`External.frequency_tendsto`). -/
