@@ -490,9 +490,9 @@ theorem msc_pattern_of_induces {σ : SpeciesTree L} (hσ : σ.IsBinary) (k : Qua
 /-- Section 3.3: "the multi-species coalescent (MSC) model (Takahata 1989) under which, for
 every four species, the most probable quartet tree matches the species tree and the other two
 quartet trees have the same lower probability". Under the MSC on a rooted binary species tree `σ`
-(with positive edge lengths, as every `ADR11.SpeciesTree`), with one lineage per taxon, on every
-four taxa `a < b < c < d` of `σ`, the topology `s` induced by `σ` is strictly the most probable one,
-and the two others have the same probability. -/
+(every `ADR11.SpeciesTree` has positive edge lengths), with one lineage per taxon, on every four
+taxa `a < b < c < d` of `σ`, the topology `s` induced by `σ` is strictly the most probable one, and
+the two others have the same probability. -/
 theorem msc_pattern {σ : SpeciesTree L} (hσ : σ.IsBinary) (k : QuartetKey)
     (hk : keyTaxa k ⊆ L) :
     ∃ s, Induces (unroot σ.clusters) (k.quartet s) ∧
