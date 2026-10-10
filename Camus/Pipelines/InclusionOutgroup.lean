@@ -12,13 +12,13 @@ the root, and the cycle of the added edge passes through the root. This file giv
 with an outgroup. Take the tree `(O,((A,B),(C,(F,(D,E)))))` (`Counterexamples.outgroupTree`), with
 the outgroup `O = 6` a child of the root, and add one edge inside the ingroup, from above the
 cherry `(D,E)` to above `A` (`Counterexamples.outgroupShallowNet`), or from above `D` to above `A`
-(`Counterexamples.outgroupDeepNet`). The cycles of both networks avoid their root
+(`Counterexamples.outgroupDeepNet`). In the first, the true network, the root lies on no cycle
 (`Counterexamples.outgroup_root_not_on_cycle`), and the leaf of `O` is a child of the root
 (`Counterexamples.outgroup_leaf_child`). As in the example without an outgroup, the second network
-displays every quartet that the first displays and one more, `AD|EF`, so it is optimal for every
-multiset version of the quartets of the first, with the fewest reticulations among the optimal
-networks, and it is not isomorphic to the first. Inside the model of Warnow, Tabatabaee and Evans,
-this holds with probability tending to 1 (`snp_outgroup_tendsto`).
+displays every quartet that the first displays, and also `AD|EF`, which the first does not, so it
+is optimal for every multiset version of the quartets of the first, with the fewest reticulations
+among the optimal networks, and it is not isomorphic to the first. Inside the model of Warnow,
+Tabatabaee and Evans, this holds with probability tending to 1 (`snp_outgroup_tendsto`).
 
 The facts used about single-edge networks `T + e` are stated for every tree: two networks that
 differ in one displayed quartet are not isomorphic (`Realization.single_not_iso`); if `T + e'`
