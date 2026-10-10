@@ -1,6 +1,8 @@
 module
 
 public import Camus.Network.SingleEdge
+public import Camus.Network.SingleEdge.Deeper
+public import Camus.DP.Computable
 public import Camus.Pipelines.Uniqueness
 
 /-!
@@ -14,11 +16,14 @@ network from its quartets), and the tie-break toward the fewest reticulations do
 
 Take the six-leaf tree `T = ((A,B),(C,(F,(D,E))))` (`Counterexamples.donorTree`), and add one edge
 from above the cherry `(D,E)` to above `A` (`shallowNet`), or from above `D` to above `A`
-(`deepNet`). Moving the donor down the tree keeps every quartet that the first edge satisfies: the
-second network displays every quartet that the first displays, and one more (`AD|EF`). Both have
-one reticulation, and their cycles have six and seven vertices. So if `Q` is a multiset version of
-`Q(N_r)` for the true network `N = shallowNet`, the network `deepNet` displays all of `Q` with the
-fewest reticulations possible, and is not isomorphic to `N`.
+(`deepNet`). Moving the donor down the tree keeps every quartet that the first edge satisfies
+(`Realization.deeper_donor_displays`): the second network displays every quartet that the first
+displays, and three more (`AD|BE`, `AD|CE` and `AD|EF`). Of the 45 quartets on the six taxa, `T`
+induces 15, `shallowNet` displays 22 and `deepNet` 25. Both networks have one reticulation, and
+their cycles have six and seven vertices. So if `Q` is a multiset version of `Q(N_r)` for the true
+network `N = shallowNet`, the network `deepNet` displays all of `Q` with the fewest reticulations
+possible, and is not isomorphic to `N`. The dynamic program itself may return `deepNet` on such an
+input (`Counterexamples.camus_may_return_deep`).
 
 ## Main results
 
@@ -27,6 +32,10 @@ fewest reticulations possible, and is not isomorphic to `N`.
 * `Counterexamples.deepNet_optimal_fewest`: `deepNet` is optimal for every multiset version of
   `Q(N_r)`, with the fewest reticulations among the optimal networks.
 * `Counterexamples.shallow_not_identifiable`: the hypothesis `identifiable` of `recovery` fails.
+* `Counterexamples.camus_may_return_deep`: on the quartets of `shallowNet`, each once, the
+  recurrence of Section 2.2 has a backtracking trace that returns `deepNet`.
+* `Counterexamples.ghost_deeper_donor`: moving the donor down fails to keep the displayed quartets
+  for a ghost pair.
 -/
 
 @[expose] public section
@@ -93,6 +102,17 @@ theorem shallowNet_reticulations : shallowNet.reticulationCount = 1 := by
 theorem deepNet_reticulations : deepNet.reticulationCount = 1 := by
   simpa using Realization.reticulationCount_eq_card donorTree {deepPair} deepPair_separated
 
+/-- The cycle of `shallowNet` has six vertices: the root, `(A,B)`, `(C,(F,(D,E)))`, `(F,(D,E))`,
+and the two new vertices. -/
+theorem shallow_cycle_card : (Realization.cycleVertices donorTree shallowPair).card = 6 := by
+  rw [Realization.cycleVertices_card]
+  decide
+
+/-- The cycle of `deepNet` has seven vertices: those of the cycle of `shallowNet` and `(D,E)`. -/
+theorem deep_cycle_card : (Realization.cycleVertices donorTree deepPair).card = 7 := by
+  rw [Realization.cycleVertices_card]
+  decide
+
 /-- A property of the quartets on four of the taxa `0, …, 5` holds for every quartet on taxa of
 `T`. -/
 theorem quartet_of_taxa {P : Quartet → Prop}
@@ -107,23 +127,12 @@ theorem quartet_of_taxa {P : Quartet → Prop}
   change d < 6 at hd
   exact h ⟨a, by omega⟩ ⟨b, by omega⟩ ⟨c, by omega⟩ ⟨d, hd⟩ hab hbc hcd s
 
-/-- Every quartet displayed by `shallowNet` is displayed by `deepNet`. By
-`Realization.single_displays_iff`, the quartets displayed by `T + e` are those on taxa of `T`
-that `T` induces or that a clade of `T'` cuts; the inclusion is checked on the 45 quartets on
-taxa of `T`. -/
+/-- Every quartet displayed by `shallowNet` is displayed by `deepNet`: the pair `((D,E), A)` is a
+cross pair, and `D` lies below `(D,E)` (`Realization.deeper_donor_displays`). -/
 theorem shallow_subset_deep (q : Quartet) :
-    shallowNet.DisplaysQuartet q → deepNet.DisplaysQuartet q := by
-  rw [Realization.single_displays_iff donorTree_wellLabelled shallowPair_mem,
-    Realization.single_displays_iff donorTree_wellLabelled deepPair_mem]
-  rintro ⟨hq, h⟩
-  refine ⟨hq, ?_⟩
-  revert h
-  refine quartet_of_taxa (P := fun q =>
-    (q.induced donorTree = true ∨
-        ∃ C ∈ EdgeAbove.switchedClades donorTree shallowPair, q.cutBy C = true) →
-      (q.induced donorTree = true ∨
-        ∃ C ∈ EdgeAbove.switchedClades donorTree deepPair, q.cutBy C = true)) ?_ hq
-  decide +kernel
+    shallowNet.DisplaysQuartet q → deepNet.DisplaysQuartet q :=
+  (Realization.deeper_donor_displays (u₂ := [true, true, true, false]) donorTree_wellLabelled
+    shallowPair_mem (by decide) (by decide) (by decide) (by decide)).2 q
 
 /-- `deepNet` displays `AD|EF`. -/
 theorem witness_deep : deepNet.DisplaysQuartet witnessQuartet := by
@@ -211,5 +220,125 @@ theorem shallow_not_identifiable :
   obtain ⟨i⟩ := h deepNet deepNet_anchored shallow_subset_deep
     (by rw [deepNet_reticulations, shallowNet_reticulations])
   exact deep_not_iso_shallow.false i
+
+/-- The pair `((C,(F,(D,E))), (D,E))`: a ghost pair, whose donor `(C,(F,(D,E)))` is an ancestor
+of its recipient `(D,E)`. -/
+def ghostPair : Pair := ([true], [true, true, true])
+
+/-- The pair `(C, (D,E))`. Its donor `C` lies below the donor `(C,(F,(D,E)))` of `ghostPair`. -/
+def ghostDeeperPair : Pair := ([true, false], [true, true, true])
+
+/-- The quartet `AD|CF`. -/
+def ghostQuartet : Quartet := ⟨0, 2, 3, 5, by decide, by decide, by decide, 1⟩
+
+/-- `Realization.deeper_donor_displays` fails for ghost pairs. In `T = ((A,B),(C,(F,(D,E))))`,
+`((C,(F,(D,E))), (D,E))` is an admissible ghost pair (its target is its donor), and `(C, (D,E))`
+is an admissible pair whose donor `C` lies below `(C,(F,(D,E)))`. The first network displays
+`AD|CF`, through its displayed tree `((A,B),((D,E),(C,F)))`; the second does not: its displayed
+trees are `T` and `((A,B),((C,(D,E)),F))`. -/
+theorem ghost_deeper_donor :
+    ghostPair ∈ EdgeAbove.candidates donorTree ∧ EdgeAbove.target ghostPair = ghostPair.1 ∧
+      ghostDeeperPair ∈ EdgeAbove.candidates donorTree ∧
+      (Realization.graph donorTree {ghostPair}).DisplaysQuartet ghostQuartet ∧
+      ¬(Realization.graph donorTree {ghostDeeperPair}).DisplaysQuartet ghostQuartet := by
+  have h1 : ghostPair ∈ EdgeAbove.candidates donorTree := by decide
+  have h2 : ghostDeeperPair ∈ EdgeAbove.candidates donorTree := by decide
+  refine ⟨h1, by decide, h2, ?_, ?_⟩
+  · rw [Realization.single_displays_iff donorTree_wellLabelled h1]
+    decide +kernel
+  · rw [Realization.single_displays_iff donorTree_wellLabelled h2]
+    decide +kernel
+
+/-- The quartet on the taxa `a < b < c < d` with split `s`: `ab|cd` for `s = 0`, `ac|bd` for
+`s = 1`, `ad|bc` for `s = 2`. -/
+def mkQuartet (a b c d : ℕ) (s : Fin 3) (h : a < b ∧ b < c ∧ c < d := by decide) : Quartet :=
+  ⟨a, b, c, d, h.1, h.2.1, h.2.2, s⟩
+
+/-- The 22 quartets displayed by `shallowNet` (`mem_shallowQuartets`): the 15 quartets of `T`, one
+for each set of four of its six taxa, and the 7 quartets that its added edge satisfies, `AD|BC`,
+`AE|BC`, `AF|BC`, `AD|BF`, `AE|BF`, `AD|CF` and `AE|CF`. -/
+def shallowQuartets : Finset Quartet :=
+  {mkQuartet 0 1 2 3 0, mkQuartet 0 1 2 4 0, mkQuartet 0 1 2 5 0, mkQuartet 0 1 3 4 0,
+    mkQuartet 0 1 3 5 0, mkQuartet 0 1 4 5 0, mkQuartet 0 2 3 4 0, mkQuartet 0 2 3 5 0,
+    mkQuartet 0 2 4 5 0, mkQuartet 0 3 4 5 2, mkQuartet 1 2 3 4 0, mkQuartet 1 2 3 5 0,
+    mkQuartet 1 2 4 5 0, mkQuartet 1 3 4 5 2, mkQuartet 2 3 4 5 2,
+    mkQuartet 0 1 2 3 2, mkQuartet 0 1 2 4 2, mkQuartet 0 1 2 5 2, mkQuartet 0 1 3 5 1,
+    mkQuartet 0 1 4 5 1, mkQuartet 0 2 3 5 1, mkQuartet 0 2 4 5 1}
+
+/-- `shallowQuartets` has 22 quartets. -/
+theorem shallowQuartets_card : shallowQuartets.card = 22 := by decide
+
+/-- `shallowQuartets` is the set of quartets displayed by `shallowNet`. -/
+theorem mem_shallowQuartets (q : Quartet) :
+    q ∈ shallowQuartets ↔ shallowNet.DisplaysQuartet q := by
+  rw [Realization.single_displays_iff donorTree_wellLabelled shallowPair_mem]
+  constructor
+  · revert q
+    decide +kernel
+  · rintro ⟨hq, h⟩
+    revert h
+    refine quartet_of_taxa (P := fun q =>
+      (q.induced donorTree = true ∨
+          ∃ C ∈ EdgeAbove.switchedClades donorTree shallowPair, q.cutBy C = true) →
+        q ∈ shallowQuartets) ?_ hq
+    decide +kernel
+
+/-- A solution of the recurrence of Section 2.2 on `T` and the quartets of `shallowNet`, each once:
+`M[v] = 7` at the root, `M[v] = 2` at `(C,(F,(D,E)))` (the edge above `(C, F)` satisfies `AD|CF`
+and `AE|CF`), and `M[v] = 0` elsewhere. -/
+def deepArray (v : Address) : ℕ := if v = [] then 7 else if v = [true] then 2 else 0
+
+/-- `deepArray` satisfies the recurrence (Equations (2)–(5)) on `T` and the quartets of
+`shallowNet`, each once. The values `s(v)` are computed with `DynamicProgramming.s_edgeWeight_eq`:
+at the root, the largest is 7, attained among others by `((D,E), A)` and by `(D, A)`, which
+satisfy the 7 quartets of `Q` that `T` does not induce. -/
+theorem deepArray_array :
+    Array donorTree (edgeWeight donorTree shallowQuartets.val) deepArray := by
+  intro v hv
+  rw [s_edgeWeight_eq donorTree donorTree_wellLabelled]
+  have hnodes : donorTree.nodes = {[], [false], [false, false], [false, true], [true],
+      [true, false], [true, true], [true, true, false], [true, true, true],
+      [true, true, true, false], [true, true, true, true]} := by decide
+  rw [hnodes] at hv
+  simp only [Finset.mem_insert, Finset.mem_singleton] at hv
+  rcases hv with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
+    simp only [donorTree, PhyloTree.nodeAt] <;> decide +kernel
+
+/-- Backtracking through `deepArray` from the root may choose the pair `(D, A)`: its weight, 7,
+plus the values of the subtrees hanging off its cycle, all leaves, is `M[root] = 7`. -/
+theorem trace_deepPair :
+    Trace donorTree (edgeWeight donorTree shallowQuartets.val) deepArray [] {deepPair} := by
+  have hhang : hanging donorTree deepPair = {[false, false], [false, true], [true, false],
+      [true, true, false], [true, true, true, false], [true, true, true, true]} := by
+    decide
+  have hg := Trace.gall (t := donorTree) (weight := edgeWeight donorTree shallowQuartets.val)
+    (M := deepArray) [] deepPair (fun _ => ∅) (by decide)
+    (by
+      intro r hr
+      rw [hhang] at hr
+      simp only [Finset.mem_insert, Finset.mem_singleton] at hr
+      rcases hr with rfl | rfl | rfl | rfl | rfl | rfl
+      exacts [Trace.leaf _ 0 rfl, Trace.leaf _ 1 rfl, Trace.leaf _ 2 rfl, Trace.leaf _ 5 rfl,
+        Trace.leaf _ 3 rfl, Trace.leaf _ 4 rfl])
+    (by
+      rw [edgeWeight_eq_satisfies donorTree_wellLabelled deepPair_mem,
+        hanging_score donorTree deepArray deepPair (Finset.mem_filter.mp deepPair_mem).2]
+      decide +kernel)
+  have hE : insert deepPair ((hanging donorTree deepPair).biUnion fun _ => ∅) = {deepPair} := by
+    ext x
+    simp
+  rw [hE] at hg
+  exact hg
+
+/-- Section 3.2: the dynamic program itself may return `deepNet` when the input is the true
+network `shallowNet`. With `Q` the quartets displayed by `shallowNet`, each once, the recurrence
+has a solution `M` and a backtracking trace through it from the root that adds the edge above
+`(D, A)`, so that the output is `deepNet`, not `shallowNet`. By Theorem 1 the output is optimal; it
+has one reticulation, the fewest possible (`deepNet_optimal_fewest`). -/
+theorem camus_may_return_deep :
+    (∀ q, q ∈ shallowQuartets.val ↔ shallowNet.DisplaysQuartet q) ∧
+      ∃ M, Array donorTree (edgeWeight donorTree shallowQuartets.val) M ∧
+        Trace donorTree (edgeWeight donorTree shallowQuartets.val) M [] {deepPair} :=
+  ⟨mem_shallowQuartets, deepArray, deepArray_array, trace_deepPair⟩
 
 end Camus.Counterexamples
