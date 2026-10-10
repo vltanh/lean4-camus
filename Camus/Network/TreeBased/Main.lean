@@ -28,7 +28,8 @@ network (`RootedNetwork.reticulationCount_le`).
   tree on the taxa of `N`, below a directed path from the root of `N` (Definition 1).
 * `RootedNetwork.builtOn_of_switching`, `RootedNetwork.treeBased`: `N` is built on the tree of
   each of its switchings, in the sense of Definition 1.
-* `RootedNetwork.reticulationCount_le`: Section 2.4's bound of `n − 1` reticulations.
+* `RootedNetwork.reticulationCount_le`, `RootedNetwork.reticulationCount_lt`: Section 2.4's bound
+  of `n − 1` reticulations.
 
 ## Proof
 
@@ -147,6 +148,21 @@ theorem reticulationCount_le (hN : N.RootedBinaryLevelOne) :
   obtain ⟨t, ht, htaxa, hbuilt⟩ := treeBased hN
   rw [← htaxa]
   exact builtOn_reticulation_bound ht hbuilt
+
+/-- A rooted binary level-1 network has a taxon: it is built on a tree, which has a leaf. -/
+theorem taxa_nonempty (hN : N.RootedBinaryLevelOne) : N.taxa.Nonempty := by
+  obtain ⟨t, -, htaxa, -⟩ := treeBased hN
+  rw [← htaxa]
+  obtain ⟨a, ha⟩ := List.exists_mem_of_length_pos t.labels_nonempty
+  exact ⟨a, List.mem_toFinset.mpr ha⟩
+
+/-- Section 2.4's bound without truncated subtraction: a rooted binary level-1 network has fewer
+reticulations than taxa. -/
+theorem reticulationCount_lt (hN : N.RootedBinaryLevelOne) :
+    N.reticulationCount < N.taxa.card := by
+  have h1 := reticulationCount_le hN
+  have h2 := (taxa_nonempty hN).card_pos
+  omega
 
 end RootedNetwork
 
