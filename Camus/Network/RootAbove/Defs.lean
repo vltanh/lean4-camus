@@ -10,12 +10,12 @@ the trees of `N`: delete one of the two edges into each reticulation, in each of
 ways, then clean up. The library's `RootedNetwork.AnchoredExtension` reads "built on `T`" with
 the root of `T` at the root of `N`, the class over which the dynamic program of Section 2.2
 optimizes ("we cannot add an edge to T that begins above the root of T"). Definition 1 also
-allows networks whose root lies above the root of `T`: the root of `N` has the root of `T` and a
-reticulation as children, and deleting the edge into the reticulation leaves a root with one
-child, which the clean-up suppresses. This file defines Definition 1's class,
-`RootedNetwork.BuiltOn`, proves the fact on switchings that the definition relies on (a switching
-of a rooted binary level-1 network has no unlabelled leaf), and shows that the class contains the
-anchored extensions.
+allows networks whose root lies above the root of `T`, such as a network whose root has the root
+of `T` and a reticulation as children: deleting the edge into the reticulation leaves a root with
+one child, which the clean-up suppresses (`Counterexamples.rootAboveNet`). This file defines
+Definition 1's class, `RootedNetwork.BuiltOn`, proves the fact on switchings that the definition
+relies on (a switching of a rooted binary level-1 network has no unlabelled leaf), and shows that
+the class contains the anchored extensions.
 
 ## Main definitions
 

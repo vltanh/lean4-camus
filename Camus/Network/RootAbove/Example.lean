@@ -11,9 +11,10 @@ Take the tree `T = ((A,B),C)` (`Counterexamples.cherryTree`) and the network `N`
 (`Counterexamples.rootAboveNet`) whose root `ρ` has two children: the root `r` of `T` and a
 reticulation `w'` above `B`, whose other parent is the parent `a` of the cherry `(A,B)`. Its cycle
 `ρ → r → a → w' ← ρ` has four vertices. Deleting the edge from `ρ` to `w'` leaves `T` below a
-root with one child, so `N` is built on `T` in the sense of Definition 1. Deleting the edge from
-`a` to `w'` gives the tree `((A,C),B)`. Neither switching is `T` with the root of `T` at the root
-of `N`.
+root with one child, so `N` is built on `T` in the sense of Definition 1. Deleting instead the
+edge from `a` to `w'` gives the tree `((A,C),B)`; no switching of `N` is `T` with the root of `T`
+at the root of `N`. The proof of the latter follows the wires: the wire above `C` must run
+`ρ → r → C`, so the wire above the cherry must leave `ρ` through `w'`, below which `A` is not.
 
 ## Main results
 

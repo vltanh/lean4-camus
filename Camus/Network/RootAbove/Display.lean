@@ -22,7 +22,8 @@ sense of Definition 1 with a network built on `T` with the root kept.
 ## Main results
 
 * `RootedNetwork.withOutgroup_displays_iff`: `N⁺` and `N` display the same quartets avoiding `z`.
-* `RootedNetwork.withOutgroup_reachable_iff`: the outgroup does not connect vertices of `N`.
+* `RootedNetwork.withOutgroup_reachable_iff`: the outgroup does not change which vertices of `N`
+  are connected.
 * `Realization.graph_displays_iff_cuts`: the quartets displayed by `Realization.graph t E`.
 * `Quartet.induced_outgroup`: `T⁺` and `T` induce the same quartets on the taxa of `T`.
 -/
