@@ -1,5 +1,6 @@
 module
 
+public import Camus.DP.Theorem1
 public import Camus.Pipelines.AstralTree
 public import Camus.Pipelines.SNPCondition
 
@@ -14,7 +15,9 @@ optimal for `Q`. The section argues that, in the model of Warnow, Tabatabaee and
 when some tree `t` displayed by `N` induces the most probable quartet on every four taxa. The
 library proves the steps separately: ASTRAL's step (`astral_maximizer_tendsto`), the support of
 `Q` (`External.support_tendsto`), and CAMUS's step, corrected (`snp_recovery_tendsto`). This file
-composes them into one statement about the pipeline (`pipeline_tendsto`).
+composes them into one statement about the pipeline (`pipeline_tendsto`). As the section notes,
+the pipeline always has an output, since ASTRAL always returns a tree, the outgroup roots it, and
+CAMUS always returns a network (`pipeline_output_exists`).
 
 Let `N` be built on `t`, with the leaf of an outgroup `o` a child of the root of `t`, and assume
 the paper's condition on `t` (`MostProbableQuartets`) and, as the correction of the report's E7
@@ -33,9 +36,10 @@ the true network (`pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypothes
 
 * `AstralOutput`, `CamusOutput`: the trees that ASTRAL may return, and the networks that CAMUS may
   return with the tie-break toward the fewest reticulations.
+* `pipeline_output_exists`: the pipeline always has an output.
 * `pipeline_recovery`: the pipeline for one multiset `Q` whose support is `Q(N_r)` and in which the
   quartets of `t` are the most frequent.
-* `pipeline_tendsto`: Section 3.2's pipeline in WTE's model, corrected.
+* `pipeline_tendsto`, `pipeline_output_tendsto`: Section 3.2's pipeline in WTE's model, corrected.
 * `pipeline_outgroup_tendsto`, `pipeline_outgroup_meets_hypotheses`: the pipeline fails in the
   deeper-donor example with an outgroup, which is not identifiable under inclusion.
 
@@ -101,6 +105,96 @@ theorem quartetSupport_congr (Q : Multiset Quartet) {T T' : PhyloTree}
   unfold quartetSupport
   simp only [h]
 
+/-- Section 3.2, "ASTRAL always returns a tree": for every multiset `Q` and every nonempty set
+`X` of taxa, ASTRAL may return some tree on `Q` and `X`. The quartet support scores of the
+well-labelled trees on `X` are at most `|Q|`, so one of them is the largest. -/
+theorem exists_astralOutput (Q : Multiset Quartet) {X : Finset ℕ} (hX : X.Nonempty) :
+    ∃ T : PhyloTree, AstralOutput Q X T := by
+  classical
+  let S : Set ℕ := {s | ∃ T : PhyloTree, T.WellLabelled ∧ T.taxa = X ∧ quartetSupport Q T = s}
+  have hbdd : BddAbove S := by
+    refine ⟨Q.card, ?_⟩
+    rintro s ⟨T, -, -, rfl⟩
+    rw [quartetSupport_eq_card]
+    exact Multiset.card_le_card (Multiset.filter_le _ _)
+  have hne : S.Nonempty := by
+    obtain ⟨T, hT, hTX⟩ := PhyloTree.exists_wellLabelled hX
+    exact ⟨_, T, hT, hTX, rfl⟩
+  obtain ⟨T, hT, hTX, hTs⟩ := Nat.sSup_mem hne hbdd
+  exact ⟨T, hT, hTX, fun T' hT' hT'X => hTs ▸ le_csSup hbdd ⟨T', hT', hT'X, rfl⟩⟩
+
+/-- Section 3.2, "we have an outgroup and hence can root the tree returned by ASTRAL": a tree that
+ASTRAL may return, rooted at the outgroup `o` (`PhyloTree.reroot`), is a tree that ASTRAL may
+return, rooted at `o`, with the same quartets. -/
+theorem AstralOutput.reroot {Q : Multiset Quartet} {X : Finset ℕ} {T : PhyloTree}
+    (hT : AstralOutput Q X T) {o : ℕ} (ho : o ∈ X) (h2 : 2 ≤ X.card) :
+    AstralOutput Q X (T.reroot o) ∧ (T.reroot o).RootedAt o ∧
+      ∀ q : Quartet, q.induced (T.reroot o) = q.induced T := by
+  obtain ⟨hTw, hTX, hmax⟩ := hT
+  have hq := PhyloTree.induced_reroot o hTw
+  refine ⟨⟨PhyloTree.wellLabelled_reroot o hTw, (PhyloTree.taxa_reroot o T).trans hTX,
+    fun T' hT' hT'X => ?_⟩, PhyloTree.rootedAt_reroot (hTX ▸ ho) (hTX ▸ h2), hq⟩
+  rw [quartetSupport_congr Q hq]
+  exact hmax T' hT' hT'X
+
+/-- Section 3.2, "CAMUS always returns a level-1 network building on the given input tree": on
+every well-labelled tree `T`, for every multiset `Q`, CAMUS may return some network. Every
+network built on `T` is isomorphic to the network obtained from `T` by adding an edge above each
+pair of a cycle-separated family (`SupportSubdivision.canonical_iso`), with the same displayed
+quartets and the same number of reticulations, and these families are finitely many
+(`exists_optimal_fewest`). -/
+theorem exists_camusOutput (Q : Multiset Quartet) {T : PhyloTree} (hT : T.WellLabelled) :
+    ∃ P : RootedNetwork, CamusOutput Q T P := by
+  classical
+  let C := (EdgeAbove.candidates T).powerset.filter (EdgeAbove.CycleSeparated T)
+  have hC : C.Nonempty := ⟨∅, Finset.mem_filter.mpr ⟨Finset.empty_mem_powerset _,
+    by simp [EdgeAbove.CycleSeparated]⟩⟩
+  have hsep : ∀ E ∈ C, EdgeAbove.CycleSeparated T E := fun E hE => (Finset.mem_filter.mp hE).2
+  have hanch : ∀ E ∈ C, (Realization.graph T E).AnchoredExtension T := fun E hE =>
+    ⟨Realization.levelOne T hT E (hsep E hE), ⟨_, ⟨Realization.support T hT E (hsep E hE)⟩⟩⟩
+  -- every network built on `T` displays the quartets, and has the reticulations, of the
+  -- canonical network of a member of `C`
+  have hcanon : ∀ R : RootedNetwork, R.AnchoredExtension T → ∃ E ∈ C,
+      repertoire Q R = repertoire Q (Realization.graph T E) ∧
+        R.reticulationCount = (Realization.graph T E).reticulationCount := by
+    intro R hR
+    obtain ⟨S, ⟨H⟩⟩ := hR.2
+    have hF := H.extracted_separated hR.1
+    have hNF := Realization.levelOne T hT H.extracted hF
+    obtain ⟨i⟩ := H.canonical_iso hR.1
+    exact ⟨H.extracted, Finset.mem_filter.mpr ⟨Finset.mem_powerset.mpr hF.1, hF⟩,
+      repertoire_iso Q hR.1 hNF i, i.reticulationCount_eq hR.1 hNF⟩
+  obtain ⟨E, ⟨hE, hEopt⟩, hEfew⟩ := exists_optimal_fewest C hC
+    (fun E => repertoire Q (Realization.graph T E))
+    (fun E => (Realization.graph T E).reticulationCount) Q
+  refine ⟨Realization.graph T E, hanch E hE, fun R hR => ?_, fun R hR hRopt => ?_⟩
+  · obtain ⟨F, hF, hrep, -⟩ := hcanon R hR
+    rw [hrep]
+    exact hEopt F hF
+  · obtain ⟨F, hF, hrep, hret⟩ := hcanon R hR
+    rw [hret]
+    refine hEfew F hF ⟨hF, fun G hG => ?_⟩
+    change score Q (repertoire Q (Realization.graph T G)) ≤
+      score Q (repertoire Q (Realization.graph T F))
+    rw [← hrep]
+    exact hRopt _ (hanch G hG)
+
+/-- Section 3.2: "for all inputs, this pipeline will always return an output rooted level-1
+phylogenetic network, since (i) ASTRAL always returns a tree, (ii) we have an outgroup and hence
+can root the tree returned by ASTRAL, and (iii) CAMUS always returns a level-1 network building on
+the given input tree". For every multiset `Q` and every set `X` of at least two taxa that contains
+the outgroup `o`, ASTRAL may return on `Q` and `X` a tree rooted at `o`, and CAMUS may return on
+it a network, which is a rooted binary level-1 network on the taxa `X`. -/
+theorem pipeline_output_exists (Q : Multiset Quartet) {X : Finset ℕ} {o : ℕ} (ho : o ∈ X)
+    (h2 : 2 ≤ X.card) :
+    ∃ T : PhyloTree, AstralOutput Q X T ∧ T.RootedAt o ∧
+      ∃ P : RootedNetwork, CamusOutput Q T P ∧ P.RootedBinaryLevelOne ∧ P.taxa = X := by
+  obtain ⟨T, hT⟩ := exists_astralOutput Q ⟨o, ho⟩
+  obtain ⟨hT', hTo, -⟩ := hT.reroot ho h2
+  obtain ⟨P, hP⟩ := exists_camusOutput Q hT'.1
+  obtain ⟨S, ⟨H⟩⟩ := hP.1.2
+  exact ⟨_, hT', hTo, P, hP, hP.1.1, H.taxa_preserved.trans hT'.2.1⟩
+
 /-- Section 3.2: if, for every four taxa of `t`, the quartet that `t` induces has more copies in
 `Q` than the two other quartets on them, then every tree that ASTRAL may return on the taxa of `t`
 induces the quartets of `t` (`quartetSupport_lt`). -/
@@ -112,8 +206,8 @@ theorem induced_eq_of_astralOutput {Q : Multiset Quartet} {t T : PhyloTree} (ht 
   by_contra hq
   exact absurd (hmax t ht rfl) (not_le.mpr (quartetSupport_lt Q t T ht hTw htaxa hfreq ⟨q, hq⟩))
 
-/-- Section 3.2: under the same condition, ASTRAL may return `t`: every tree on its taxa has at
-most its score, with equality exactly for the trees that induce its quartets. -/
+/-- Section 3.2: under the same condition, ASTRAL may return `t`: every well-labelled tree on its
+taxa has at most its quartet support score. -/
 theorem astralOutput_self {Q : Multiset Quartet} {t : PhyloTree} (ht : t.WellLabelled)
     (hfreq : ∀ q : Quartet, q.induced t = true → ∀ s : Fin 3, s ≠ q.split →
       Q.count (q.key.quartet s) < Q.count q) :
@@ -124,6 +218,16 @@ theorem astralOutput_self {Q : Multiset Quartet} {t : PhyloTree} (ht : t.WellLab
   · push Not at hdiff
     rw [quartetSupport_congr Q hdiff]
 
+/-- A network that displays every quartet of `Q` displays `|Q|` quartets of `Q`, counted with
+multiplicity, the largest possible score. -/
+theorem score_repertoire_eq_card {N : RootedNetwork} {Q : Multiset Quartet}
+    (hQ : ∀ q ∈ Q, N.DisplaysQuartet q) : score Q (repertoire Q N) = Q.card := by
+  classical
+  apply (score_eq_card_iff Q _).mpr
+  intro q hq
+  simp only [repertoire, Finset.mem_filter]
+  exact ⟨hq, hQ q (Multiset.mem_toFinset.mp hq)⟩
+
 /-- If the quartets of `Q` are exactly those displayed by `N`, every network that displays as
 many quartets of `Q` as `N` displays every quartet that `N` displays. -/
 theorem displays_of_optimal {N : RootedNetwork} {Q : Multiset Quartet}
@@ -131,11 +235,7 @@ theorem displays_of_optimal {N : RootedNetwork} {Q : Multiset Quartet}
     (hR : score Q (repertoire Q N) ≤ score Q (repertoire Q R)) :
     ∀ q, N.DisplaysQuartet q → R.DisplaysQuartet q := by
   classical
-  have hNscore : score Q (repertoire Q N) = Q.card := by
-    apply (score_eq_card_iff Q _).mpr
-    intro q hq
-    simp only [repertoire, Finset.mem_filter]
-    exact ⟨hq, (hQ q).mp (Multiset.mem_toFinset.mp hq)⟩
+  have hNscore := score_repertoire_eq_card fun q hq => (hQ q).mp hq
   have hRscore : score Q (repertoire Q R) = Q.card :=
     le_antisymm (score_le_card _ _) (hNscore ▸ hR)
   intro q hq
@@ -174,14 +274,8 @@ theorem pipeline_recovery (t : PhyloTree) (ht : t.WellLabelled) {o : ℕ} (hto :
   rw [hNt]
   -- `N` displays every quartet of `Q`, so it is optimal
   have hNopt : ∀ R : RootedNetwork, R.AnchoredExtension t →
-      score Q (repertoire Q R) ≤ score Q (repertoire Q N) := by
-    intro R _
-    have hNscore : score Q (repertoire Q N) = Q.card := by
-      apply (score_eq_card_iff Q _).mpr
-      intro q hq
-      simp only [repertoire, Finset.mem_filter]
-      exact ⟨hq, (hQ q).mp (Multiset.mem_toFinset.mp hq)⟩
-    exact hNscore ▸ score_le_card _ _
+      score Q (repertoire Q R) ≤ score Q (repertoire Q N) := fun R _ =>
+    (score_repertoire_eq_card fun q hq => (hQ q).mp hq) ▸ score_le_card _ _
   -- and has the fewest reticulations among the optimal networks: an optimal network with fewer
   -- would display every quartet that `N` displays, and so be isomorphic to `N`
   have hNcamus : CamusOutput Q t N := by
@@ -198,7 +292,7 @@ theorem pipeline_recovery (t : PhyloTree) (ht : t.WellLabelled) {o : ℕ} (hto :
   -- network that CAMUS may return on `t`
   have hiso : T.RootedIso t := PhyloTree.rootedIso_of_induced_eq hT.1 ht hT.2.1 hq hTo hto
   obtain ⟨hPt, hPopt, hPfew⟩ := (hiso.camusOutput_iff Q P).mp hP
-  -- step 3, corrected: `recovery`
+  -- steps 3 and 4, corrected: on a multiset version of `Q(N_r)`, `recovery`
   exact recovery t N hN Q hQ identifiable P hPt hPopt hPfew
 
 variable {N : RootedNetwork} {σ : Type*} [Fintype σ] [DecidableEq σ] {Ω : Type*}
@@ -311,6 +405,31 @@ theorem pipeline_tendsto [Nontrivial σ] (t : PhyloTree) (ht : t.WellLabelled) {
   filter_upwards [hfreq, hsupp] with m hm hm'
   -- on that event, the pipeline for one multiset
   exact pipeline_recovery t ht hto N hN identifiable _ hm hm'
+
+/-- Section 3.2, the SNP pipeline in WTE's model, corrected, for a selection rule: let `tree m ω`
+be a tree that ASTRAL may return on `Q_m` and the taxa of `N`, rooted at the outgroup `o`, and
+`output m ω` a network that CAMUS may return on it (such a selection exists,
+`pipeline_output_exists`). Under the hypotheses of `pipeline_tendsto`, the probability that
+`output m` is isomorphic to `N` tends to 1: the pipeline is a statistically consistent estimator
+of `N`. -/
+theorem pipeline_output_tendsto [Nontrivial σ] (t : PhyloTree) (ht : t.WellLabelled) {o : ℕ}
+    (hto : t.RootedAt o) (N : RootedNetwork) (hN : N.AnchoredExtension t)
+    (identifiable : ∀ P : RootedNetwork, P.AnchoredExtension t →
+      (∀ q, N.DisplaysQuartet q → P.DisplaysQuartet q) →
+      P.reticulationCount ≤ N.reticulationCount → Nonempty (P.Iso N))
+    (M : External.SiteModel N σ) (hcond : MostProbableQuartets M t)
+    {μ : Measure Ω} [IsProbabilityMeasure μ] (X : ℕ → Ω → External.SiteHistory N σ)
+    (hind : iIndepFun X μ) (hid : ∀ n, IdentDistrib (X n) (X 0) μ μ)
+    (hlaw : μ.map (X 0) = M.law hN.1) (tree : ℕ → Ω → PhyloTree)
+    (htree : ∀ m ω, AstralOutput (External.sampleQuartets X m ω) N.taxa (tree m ω) ∧
+      (tree m ω).RootedAt o)
+    (output : ℕ → Ω → RootedNetwork)
+    (hout : ∀ m ω, CamusOutput (External.sampleQuartets X m ω) (tree m ω) (output m ω)) :
+    Tendsto (fun m => μ {ω | Nonempty ((output m ω).Iso N)}) atTop (𝓝 1) := by
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le
+    (pipeline_tendsto t ht hto N hN identifiable M hcond X hind hid hlaw) tendsto_const_nhds
+    (fun m => measure_mono fun ω hω => ?_) fun _ => prob_le_one
+  exact hω.2 _ (htree m ω).1 (htree m ω).2 _ (hout m ω)
 
 namespace Counterexamples
 

@@ -18,7 +18,9 @@ trees on the same taxa that induce the same quartets have the same splits
 (`PhyloTree.splits_eq_of_induced_eq`); if moreover the leaf of the same outgroup is a child of the
 root of both, they have the same clades (`PhyloTree.clusterEq_of_induced_eq`), and so they are
 equal up to the order of the children (`PhyloTree.rootedIso_of_induced_eq`), which leaves the
-networks built on them unchanged (`PhyloTree.RootedIso.anchoredExtension_iff`).
+networks built on them unchanged (`PhyloTree.RootedIso.anchoredExtension_iff`). Every tree with at
+least two taxa can be rooted at the outgroup without changing its quartets (`PhyloTree.reroot`,
+`PhyloTree.induced_reroot`, `PhyloTree.rootedAt_reroot`).
 
 ## Main results
 
@@ -32,6 +34,8 @@ networks built on them unchanged (`PhyloTree.RootedIso.anchoredExtension_iff`).
   the order of the children.
 * `PhyloTree.rootedIso_of_induced_eq`: the quartets of a binary tree rooted at an outgroup
   determine it, up to the order of the children.
+* `PhyloTree.reroot`, `PhyloTree.induced_reroot`, `PhyloTree.rootedAt_reroot`: rooting a tree at
+  the outgroup keeps its quartets.
 
 ## Proof
 
@@ -43,7 +47,9 @@ if and only if every quartet tree `aa'|bb'` with `a, a' ∈ A` and `b, b' ∉ A`
 (`Coalescent.separates_iff_induced`, through `Coalescent.induces_iff_induced`). So trees with the
 same quartets have the same splits (`Coalescent.unroot_subset_of_induced`). If the outgroup `o` is
 a child of the root, the clades of the tree are the set of all taxa, `{o}`, and the sides of its
-splits that do not contain `o` (`PhyloTree.mem_clades_iff_of_rootedAt`).
+splits that do not contain `o` (`PhyloTree.mem_clades_iff_of_rootedAt`). Rooting at the outgroup
+moves the root down the path to `o`, one rotation `((a, b), c) ↦ (a, (b, c))` at a time, and a
+rotation keeps the quartets (`PhyloTree.induced_rotate`).
 -/
 
 @[expose] public section
@@ -554,6 +560,220 @@ theorem rootedIso_of_induced_eq {t t' : PhyloTree} (ht : t.WellLabelled) (ht' : 
     (htaxa : t.taxa = t'.taxa) (hq : ∀ q : Quartet, q.induced t = q.induced t') {o : ℕ}
     (hto : t.RootedAt o) (hto' : t'.RootedAt o) : RootedIso t t' :=
   rootedIso_of_clusterEq ht ht' (clusterEq_of_induced_eq ht ht' htaxa hq hto hto')
+
+end PhyloTree
+
+namespace Quartet
+
+/-- A set of taxa `S` and its complement in a set `L` of taxa cut the same quartet trees on taxa
+of `L`. -/
+theorem cutBy_sdiff {q : Quartet} {L : Finset ℕ} (hq : q.taxa ⊆ L) (S : Finset ℕ) :
+    q.cutBy (L \ S) = q.cutBy S := by
+  obtain ⟨h1, h2⟩ := q.sides_subset_taxa
+  have hsub : ∀ A ⊆ q.taxa, A ⊆ L \ S ↔ Disjoint A S := fun A hA => by
+    rw [Finset.subset_sdiff]
+    exact and_iff_right (hA.trans hq)
+  have hdisj : ∀ A ⊆ q.taxa, Disjoint A (L \ S) ↔ A ⊆ S := fun A hA => by
+    simp only [Finset.disjoint_left, Finset.mem_sdiff, not_and, not_not]
+    exact ⟨fun h x hx => h hx (hA.trans hq hx), fun h x hx _ => h hx⟩
+  rw [Bool.eq_iff_iff, cutBy_iff, cutBy_iff, hsub _ h1, hsub _ h2, hdisj _ h1, hdisj _ h2]
+  tauto
+
+end Quartet
+
+/-! ### Rooting a tree at the outgroup -/
+
+namespace PhyloTree
+
+/-- The tree `s`, with the tree `up` hanging from the edge above its root, rooted on the edge to the
+leaf `o` of `s`: the subtrees met on the path from the root of `s` down to `o` are hung, in reverse
+order, on the path from the new root up to `up`. -/
+def graftAt (o : ℕ) : PhyloTree → PhyloTree → PhyloTree
+  | .leaf a, up => .fork (.leaf a) up
+  | .fork a b, up => if o ∈ a.taxa then graftAt o a (.fork b up) else graftAt o b (.fork a up)
+
+/-- Section 3.2: the tree `t` "rooted using the outgroup" `o`, the same unrooted tree rooted on the
+edge to the leaf `o` (`induced_reroot`, `rootedAt_reroot`). A leaf is left as it is. -/
+def reroot (o : ℕ) : PhyloTree → PhyloTree
+  | .leaf a => .leaf a
+  | .fork a b => if o ∈ a.taxa then graftAt o a b else graftAt o b a
+
+/-- Rotating a well-labelled tree at its root keeps its quartets: `(a, (b, c))` and `((a, b), c)`
+are the same unrooted tree. The clade `b ∪ c` of the first is the complement of the clade `a`,
+and the clade `a ∪ b` of the second is the complement of the clade `c`. -/
+theorem induced_rotate {a b c : PhyloTree} (h : (fork a (fork b c)).WellLabelled) (q : Quartet) :
+    q.induced (fork a (fork b c)) = q.induced (fork (fork a b) c) := by
+  obtain ⟨-, hbc, habc⟩ := wellLabelled_fork h
+  obtain ⟨-, -, hbc'⟩ := wellLabelled_fork hbc
+  rw [taxa_fork] at habc
+  have htaxa : (fork (fork a b) c).taxa = (fork a (fork b c)).taxa := by
+    simp only [taxa_fork, Finset.union_assoc]
+  have hL : (fork a (fork b c)).taxa = a.taxa ∪ (b.taxa ∪ c.taxa) := by
+    rw [taxa_fork, taxa_fork]
+  -- the two clades that differ are complements of clades of both trees
+  have hBC : b.taxa ∪ c.taxa = (fork a (fork b c)).taxa \ a.taxa := by
+    rw [hL, Finset.union_sdiff_left, Finset.sdiff_eq_self_of_disjoint habc.symm]
+  have hAB : a.taxa ∪ b.taxa = (fork a (fork b c)).taxa \ c.taxa := by
+    rw [hL, ← Finset.union_assoc, Finset.union_sdiff_right,
+      Finset.sdiff_eq_self_of_disjoint]
+    rw [Finset.disjoint_union_left]
+    exact ⟨Finset.disjoint_of_subset_right Finset.subset_union_right habc, hbc'⟩
+  unfold Quartet.induced
+  rw [htaxa]
+  by_cases hq : q.taxa ⊆ (fork a (fork b c)).taxa
+  · simp only [hq, decide_true, Bool.true_and]
+    rw [Bool.eq_iff_iff, List.any_eq_true, List.any_eq_true]
+    constructor
+    · rintro ⟨C, hC, hcut⟩
+      rcases mem_clades_fork.mp hC with rfl | hC | hC
+      · refine ⟨_, mem_clades_fork.mpr (Or.inl rfl), ?_⟩
+        rw [taxa_fork] at hcut ⊢
+        rwa [Finset.union_assoc]
+      · exact ⟨C, mem_clades_fork.mpr (Or.inr (Or.inl (mem_clades_fork.mpr
+          (Or.inr (Or.inl hC))))), hcut⟩
+      · rcases mem_clades_fork.mp hC with rfl | hC | hC
+        · refine ⟨a.taxa, mem_clades_fork.mpr (Or.inr (Or.inl (mem_clades_fork.mpr
+            (Or.inr (Or.inl a.taxa_mem_clades))))), ?_⟩
+          rw [hBC, Quartet.cutBy_sdiff hq] at hcut
+          exact hcut
+        · exact ⟨C, mem_clades_fork.mpr (Or.inr (Or.inl (mem_clades_fork.mpr
+            (Or.inr (Or.inr hC))))), hcut⟩
+        · exact ⟨C, mem_clades_fork.mpr (Or.inr (Or.inr hC)), hcut⟩
+    · rintro ⟨C, hC, hcut⟩
+      rcases mem_clades_fork.mp hC with rfl | hC | hC
+      · refine ⟨_, mem_clades_fork.mpr (Or.inl rfl), ?_⟩
+        rw [taxa_fork] at hcut ⊢
+        rwa [← Finset.union_assoc]
+      · rcases mem_clades_fork.mp hC with rfl | hC | hC
+        · refine ⟨c.taxa, mem_clades_fork.mpr (Or.inr (Or.inr (mem_clades_fork.mpr
+            (Or.inr (Or.inr c.taxa_mem_clades))))), ?_⟩
+          rw [hAB, Quartet.cutBy_sdiff hq] at hcut
+          exact hcut
+        · exact ⟨C, mem_clades_fork.mpr (Or.inr (Or.inl hC)), hcut⟩
+        · exact ⟨C, mem_clades_fork.mpr (Or.inr (Or.inr (mem_clades_fork.mpr
+            (Or.inr (Or.inl hC))))), hcut⟩
+      · exact ⟨C, mem_clades_fork.mpr (Or.inr (Or.inr (mem_clades_fork.mpr
+          (Or.inr (Or.inr hC))))), hcut⟩
+  · simp [hq]
+
+/-- `graftAt o s up` has the leaves of `s` and of `up`. -/
+theorem graftAt_labels_perm (o : ℕ) :
+    ∀ s up : PhyloTree, (graftAt o s up).labels.Perm (s.labels ++ up.labels)
+  | .leaf a, up => by simp [graftAt, labels]
+  | .fork a b, up => by
+    unfold graftAt
+    split_ifs
+    · refine (graftAt_labels_perm o a (.fork b up)).trans ?_
+      simp only [labels, List.append_assoc]
+      exact List.Perm.refl _
+    · refine (graftAt_labels_perm o b (.fork a up)).trans ?_
+      simp only [labels, ← List.append_assoc]
+      exact List.perm_append_comm.append_right _
+
+/-- `graftAt o s up` is the unrooted tree `(s, up)`: it induces the same quartets. -/
+theorem induced_graftAt (o : ℕ) :
+    ∀ s up : PhyloTree, (fork s up).WellLabelled →
+      ∀ q : Quartet, q.induced (graftAt o s up) = q.induced (fork s up)
+  | .leaf a, up, _, q => rfl
+  | .fork a b, up, h, q => by
+    unfold graftAt
+    split_ifs
+    · have h' : (fork a (fork b up)).WellLabelled := by
+        change (a.labels ++ (b.labels ++ up.labels)).Nodup
+        rw [← List.append_assoc]
+        exact h
+      rw [induced_graftAt o a (.fork b up) h' q, induced_rotate h' q]
+    · have h' : (fork b (fork a up)).WellLabelled := by
+        change (b.labels ++ (a.labels ++ up.labels)).Nodup
+        refine (List.Perm.nodup_iff ?_).mpr h
+        rw [← List.append_assoc]
+        exact List.perm_append_comm.append_right _
+      rw [induced_graftAt o b (.fork a up) h' q, induced_rotate h' q]
+      exact (ClusterEq.fork (ClusterEq.fork_swap b a) (ClusterEq.refl up)).induced_eq q
+
+/-- `graftAt o s up` is rooted at `o`, a taxon of `s`. -/
+theorem rootedAt_graftAt (o : ℕ) : ∀ s up : PhyloTree, o ∈ s.taxa → (graftAt o s up).RootedAt o
+  | .leaf a, up, h => by
+    rw [taxa_leaf, Finset.mem_singleton] at h
+    subst h
+    exact ⟨false, rfl⟩
+  | .fork a b, up, h => by
+    unfold graftAt
+    split_ifs with ho
+    · exact rootedAt_graftAt o a _ ho
+    · rw [taxa_fork, Finset.mem_union] at h
+      exact rootedAt_graftAt o b _ (h.resolve_left ho)
+
+/-- Rooting at the outgroup keeps the leaves. -/
+theorem reroot_labels_perm (o : ℕ) (t : PhyloTree) : (t.reroot o).labels.Perm t.labels := by
+  cases t with
+  | leaf a => exact List.Perm.refl _
+  | fork a b =>
+    simp only [reroot]
+    split_ifs
+    · exact graftAt_labels_perm o a b
+    · exact (graftAt_labels_perm o b a).trans List.perm_append_comm
+
+/-- Rooting at the outgroup keeps the taxa. -/
+theorem taxa_reroot (o : ℕ) (t : PhyloTree) : (t.reroot o).taxa = t.taxa :=
+  List.toFinset_eq_of_perm _ _ (reroot_labels_perm o t)
+
+/-- Rooting a well-labelled tree at the outgroup gives a well-labelled tree. -/
+theorem wellLabelled_reroot (o : ℕ) {t : PhyloTree} (ht : t.WellLabelled) :
+    (t.reroot o).WellLabelled :=
+  (List.Perm.nodup_iff (reroot_labels_perm o t)).mpr ht
+
+/-- Section 3.2: rooting a well-labelled tree at the outgroup keeps its unrooted form: the rooted
+tree induces the same quartets. -/
+theorem induced_reroot (o : ℕ) {t : PhyloTree} (ht : t.WellLabelled) (q : Quartet) :
+    q.induced (t.reroot o) = q.induced t := by
+  cases t with
+  | leaf a => rfl
+  | fork a b =>
+    simp only [reroot]
+    split_ifs
+    · exact induced_graftAt o a b ht q
+    · have h' : (fork b a).WellLabelled := by
+        change (b.labels ++ a.labels).Nodup
+        exact List.nodup_append_comm.mp ht
+      rw [induced_graftAt o b a h' q]
+      exact (ClusterEq.fork_swap b a).induced_eq q
+
+/-- Section 3.2: "we have an outgroup and hence can root the tree returned by ASTRAL". Rooting at
+`o` a tree with at least two taxa, one of which is `o`, gives a tree rooted at `o`. -/
+theorem rootedAt_reroot {o : ℕ} {t : PhyloTree} (ho : o ∈ t.taxa) (h2 : 2 ≤ t.taxa.card) :
+    (t.reroot o).RootedAt o := by
+  cases t with
+  | leaf a =>
+    rw [taxa_leaf, Finset.card_singleton] at h2
+    omega
+  | fork a b =>
+    simp only [reroot]
+    split_ifs with hoa
+    · exact rootedAt_graftAt o a b hoa
+    · rw [taxa_fork, Finset.mem_union] at ho
+      exact rootedAt_graftAt o b a (ho.resolve_left hoa)
+
+/-- The caterpillar `(a₀, (a₁, (…, aₖ)))` on the labels `a₀, a₁, …, aₖ`. -/
+def caterpillar : ℕ → List ℕ → PhyloTree
+  | a, [] => .leaf a
+  | a, b :: l => .fork (.leaf a) (caterpillar b l)
+
+/-- The leaves of the caterpillar on `a :: l` are labelled `a :: l`, in order. -/
+theorem labels_caterpillar : ∀ (a : ℕ) (l : List ℕ), (caterpillar a l).labels = a :: l
+  | a, [] => rfl
+  | a, b :: l => by simp [caterpillar, labels, labels_caterpillar b l]
+
+/-- Every nonempty set of taxa is the set of taxa of some well-labelled tree. -/
+theorem exists_wellLabelled {X : Finset ℕ} (hX : X.Nonempty) :
+    ∃ t : PhyloTree, t.WellLabelled ∧ t.taxa = X := by
+  obtain ⟨a, l, hal⟩ := List.exists_cons_of_ne_nil (Finset.toList_eq_nil.not.mpr hX.ne_empty)
+  refine ⟨caterpillar a l, ?_, ?_⟩
+  · change (caterpillar a l).labels.Nodup
+    rw [labels_caterpillar, ← hal]
+    exact X.nodup_toList
+  · unfold taxa
+    rw [labels_caterpillar, ← hal, Finset.toList_toFinset]
 
 end PhyloTree
 
