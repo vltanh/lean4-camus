@@ -48,8 +48,9 @@ a cycle whose other side has a single node, the two choices give the same tree.)
 * `NMSC.nodeDisplayed`, `NMSC.nodeDisplayed_subset`, `NMSC.mem_nodeDisplayed_iff`,
   `NMSC.exists_baseTree_of_mem_nodeDisplayed`: the displayed trees that delete the hybrid edge of a
   side with a node at each cycle are the base trees of the exchanges.
-* `NMSC.displaysTree_baseTree_of_sideSwap`, `NMSC.nmsc_recovery_sideSwap`: recovery through the
-  base tree of `N` with the sides of some cycles exchanged.
+* `NMSC.displaysTree_baseTree_of_sideSwap`, `NMSC.graph_sideSwap`, `NMSC.nmsc_recovery_sideSwap`:
+  recovery through the base tree of `N` with the sides of some cycles exchanged, whose graph
+  displays Q(N_r) and has as many reticulations as the graph of `N`.
 
 ## Proof (the paper's)
 
@@ -487,6 +488,42 @@ theorem mem_nodeDisplayed_iff {N : Brooqs.Net L} (hN : N.IsMetric) (K : Finset (
     K ∈ nodeDisplayed N ↔ ∃ N', N.SideSwap N' ∧ baseClusters N' = K :=
   ⟨exists_sideSwap_of_mem_nodeDisplayed, fun ⟨_, h, hK⟩ =>
     hK ▸ baseClusters_mem_nodeDisplayed h hN⟩
+
+mutual
+/-- Exchanging the sides of cycles keeps the number of cycles. -/
+theorem cycleCount_of_sideSwap : ∀ {N N' : Brooqs.Net L}, N.SideSwap N' →
+    cycleCount N' = cycleCount N
+  | _, _, .leaf _ => rfl
+  | _, _, .tree h₁ h₂ => by
+      simp only [cycleCount, cycleCount_of_sideSwap h₁, cycleCount_of_sideSwap h₂]
+  | _, _, .cycle h₁ h₂ h => by
+      simp only [cycleCount, cycleCount_of_sideSwap h, sideCycleCount_of_sideSwap h₁,
+        sideCycleCount_of_sideSwap h₂]
+  | _, _, .swap h₁ h₂ h => by
+      simp only [cycleCount, cycleCount_of_sideSwap h, sideCycleCount_of_sideSwap h₁,
+        sideCycleCount_of_sideSwap h₂]
+      ring
+
+/-- Exchanging the sides of cycles keeps the number of cycles below a side. -/
+theorem sideCycleCount_of_sideSwap : ∀ {S S' : Brooqs.Side L}, S.SideSwap S' →
+    sideCycleCount S' = sideCycleCount S
+  | _, _, .hyb _ => rfl
+  | _, _, .node hM hS => by
+      simp only [sideCycleCount, cycleCount_of_sideSwap hM, sideCycleCount_of_sideSwap hS]
+end
+
+/-- The graphs of `N` and of an exchange `N'` of the sides of some of its cycles display the same
+quartet trees, those of Q(N_r), and have the same number of reticulations, one for each cycle. -/
+theorem graph_sideSwap {N N' : Brooqs.Net L} (h : N.SideSwap N') (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) :
+    (∀ q, (Realization.graph (baseTree N') (pairs N')).DisplaysQuartet q ↔
+        (Realization.graph (baseTree N) (pairs N)).DisplaysQuartet q) ∧
+      (Realization.graph (baseTree N') (pairs N')).reticulationCount =
+        (Realization.graph (baseTree N) (pairs N)).reticulationCount := by
+  refine ⟨fun q => ?_, ?_⟩
+  · rw [graph_displaysQuartet_iff (h.wellFormed_iff.1 hN) (fun x => h.taxa_eq ▸ htaxa x),
+      graph_displaysQuartet_iff hN htaxa, displaysQuartet_iff_of_sideSwap h]
+  · rw [graph_reticulationCount, graph_reticulationCount, cycleCount_of_sideSwap h]
 
 /-- The base tree of `N` with the sides of some cycles exchanged is a displayed tree of `N`
 (`NMSC.DisplaysTree`). -/

@@ -23,7 +23,8 @@ anomalous configuration.
 * `Brooqs.Net.SideSwap.perm_leaves`, `Brooqs.Net.SideSwap.taxa_eq`,
   `Brooqs.Net.SideSwap.wellFormed_iff`: the leaves, the taxa and the laws of a metric network.
 * `Brooqs.Net.SideSwap.forestDist_eq`, `Brooqs.Net.SideSwap.geneTreeDist_eq`,
-  `Brooqs.Net.SideSwap.quartetCF_eq`: the NMSC and the quartet CFs.
+  `Brooqs.Net.SideSwap.genes_eq`, `Brooqs.Net.SideSwap.quartetCF_eq`: the NMSC, the law of
+  independent gene trees and the quartet CFs.
 * `Brooqs.Net.SideSwap.mem_displayed_iff`, `Brooqs.Net.SideSwap.displays_iff`: the displayed trees
   and the displayed quartets.
 * `Brooqs.Net.SideSwap.anomalous_iff`: the anomalous configuration.
@@ -308,6 +309,23 @@ theorem Net.SideSwap.geneTreeDist_eq (s : L → X) {N N' : Net X} (h : N.SideSwa
   simp only [Net.geneTreeDist, h.forestDist_eq s]
 
 end Coalescent
+
+section Genes
+
+variable [Fintype X] [MeasurableSpace (Finset (Finset X))]
+
+/-- The law of the gene tree, one lineage per taxon, is the same under the NMSC on `N` and on
+`N'`. -/
+theorem Net.SideSwap.geneLaw_eq {N N' : Net X} (h : N.SideSwap N') (hN : N.WellFormed)
+    (hN' : N'.WellFormed) : N.geneLaw hN = N'.geneLaw hN' := by
+  simp only [Net.geneLaw, h.geneTreeDist_eq]
+
+/-- Independent gene trees have the same product law under the NMSC on `N` and on `N'`. -/
+theorem Net.SideSwap.genes_eq {N N' : Net X} (h : N.SideSwap N') (hN : N.WellFormed)
+    (hN' : N'.WellFormed) : N.genes hN = N'.genes hN' := by
+  simp only [Net.genes, h.geneLaw_eq hN hN']
+
+end Genes
 
 /-- The quartet CFs of `N` and of `N'` are equal. -/
 theorem Net.SideSwap.quartetCF_eq {N N' : Net X} (h : N.SideSwap N') (a b c e : X) :
