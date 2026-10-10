@@ -15,7 +15,7 @@ the parents, depths, kinds and `M`, the taxa for the leaves, the pairs of vertic
 common ancestors, the targets for the buckets (which hold `|candidates|` pairs in all), and the
 candidate pairs for the weights. Counting the integers stored at these keys
 (`Complexity.storedIntegers`) gives at most three times the count `Complexity.scalarSpace` of
-`Camus/Complexity/Operations.lean`, hence `O(n⁴)` by `Complexity.scalarSpace_bound`.
+`Camus/Complexity/Counts.lean`, hence `O(n⁴)` by `Complexity.scalarSpace_bound`.
 
 ## Main results
 

@@ -1,7 +1,7 @@
 module
 
 public import Camus.Complexity.Timed
-public import Camus.Complexity.Operations
+public import Camus.Complexity.Counts
 
 /-!
 # Section 2.3: the preprocessing tables

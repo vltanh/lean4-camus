@@ -1,6 +1,6 @@
 module
 
-public import Camus.Complexity.Operations
+public import Camus.Complexity.Counts
 public import Camus.Network.Clades
 public import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
