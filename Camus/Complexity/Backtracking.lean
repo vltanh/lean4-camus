@@ -226,7 +226,8 @@ theorem backtrack_trace {t : PhyloTree} {T : Tables} (hT : T.Correct t)
       change M v = max (M (v ++ [false]) + M (v ++ [true])) (s t w M v) at hrec
       have hk' : T.kind v = .fork (v ++ [false]) (v ++ [true]) := by
         rw [hk]; simp [kindAt, hsub]
-      have hchild (b : Bool) : Trace t w M (v ++ [b]) (backtrack T B W M n (v ++ [b]) []).val.toFinset := by
+      have hchild (b : Bool) :
+          Trace t w M (v ++ [b]) (backtrack T B W M n (v ++ [b]) []).val.toFinset := by
         have hmem := PhyloTree.child_mem_nodes hsub b
         exact ih _ hmem (by
           have := remainingDepth_lt hmem (List.prefix_append _ _) (by simp)
@@ -315,7 +316,8 @@ theorem cone_children {t : PhyloTree} {v : Address} :
 below `v`. -/
 theorem cone_hanging {t : PhyloTree} {e : Address × Address} (he : EdgeAbove.Admissible t e) :
     (↑(hanging t e) : Set Address).PairwiseDisjoint (cone t) ∧
-      (hanging t e).biUnion (cone t) ⊆ (cone t (EdgeAbove.target e)).erase (EdgeAbove.target e) := by
+      (hanging t e).biUnion (cone t) ⊆
+        (cone t (EdgeAbove.target e)).erase (EdgeAbove.target e) := by
   have hS := EdgeAbove.footprint_region t e he
   refine ⟨fun r hr r' hr' hne => Finset.disjoint_left.mpr fun x h1 h2 => hne ?_, ?_⟩
   · rcases List.prefix_or_prefix_of_prefix (mem_cone.mp h1).2 (mem_cone.mp h2).2 with h | h
