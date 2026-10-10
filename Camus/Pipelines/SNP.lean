@@ -68,7 +68,14 @@ variable {σ : Type*} [Fintype σ] [DecidableEq σ] [Nontrivial σ] {Ω : Type*}
 independent with the law of a site under a model `M` on `N` with at least two states. Then the
 probability that every network built on `t` that displays as many quartets of `Q_m` as any
 network built on `t`, and has the fewest reticulations among those, is isomorphic to `N` tends
-to 1. -/
+to 1.
+
+Departure from the paper: the paper concludes that CAMUS returns `N` because `N` "is the unique
+network that can satisfy all the quartets in Q(Nr)", which is false (the report's E6,
+`snp_deeperDonor_tendsto`); identifiability under inclusion and the tie-break toward the fewest
+reticulations replace that step, as in `recovery`. The constraint tree is `t` itself: that ASTRAL
+returns `t` is step 1 (`astral_maximizer_tendsto`), formalized up to the determination of a tree
+by its quartets. -/
 theorem snp_recovery_tendsto (t : PhyloTree) (N : RootedNetwork) (hN : N.AnchoredExtension t)
     (identifiable : ∀ P : RootedNetwork, P.AnchoredExtension t →
       (∀ q, N.DisplaysQuartet q → P.DisplaysQuartet q) →

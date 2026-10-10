@@ -457,7 +457,9 @@ variable {N : RootedNetwork} {σ : Type*} [Fintype σ] [DecidableEq σ]
 /-- Section 3.2's condition on the tree `t` ("the most probable quartet tree is induced by t"):
 for every four taxa of `t`, the quartet that `t` induces on them is strictly the most probable
 quartet on them, per site, under the model `M`: a site contributes it to `Q` with larger
-probability than each of the two other quartets on those taxa. -/
+probability than each of the two other quartets on those taxa. "The most probable" is read as
+strictly more probable than the two others: with a tie, the most frequent quartet need not settle
+on the quartet of `t`. -/
 def MostProbableQuartets (M : External.SiteModel N σ) (t : PhyloTree) : Prop :=
   ∀ q : Quartet, q.induced t = true → ∀ s : Fin 3, s ≠ q.split →
     M.quartetProb (q.key.quartet s) < M.quartetProb q
@@ -531,10 +533,13 @@ theorem astral_tendsto (M : External.SiteModel N σ) (hN : N.RootedBinaryLevelOn
   intro T hT htaxa hdiff
   exact quartetSupport_lt _ t T ht hT htaxa hω hdiff
 
-/-- Section 3.2: "ASTRAL will return t since it solves its optimization problem exactly", up to
-the classical fact, not formalized here, that a binary tree is determined by its quartets. Under
+/-- Section 3.2: "ASTRAL will return t since it solves its optimization problem exactly". Under
 `MostProbableQuartets`, the probability that every well-labelled tree on the taxa of `t` with the
-largest quartet support score for `Q_m` induces the quartets of `t` tends to 1. -/
+largest quartet support score for `Q_m` induces the quartets of `t` tends to 1.
+
+Departure from the paper: the conclusion is that every tree ASTRAL may return induces the
+quartets of `t`. That such a tree, rooted at the outgroup, is `t` is the classical fact that a
+binary tree is determined by its quartets, which is not formalized here. -/
 theorem astral_maximizer_tendsto (M : External.SiteModel N σ) (hN : N.RootedBinaryLevelOne)
     (t : PhyloTree) (ht : t.WellLabelled) (hcond : MostProbableQuartets M t)
     {P : Measure Ω} [IsProbabilityMeasure P] (X : ℕ → Ω → External.SiteHistory N σ)

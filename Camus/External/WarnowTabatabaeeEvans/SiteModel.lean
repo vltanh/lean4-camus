@@ -294,10 +294,12 @@ structure SiteParameters (N : RootedNetwork) (σ : Type*) [Fintype σ] where
 
 /-- WTE's single site model (their Section 4.2) on the network `N`: the parameters of
 `External.SiteParameters`, and `stay_pos`: no change, p(e, s, s), has positive probability on a
-tree edge. WTE's list of constraints does not state this, but the proof of their Theorem 6 needs
-it ("it is easy to see that the probability that c changes on e and no other edge in T is
-strictly positive"; without it the step fails, `External.theorem6_step_needs_stay`), and their
-Theorem 7 assumes it (`0 < p_on ≤ p(e, s, s)`). -/
+tree edge.
+
+Departure from WTE: their list of constraints does not state `stay_pos`, but the proof of their
+Theorem 6 needs it ("it is easy to see that the probability that c changes on e and no other edge
+in T is strictly positive"; without it the step fails, `External.theorem6_step_needs_stay`), and
+their Theorem 7 assumes it (`0 < p_on ≤ p(e, s, s)`). -/
 structure SiteModel (N : RootedNetwork) (σ : Type*) [Fintype σ] extends SiteParameters N σ where
   stay_pos : ∀ e ∈ N.edges, N.indegree e.2 = 1 → ∀ s, 0 < substitution e s s
 
