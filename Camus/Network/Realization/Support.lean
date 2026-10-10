@@ -1,5 +1,6 @@
 module
 
+public import Camus.Network.Completeness.Anchors
 public import Camus.Network.Realization.Wires
 
 /-!
@@ -10,15 +11,13 @@ wires; they form the subdivision of `T` inside the network, its support. For a f
 admissible pairs, this file proves that the support edges form a switching of the network
 (`RootedNetwork.Switching`: exactly one support edge ends at each non-root vertex, as when
 Definition 1 deletes one incoming edge of each reticulation), and that the other edges of the
-network are the added edges `u′ → w′`. It also proves that in any support subdivision the anchor
-of a vertex inside the wire above `p` is `p`.
+network are the added edges `u′ → w′`.
 
 ## Main results
 
 * `Realization.support_switching`: the support edges form a switching of the network.
 * `Realization.added_edge_not_support`: the added edge `u′ → w′` is not a support edge.
 * `Realization.nonSupportEdges`: the edges outside the support are the added edges.
-* `SupportSubdivision.anchor_eq`: the anchor of a vertex inside the wire above `p` is `p`.
 -/
 
 @[expose] public section
@@ -183,21 +182,5 @@ theorem nonSupportEdges (t : PhyloTree) (E : Finset Pair)
 end Camus.Realization
 
 namespace Camus.SupportSubdivision
-
-/-- In a support subdivision `H` of `T` in `N`, the anchor of a vertex inside the wire above a
-non-root vertex `p` of `T` is `p`. -/
-theorem anchor_eq {t : PhyloTree} {N : RootedNetwork} {S : Finset (ℕ × ℕ)}
-    (H : SupportSubdivision t N S) {p : Address} (hp : p ∈ t.nodes) (hp0 : p ≠ [])
-    {v : ℕ} (hv : v ∈ wireInterior (H.wire p)) : H.anchor v = p := by
-  classical
-  have hex : ∃ p ∈ t.nodes, p ≠ [] ∧ v ∈ wireInterior (H.wire p) :=
-    ⟨p, hp, hp0, hv⟩
-  unfold anchor
-  simp only [dite_eq_left hex]
-  obtain ⟨hq, hq0, hqv⟩ := hex.choose_spec
-  by_contra hne
-  exact Finset.disjoint_left.mp
-    (H.interiors_disjoint (Finset.mem_erase.mpr ⟨hq0, hq⟩)
-      (Finset.mem_erase.mpr ⟨hp0, hp⟩) hne) hqv hv
 
 end Camus.SupportSubdivision

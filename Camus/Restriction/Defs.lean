@@ -9,30 +9,28 @@ Section 2.4 of the paper modifies the dynamic program so that it returns, for ea
 level-1 network `N_k` that contains `T`, has exactly `k` non-tree edges, and maximizes the number of
 quartets of `Q` among such networks. The paper describes the array `M[v, k]` ("the solution found
 for subtree `T_v` of the network limited to allowing k non-tree edges") but gives no recurrence.
-This file defines the formalization's own recurrence, following that description.
-
-A family of added edges is feasible below `v` (`DynamicProgramming.FeasibleBelow`) when its pairs
-are admissible, their cycles share no vertex of `T` (`EdgeAbove.CycleSeparated`, so that the network
-is level-1), and their targets lie in `T_v`; its value is the sum of the weights of its edges. A
-row `M[v][k]` is a finite set of naturals: empty when no family of exactly `k` added edges is
-feasible below `v`, and otherwise the singleton of the best value (`best`). At a leaf the row of
-budget `0` is `{0}` and the others are empty. At an internal vertex `v` (`cases`), either
+The formalization's recurrence, which follows that description, is defined with the other shared
+definitions in `Camus/Defs.lean`, since the Challenge states Section 2.4 with it: a row
+`M[v][k]` is a finite set of naturals, empty when no family of exactly `k` added edges is feasible
+below `v`, and otherwise the singleton of the best value (`BudgetDP.best`). At a leaf the row of
+budget `0` is `{0}` and the others are empty. At an internal vertex `v` (`BudgetDP.cases`), either
 
 * no added edge has target `v`: the budget is split between the two children, by the max-plus
-  convolution of their rows (`convolution`); or
+  convolution of their rows (`BudgetDP.convolution`); or
 * the edge added above some `(u, w) ∈ Pairs(v)` has target `v` (Equation (3)): it uses one unit of
   budget and contributes its weight `s_e(u, w)`, and the remaining `k − 1` units are distributed
   over the subtrees hanging off the cycle `γ(u, w)`, whose rows are combined as in Equations (4)
-  and (5) by a knapsack (`forest`).
+  and (5) by a knapsack (`BudgetDP.forest`), which keeps only the maximum after each convolution.
 
-`forest` keeps only the maximum after each convolution. `allocations` is the unpruned set of the
-values of all distributions of the budget; it is the specification of `forest` used in the proofs.
+This file proves the basic properties of `best` and `convolution`, and defines `allocations`, the
+unpruned set of the values of all distributions of the budget over the hanging subtrees, which is
+the specification of `forest` used in the proofs.
 
-## Main definitions
+## Main results
 
-* `BudgetDP.best`, `BudgetDP.convolution`, `BudgetDP.allocations`, `BudgetDP.forest`.
-* `BudgetDP.cases`: the candidate values of a row, from the two cases above.
-* `BudgetDP.Array`: `M` satisfies the recurrence at every vertex and budget.
+* `BudgetDP.mem_best`, `BudgetDP.best_card_le_one`: `best S` is empty or the maximum of `S`.
+* `BudgetDP.mem_convolution`: the elements of a convolution.
+* `BudgetDP.allocations`: all distributions of the budget over a list of subtrees.
 -/
 
 @[expose] public section

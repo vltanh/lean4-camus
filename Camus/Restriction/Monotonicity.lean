@@ -12,12 +12,13 @@ each `k`, a best network with exactly `k` non-tree edges. For exact counts the c
 
 ## Main results
 
-* `ExactCountMonotone`: the claim, for exact numbers of reticulations: whenever `j ≤ k` and some
-  network built on `T` has exactly `k` reticulations, every network built on `T` with exactly `j`
-  reticulations is matched by one with exactly `k` that displays at least as many quartets of `Q`.
-* `not_exactCountMonotone`: the claim fails. For `T = (A,(B,(D,C)))` and `Q = {AC|BD}`, a network with two
-  reticulations displays `AC|BD`, while every network with three reticulations displays only the
-  quartet of `T` (`Counterexamples.graph_exact_budget_nonmonotone`).
+* `ExactCountMonotone` (defined with the shared definitions in `Camus/Defs.lean`): the claim, for
+  exact numbers of reticulations: whenever `j ≤ k` and some network built on `T` has exactly `k`
+  reticulations, every network built on `T` with exactly `j` reticulations is matched by one with
+  exactly `k` that displays at least as many quartets of `Q`.
+* `not_exactCountMonotone`: the claim fails. For `T = (A,(B,(D,C)))` and `Q = {AC|BD}`, a network
+  with two reticulations displays `AC|BD`, while every network with three reticulations displays
+  only the quartet of `T` (`Counterexamples.graph_exact_budget_nonmonotone`).
 
 For "at most `k`" reticulations the claim holds trivially, since the feasible networks only grow
 with `k` (`Camus.atMostScore_mono`).

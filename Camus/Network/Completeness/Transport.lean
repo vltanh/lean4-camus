@@ -1,5 +1,6 @@
 module
 
+public import Camus.Network.Subdivision.Incoming
 public import Camus.Network.Completeness.Iso
 
 /-!
@@ -31,20 +32,6 @@ theorem wireInterior_map (l : List ℕ) (f : ℕ → ℕ) :
 namespace GraphSubdivision
 
 variable {P Q M : RootedNetwork}
-
-/-- The image of a vertex of `P` is a vertex of `Q`. -/
-theorem original_mem_vertices (R : GraphSubdivision P Q) {v : ℕ}
-    (hv : v ∈ P.vertices) : R.original v ∈ Q.vertices := by
-  classical
-  rw [R.vertices_covered]
-  exact Finset.mem_union_left _ (Finset.mem_image.mpr ⟨v,hv,rfl⟩)
-
-/-- The interior vertices of the wire of an edge of `P` are vertices of `Q`. -/
-theorem interior_mem_vertices (R : GraphSubdivision P Q) {e : ℕ × ℕ}
-    (he : e ∈ P.edges) {v : ℕ} (hv : v ∈ wireInterior (R.wire e)) : v ∈ Q.vertices := by
-  classical
-  rw [R.vertices_covered]
-  exact Finset.mem_union_right _ (Finset.mem_biUnion.mpr ⟨e,he,hv⟩)
 
 /-- The vertices of the wire of an edge of `P` are vertices of `Q`. -/
 theorem wire_mem_vertices (R : GraphSubdivision P Q) {e : ℕ × ℕ}

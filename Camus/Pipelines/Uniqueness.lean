@@ -14,22 +14,22 @@ than `N` ties it, since the objective only counts the quartets of `Q`.
 
 ## Main results
 
-* `UniqueOptimum`: the claim. If `N` is built on `t` and the quartets of `Q` are exactly those that
+* `UniqueOptimum` (defined with the shared definitions in `Camus/Defs.lean`): the claim. If `N` is built on `t` and the quartets of `Q` are exactly those that
   `N` displays, then every network built on `t` that displays as many quartets of `Q` as any other
   is isomorphic to `N`.
 * `not_uniqueOptimum`: the claim fails. The five-leaf tree `T = (O,((B,A),(D,C)))`, as a network
   with no added edge, displays its five quartets; the network obtained by adding one edge above
   `(A, C)` is built on `T` and displays them too, so it is optimal, but it has a reticulation and
-  `T` has none (`Counterexamples.graph_uniqueness_counterexample`). No cited result is assumed.
+  `T` has none (`Counterexamples.graph_uniqueness_counterexample`).
 * `camus_may_add_edge`: on this input the dynamic program itself may return the network with the
   added edge: every weight is zero, so a backtracking trace may take either branch at the vertex
   above `A` and `C`.
-* `tree_identifiable`: the tree itself satisfies the first of these hypotheses, so `recovery`
-  applies to the counterexample, and there selects the tree.
 * `recovery`: the claim holds with two more hypotheses: `N` is identifiable under inclusion (every
   network built on `t` that displays every quartet `N` displays, with no more reticulations than
   `N`, is isomorphic to `N`), and the optimal network has the fewest reticulations among the
   optimal networks built on `t`.
+* `tree_identifiable`: the tree itself satisfies the first of these hypotheses, so `recovery`
+  applies to the counterexample, and there selects the tree.
 
 Optimality is measured by the number of quartets of `Q` displayed. For a fixed `t` it differs from
 the number of quartets satisfied (CAMUS's objective in Theorem 1) by the number of quartets of `Q`
