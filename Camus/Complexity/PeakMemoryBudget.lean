@@ -240,8 +240,9 @@ theorem Timed.bind_assoc {α β γ : Type} (x : Timed α) (f : α → Timed β) 
   congr 1
   exact Nat.add_assoc _ _ _
 
-/-- `findList p l` (`Timed.findList`), with its memory: each test runs in its own scope and returns
-a Boolean, so its cells are released when it returns. -/
+/-- `findList p l` (`Timed.findList`), with its memory declared directly: it keeps nothing, and its
+peak is the largest peak of a test. The declaration is valid when every test keeps nothing, as in
+its one use, whose test `Complexity.gallTestS` runs in a scope that keeps nothing. -/
 def Spaced.findList {α : Type} (p : α → Spaced Bool) (l : List α) : Spaced (Option α) :=
   ⟨Timed.findList (fun a => (p a).run) l, 0, (l.map fun a => (p a).peak).foldr max 0⟩
 
@@ -472,9 +473,10 @@ theorem length_budgetBacktrack {t : PhyloTree} {T : Tables} (hT : T.Correct t)
             _ ≤ 1 + ((cone t v).erase v).card := Nat.add_le_add_left (hsum _) 1
             _ = (cone t v).card := by omega
 
-/-- The cells that the backtracking through the matrix holds besides one frame, one pair and two
-lists of hanging subtrees per level of calls, for budgets `≤ m` and `N` vertices: the test of a
-pair, and the knapsack table with the reverse of the list while the budgets are found. -/
+/-- The cells that the backtracking through the matrix holds besides one frame, one pair, the list
+of the hanging subtrees and the table of their budgets per level of calls, for budgets `≤ m` and
+`N` vertices: the test of a pair, and the knapsack table with the reverse of the list while the
+budgets are found. -/
 def budgetTransient (N m : ℕ) : ℕ := (N + 1) * (m + 1) + N + 2 * m + 1
 
 /-- With correct tables and buckets, the backtracking through the matrix from `v` with a budget
@@ -716,8 +718,8 @@ theorem run_budgetNetworksS (T : Tables) (B : Address → List (Address × Addre
     Spaced.run_bind, Spaced.run_op, Spaced.run_ite, run_budgetBacktrackS, Spaced.run_pure]
 
 /-- With correct tables and buckets, the backtracking from the root of a tree with `N` vertices
-for the `m + 1` budgets keeps at most `(m + 1)(N + 1)` cells and holds at most
-`(m + 1)(N + 1) + N (2 N + 3) + budgetTransient N m`. -/
+for the `m + 1` budgets holds at most `(m + 1)(N + 1) + N (2 N + 3) + budgetTransient N m`
+cells. -/
 theorem budgetNetworksS_memory {t : PhyloTree} {T : Tables} (hT : T.Correct t)
     {B : Address → List (Address × Address)} (hB : ∀ v e, e ∈ B v ↔ e ∈ pairsAt t v)
     (W : Address × Address → ℕ) (R : Address × ℕ → WithBot ℕ) (m : ℕ) :
@@ -834,9 +836,9 @@ theorem camusBudgetNetworks_memory {t : PhyloTree} (ht : t.WellLabelled) (Q : Mu
   omega
 
 /-- **Section 2.4 with backtracking**, for the program with its memory. For a well-labelled tree
-`T` with `n` leaves, a multiset `Q` with `|Q|` distinct quartets, all on taxa of `T`, `m ≥ 1`
-budget columns, and a solution `A` of the recurrence with the weights of Equation (1), the program
-of `camusBudgetNetworksS` returns, for every `k ≤ m` whose row at the root is nonempty, a
+`T` with `n` leaves, a multiset `Q` with `|Q|` distinct quartets, all on taxa of `T`, the budget
+columns `0, …, m` for some `m ≥ 1`, and a solution `A` of the recurrence with the weights of
+Equation (1), the program of `camusBudgetNetworksS` returns, for every `k ≤ m` whose row at the root is nonempty, a
 backtracking trace from the root with budget `k` (`camusBudgetNetworks_trace`), whose network is
 the network `N_k` (`camusBudgetNetworks_networks`); it performs at most `2100 n² (|Q| + m³ n)`
 operations (`camusBudgetNetworks_time`); and its input and the cells that it holds at any step

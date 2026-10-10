@@ -118,11 +118,10 @@ open DynamicProgramming in
 /-- **Sections 3.2 to 3.4 under the NMSC, with the corrected recovery theorem.** Let the gene trees
 be independent, each with the law of the NMSC on a metric level-1 network `N` with distinct leaf
 labels on the taxa `L`, without the anomalous configuration, and let `0 < t < t₀(N)`. Let `Nr` be a
-rooted binary level-1 network of CAMUS built on the tree `T` that displays the quartet trees that
-`N` displays (`hbridge`; the graph of `N` is such a network, `NMSC.nmsc_recovery_graph`), and
-assume, as `recovery` does, that `Nr` is identifiable under inclusion among the networks built on
-`T`. Almost
-surely, for all large numbers `n` of genes, every network built on `T` that has the best score for
+rooted binary level-1 network of CAMUS built on the tree `T` that displays exactly the quartet
+trees that `N` displays (`hbridge`; the graph of `N` is such a network,
+`NMSC.nmsc_recovery_graph`), and assume, as `recovery` does, that `Nr` is identifiable under
+inclusion among the networks built on `T`. Almost surely, for all large numbers `n` of genes, every network built on `T` that has the best score for
 the output `Q` of Quartet Filtering on the quartet trees of the first `n` gene trees, with the
 fewest reticulations among the networks with the best score, is isomorphic to `Nr`. The paper's
 uniqueness claim, without the tie-break and the identifiability, is false (the report's E7). -/

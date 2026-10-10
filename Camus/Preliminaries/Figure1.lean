@@ -110,7 +110,8 @@ theorem net_displays_iff (q : Quartet) :
     fin_cases s <;> decide +kernel
   · rintro (rfl | rfl) <;> decide +kernel
 
-/-- Figure 1: `T` induces AD|EG ("also induced by T") and not DE|AG. -/
+/-- Figure 1: `T` induces AD|EG, the quartet of the rooted tree ((A,D),(E,G)) "which is also induced
+by T", and not DE|AG. -/
 theorem tree_induces : quartetAD.induced tree = true ∧ quartetDE.induced tree = false := by
   decide
 
@@ -138,8 +139,10 @@ theorem tree_clades_eq :
   decide
 
 /-- Figure 1: the tree displayed by `N` through the added edge, `T` with `D` pruned and regrafted
-above `E`, has the clades of the rooted tree (A,((D,E),G)). Its vertex above `A` alone, the parent
-of `A` in `T`, keeps the clade {A}, and the clean-up of Definition 1 suppresses it. -/
+above `E`, has the clades of the rooted tree (A,((D,E),G)): these are the clades below the vertices
+of the second switching of `N` (`Realization.switched_cladeBelow_code`). Its vertex above `A`
+alone, the parent of `A` in `T`, keeps the clade {A}, and the clean-up of Definition 1 suppresses
+it. -/
 theorem switchedClades_eq : EdgeAbove.switchedClades tree pair = switchedTree.clades.toFinset := by
   decide
 

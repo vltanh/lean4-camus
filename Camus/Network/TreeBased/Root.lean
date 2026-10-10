@@ -15,15 +15,17 @@ switching keeps them (`RootedNetwork.exists_switching_rootEdges`), so every root
 network is built with the root kept on a well-labelled tree on its taxa
 (`RootedNetwork.exists_anchoredExtension`), and is isomorphic to the network obtained from that
 tree by adding edges (Definition 3, `RootedNetwork.exists_canonical`): Section 2.1's "N can be
-constructed by taking one of the trees t∈𝒯 and adding reticulations (edges) to t".
+constructed by taking one of the trees t∈𝒯 and adding reticulations (edges) to t". So it has at
+most `n − 1` reticulations, Section 2.4's bound (`RootedNetwork.reticulationCount_le`).
 
 Section 3.2 says that "any tree t∈Q(N_r) can be used as the basis for N (i.e. N can be obtained by
-adding reticulate edges to t)". This fails when the root of `N` lies on a cycle (the report's E8),
-and holds when the root of `N` has an outgroup leaf as a child, as in the pipelines of Section 3:
-then every switching keeps the edges out of the root (`RootedNetwork.rootEdges_mem_of_outgroup`),
-and `N` is built with the root kept on the tree of every switching
-(`RootedNetwork.exists_support_of_outgroup`, `RootedNetwork.BuiltOn.anchored_of_outgroup`), hence
-obtained from it by adding edges (`RootedNetwork.BuiltOn.exists_canonical_of_outgroup`).
+adding reticulate edges to t)". This can fail when a child of the root of `N` is a reticulation
+(the report's E8), and holds when the root of `N` has an outgroup leaf as a child, as in the
+pipelines of Section 3: then every switching keeps the edges out of the root
+(`RootedNetwork.rootEdges_mem_of_outgroup`), and `N` is built with the root kept on the tree of
+every switching (`RootedNetwork.exists_support_of_outgroup`,
+`RootedNetwork.BuiltOn.anchored_of_outgroup`), hence obtained from it by adding edges
+(`RootedNetwork.BuiltOn.exists_canonical_of_outgroup`).
 
 ## Main results
 
@@ -34,9 +36,11 @@ obtained from it by adding edges (`RootedNetwork.BuiltOn.exists_canonical_of_out
 * `RootedNetwork.exists_anchoredExtension`, `RootedNetwork.exists_canonical`: every rooted binary
   level-1 network is built with the root kept on a well-labelled tree, and is isomorphic to a
   network obtained from it by adding edges.
+* `RootedNetwork.reticulationCount_le`, `RootedNetwork.reticulationCount_lt`: Section 2.4's bound
+  of `n − 1` reticulations, for every rooted binary level-1 network.
 * `RootedNetwork.exists_support_of_outgroup`, `RootedNetwork.BuiltOn.anchored_of_outgroup`,
-  `RootedNetwork.BuiltOn.exists_canonical_of_outgroup`: with an outgroup leaf below the root, every
-  tree of `N` keeps the root, and `N` is obtained from it by adding edges.
+  `RootedNetwork.BuiltOn.exists_canonical_of_outgroup`: with an outgroup leaf as a child of the
+  root, every tree of `N` keeps the root, and `N` is obtained from it by adding edges.
 -/
 
 @[expose] public section
@@ -254,15 +258,38 @@ theorem exists_anchoredExtension (hN : N.RootedBinaryLevelOne) :
   obtain ⟨t, ht, htaxa, ⟨H⟩⟩ := (exists_support_iff hN hS).mpr hroot
   exact ⟨t, ht, htaxa, hN, S, ⟨H⟩⟩
 
+/-- Section 2.4: "it is known that a level-1 phylogenetic network on n leaves will not have more
+than n−1 reticulations". Every rooted binary level-1 network `N` has at most `n − 1`
+reticulations, where `n` is the number of its taxa: it is built with the root kept on a
+well-labelled tree on its taxa (`RootedNetwork.exists_anchoredExtension`), and a network built so
+on a tree with `n` taxa has at most `n − 1` reticulations
+(`RootedNetwork.anchored_reticulation_bound`). -/
+theorem reticulationCount_le (hN : N.RootedBinaryLevelOne) :
+    N.reticulationCount ≤ N.taxa.card - 1 := by
+  obtain ⟨t, ht, htaxa, hA⟩ := exists_anchoredExtension hN
+  rw [← htaxa]
+  exact anchored_reticulation_bound ht hA
+
+/-- Section 2.4's bound without truncated subtraction: a rooted binary level-1 network has fewer
+reticulations than taxa. -/
+theorem reticulationCount_lt (hN : N.RootedBinaryLevelOne) :
+    N.reticulationCount < N.taxa.card := by
+  have h1 := reticulationCount_le hN
+  have h2 := (taxa_nonempty hN).card_pos
+  omega
+
 /-- Section 2.1: "N can be constructed by taking one of the trees t∈𝒯 and adding reticulations
-(edges) to t". Every rooted binary level-1 network `N` is isomorphic to the network obtained from
-a well-labelled tree `t` on its taxa by adding an edge above each pair of a cycle-separated family
-`E` (Definition 3); `t` is the tree of a switching that keeps the edges out of the root of `N`. -/
+(edges) to t". Every rooted binary level-1 network `N` is built with the root kept on a
+well-labelled tree `t` on its taxa, the tree of a switching that keeps the edges out of the root of
+`N`, and is isomorphic to the network obtained from `t` by adding an edge above each pair of a
+cycle-separated family `E` (Definition 3). -/
 theorem exists_canonical (hN : N.RootedBinaryLevelOne) :
     ∃ (t : PhyloTree) (E : Finset (Address × Address)), t.WellLabelled ∧ t.taxa = N.taxa ∧
-      EdgeAbove.CycleSeparated t E ∧ Nonempty (N.Iso (Realization.graph t E)) := by
-  obtain ⟨t, ht, htaxa, -, S, ⟨H⟩⟩ := exists_anchoredExtension hN
-  exact ⟨t, H.extracted, ht, htaxa, H.extracted_separated hN, H.canonical_iso hN⟩
+      N.AnchoredExtension t ∧ EdgeAbove.CycleSeparated t E ∧
+        Nonempty (N.Iso (Realization.graph t E)) := by
+  obtain ⟨t, ht, htaxa, hA⟩ := exists_anchoredExtension hN
+  obtain ⟨-, S, ⟨H⟩⟩ := hA
+  exact ⟨t, H.extracted, ht, htaxa, ⟨hN, S, ⟨H⟩⟩, H.extracted_separated hN, H.canonical_iso hN⟩
 
 /-- A vertex with edges to two distinct vertices `a` and `b` has no other child. -/
 theorem child_eq_of_two {v a b c : ℕ} (hN : N.RootedBinaryLevelOne) (ha : (v, a) ∈ N.edges)
@@ -336,7 +363,7 @@ theorem rootEdges_mem_of_outgroup (hN : N.RootedBinaryLevelOne) (hS : N.Switchin
 /-- Section 3.2, "any tree t∈Q(N_r) can be used as the basis for N (i.e. N can be obtained by
 adding reticulate edges to t)", with an outgroup: if the root of `N` has an outgroup leaf as a
 child, the tree of every switching `S` keeps the root, and `N` is built on it with the root kept.
-Without the outgroup this fails when the root lies on a cycle (the report's E8). -/
+Without the outgroup this can fail when a child of the root is a reticulation (the report's E8). -/
 theorem exists_support_of_outgroup (hN : N.RootedBinaryLevelOne) (hS : N.Switching S) {z : ℕ}
     (hz : z ∈ N.taxa) (hzr : (N.root, N.leaf z) ∈ N.edges) :
     ∃ t : PhyloTree, t.WellLabelled ∧ t.taxa = N.taxa ∧ Nonempty (SupportSubdivision t N S) :=

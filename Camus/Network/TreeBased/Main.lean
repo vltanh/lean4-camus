@@ -18,7 +18,7 @@ Definition 1, through `S` (`RootedNetwork.exists_displayedSubdivision`). So ever
 tree-based (`RootedNetwork.treeBased`; Section 3.2: "the network N is tree-based (which follows
 directly from being level-1)"), and Section 2.4's "it is known that a level-1 phylogenetic network
 on n leaves will not have more than n−1 reticulations" holds for every rooted binary level-1
-network (`RootedNetwork.reticulationCount_le`).
+network (`RootedNetwork.reticulationCount_le`, in `Camus/Network/TreeBased/Root.lean`).
 
 ## Main results
 
@@ -28,8 +28,6 @@ network (`RootedNetwork.reticulationCount_le`).
   tree on the taxa of `N`, below a directed path from the root of `N` (Definition 1).
 * `RootedNetwork.builtOn_of_switching`, `RootedNetwork.treeBased`: `N` is built on the tree of
   each of its switchings, in the sense of Definition 1.
-* `RootedNetwork.reticulationCount_le`, `RootedNetwork.reticulationCount_lt`: Section 2.4's bound
-  of `n − 1` reticulations.
 
 ## Proof
 
@@ -124,30 +122,21 @@ theorem exists_displayedSubdivision (hN : N.RootedBinaryLevelOne) (hS : N.Switch
 
 /-- Section 2.1: "N can be constructed by taking one of the trees t∈𝒯 and adding reticulations
 (edges) to t". For every switching `S` of a rooted binary level-1 network `N`, `N` is built, in the
-sense of Definition 1, on a well-labelled tree on its taxa: the tree of `S`
-(`RootedNetwork.exists_displayedSubdivision`). -/
+sense of Definition 1, on a well-labelled tree `t` on its taxa through `S`: `t` is the tree of `S`,
+of which `S` is a subdivision (`RootedNetwork.exists_displayedSubdivision`). -/
 theorem builtOn_of_switching (hN : N.RootedBinaryLevelOne) (hS : N.Switching S) :
-    ∃ t : PhyloTree, t.WellLabelled ∧ t.taxa = N.taxa ∧ N.BuiltOn t := by
+    ∃ t : PhyloTree, t.WellLabelled ∧ t.taxa = N.taxa ∧ N.BuiltOn t ∧
+      Nonempty (DisplayedSubdivision t N S) := by
   obtain ⟨t, ht, htaxa, hH⟩ := exists_displayedSubdivision hN hS
-  exact ⟨t, ht, htaxa, hN, S, hH⟩
+  exact ⟨t, ht, htaxa, ⟨hN, S, hH⟩, hH⟩
 
 /-- Section 2.1: every rooted binary level-1 network is tree-based. It is built, in the sense of
 Definition 1, on a well-labelled tree on its taxa. -/
 theorem treeBased (hN : N.RootedBinaryLevelOne) :
     ∃ t : PhyloTree, t.WellLabelled ∧ t.taxa = N.taxa ∧ N.BuiltOn t := by
   obtain ⟨S, hS⟩ := exists_switching hN
-  exact builtOn_of_switching hN hS
-
-/-- Section 2.4: "it is known that a level-1 phylogenetic network on n leaves will not have more
-than n−1 reticulations". Every rooted binary level-1 network `N` has at most `n − 1`
-reticulations, where `n` is the number of its taxa: it is built on a well-labelled tree on its
-taxa (`RootedNetwork.treeBased`), and a network built on a tree with `n` taxa has at most `n − 1`
-reticulations (`RootedNetwork.builtOn_reticulation_bound`). -/
-theorem reticulationCount_le (hN : N.RootedBinaryLevelOne) :
-    N.reticulationCount ≤ N.taxa.card - 1 := by
-  obtain ⟨t, ht, htaxa, hbuilt⟩ := treeBased hN
-  rw [← htaxa]
-  exact builtOn_reticulation_bound ht hbuilt
+  obtain ⟨t, ht, htaxa, hbuilt, -⟩ := builtOn_of_switching hN hS
+  exact ⟨t, ht, htaxa, hbuilt⟩
 
 /-- A rooted binary level-1 network has a taxon: it is built on a tree, which has a leaf. -/
 theorem taxa_nonempty (hN : N.RootedBinaryLevelOne) : N.taxa.Nonempty := by
@@ -155,14 +144,6 @@ theorem taxa_nonempty (hN : N.RootedBinaryLevelOne) : N.taxa.Nonempty := by
   rw [← htaxa]
   obtain ⟨a, ha⟩ := List.exists_mem_of_length_pos t.labels_nonempty
   exact ⟨a, List.mem_toFinset.mpr ha⟩
-
-/-- Section 2.4's bound without truncated subtraction: a rooted binary level-1 network has fewer
-reticulations than taxa. -/
-theorem reticulationCount_lt (hN : N.RootedBinaryLevelOne) :
-    N.reticulationCount < N.taxa.card := by
-  have h1 := reticulationCount_le hN
-  have h2 := (taxa_nonempty hN).card_pos
-  omega
 
 end RootedNetwork
 

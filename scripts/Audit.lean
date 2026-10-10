@@ -210,6 +210,8 @@ meta def externalResults : List (String × Name) :=
     ``Camus.External.support_tendsto),
    ("Quartet CFs of the components of a cycle under the NMSC (Banos 2019)",
     ``Brooqs.nmsc_quartetCF),
+   ("Quartet CFs of four taxa in four components of a cycle under the NMSC (Banos 2019)",
+    ``Brooqs.quartetCF_eq_of_components),
    ("The anomalous 3-cycle under the NMSC (Ane, Fogg, Allman, Banos, Rhodes 2024)",
     ``Brooqs.net32_anomaly)]
 
@@ -278,7 +280,7 @@ meta def paperResults : List (String × Name) :=
    ("Sec 3.3, quartet CFs of every four taxa under the NMSC", ``Brooqs.Net.weakPattern),
    ("Sec 3.3, the filter returns Q(N_r) under the NMSC, without the anomaly",
     ``Camus.NMSC.nmsc_filterQuartets_support),
-   ("Sec 3.3, the filter in the anomalous configuration (E9)", ``Camus.NMSC.anomaly_filterQuartets),
+   ("Sec 3.3, the filter on an anomalous network (E9)", ``Camus.NMSC.anomaly_filterQuartets),
    ("Sec 3.3, ASTRAL's tree need not be displayed", ``Camus.NMSC.anomaly_astral),
    ("Sec 3.3, recovery under the NMSC", ``Camus.NMSC.nmsc_recovery_graph),
    ("Sec 3.3, uniqueness fails under the NMSC (E7)", ``Camus.NMSC.nmsc_uniqueness_counterexample),

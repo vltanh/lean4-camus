@@ -22,7 +22,8 @@ of `N` (`NMSC.displaysTree_baseTree`).
 * `NMSC.cutSets`, `NMSC.cutSets_baseTree`: the clusters of the trees displayed by the graph
   through at most one added edge, and their equality with the clusters of the displayed trees
   of `N`.
-* `NMSC.graph_displaysQuartet_iff`: the graph of `N` displays the quartet trees that `N` displays.
+* `NMSC.graph_displaysQuartet_iff`: the graph of `N` displays exactly the quartet trees that `N`
+  displays.
 * `NMSC.graph_anchoredExtension`: the graph of `N` is built on the base tree of `N`.
 * `NMSC.baseClusters`, `NMSC.displaysTree_baseTree`: the base tree is a displayed tree of `N`.
 * `NMSC.cycleCount`, `NMSC.graph_reticulationCount`: the graph of `N` has one reticulation for each

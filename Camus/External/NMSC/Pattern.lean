@@ -703,7 +703,8 @@ private theorem pt_pair_gt {N : Net X} (hN : N.leaves.Nodup) {s : Fin 4 → X}
 two of them below its hybrid node, at least three below its top node, and at most one in each
 network hanging from its sides. The four taxa then induce a 3₂-cycle in the terms of Ané, Fogg,
 Allman, Baños and Rhodes (2024): two of them below the hybrid node of a 3-cycle, the two others in
-two other components. (`Brooqs.net32_anomaly` shows that the CF pattern can fail there.) -/
+two other components. (`Brooqs.net32_anomaly` shows that the CF pattern can fail there, and
+`Brooqs.net32_long` that it can hold there.) -/
 def Net.Anomalous (N : Net X) (s : Fin 4 → X) : Prop :=
   ∃ Ω : N.Cycle, #(Ω.below.lin s) = 2 ∧ 3 ≤ #(Ω.top.lin s) ∧
     ∀ n ∈ Ω.side₁.nodes ++ Ω.side₂.nodes, #(n.2.2.lin s) ≤ 1

@@ -54,19 +54,21 @@ is `O(n³m³)`, within the bound of the matrix.
 * `Complexity.camusBudgetNetworks_time`: at most `2100 n² (|Q| + m³ n)` operations for `m ≥ 1`,
   the matrix and the backtracking for every `k ≤ m` together.
 
-## Proof (the paper's)
+## Proof
 
 The paper analyses the matrix only: "we need to solve each of the n original subproblems O(m)
 times. It takes O(m²) time to find the correct DP look-ups to solve each problem optimally"
-(`Complexity.camusBudget_time`). The backtracking for one budget solves each subproblem at most
-once more, at a budget `≤ m`: it visits each vertex of `T` at most once (`Complexity.cone_children`,
-`Complexity.cone_hanging`, `Complexity.time_budgetBacktrack`), and at a vertex `x` it scans the
-bucket of `x` with the knapsack of each pair (`Complexity.time_gallTest`) and backtracks through
-one knapsack (`Complexity.time_knapsackTable`, `Complexity.time_knapsackBack`). Each candidate
-pair is in one bucket (`Complexity.sum_ownCostBudget`), so the `m + 1` backtrackings add
-`O(m · |candidates| · n · m²) = O(n³m³)` (`Complexity.budgetNetworks_arith`). Correctness follows
-the paper's proof of Theorem 1, for the matrix: the value of the cell comes from one of the two
-cases of the recurrence (`Complexity.budgetBacktrack_trace`), as in `BudgetDP.exists_trace`.
+(`Complexity.camusBudget_time`). It gives no argument for the backtracking, whose running time and
+correctness are the formalization's own. The backtracking for one budget solves each subproblem at
+most once more, at a budget `≤ m`: it visits each vertex of `T` at most once
+(`Complexity.cone_children`, `Complexity.cone_hanging`, `Complexity.time_budgetBacktrack`), and at a
+vertex `x` it scans the bucket of `x` with the knapsack of each pair (`Complexity.time_gallTest`)
+and backtracks through one knapsack (`Complexity.time_knapsackTable`,
+`Complexity.time_knapsackBack`). Each candidate pair is in one bucket
+(`Complexity.sum_ownCostBudget`), so the `m + 1` backtrackings add
+`O(m · |candidates| · n · m²) = O(n³m³)` (`Complexity.budgetNetworks_arith`). Its output is a
+trace because the value of each cell comes from one of the two cases of the recurrence
+(`Complexity.budgetBacktrack_trace`), as in `BudgetDP.exists_trace`.
 -/
 
 @[expose] public section
@@ -1294,9 +1296,9 @@ theorem budgetNetworks_arith {n m N C q Tm : ℕ} (hn : 1 ≤ n) (hm : 1 ≤ m) 
   omega
 
 /-- **Section 2.4 with backtracking: the running time `O(n²(|Q| + m³n))`.** For a well-labelled
-tree `T` with `n` leaves, a multiset `Q` with `|Q|` distinct quartets, and `m ≥ 1` budget columns,
-`camusBudgetNetworks t Q m`, which computes the matrix and backtracks the networks `N_k` for every
-`k ≤ m`, performs at most `2100 n² (|Q| + m³ n)` operations. -/
+tree `T` with `n` leaves, a multiset `Q` with `|Q|` distinct quartets, and the budget columns
+`0, …, m` for some `m ≥ 1`, `camusBudgetNetworks t Q m`, which computes the matrix and backtracks
+the networks `N_k` for every `k ≤ m`, performs at most `2100 n² (|Q| + m³ n)` operations. -/
 theorem camusBudgetNetworks_time {t : PhyloTree} (ht : t.WellLabelled) (Q : Multiset Quartet)
     {m : ℕ} (hm : 1 ≤ m) :
     (camusBudgetNetworks t Q m).time ≤

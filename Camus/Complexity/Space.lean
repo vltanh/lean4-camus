@@ -44,6 +44,11 @@ stores, and each declaration is to be checked against the program it wraps:
   `sz a` cells of its result `a`.
 * `Spaced.frame x`: `x` is a call of a recursive function that is not tail-recursive; its frame,
   one cell, is held during the call. A tail-recursive function is a loop and has no frames.
+* `Spaced.findList p l` (`Camus/Complexity/PeakMemoryBudget.lean`): a search through `l` that keeps
+  nothing, with the largest peak of its tests; valid when every test keeps nothing.
+
+Lean checks that each program with its memory runs the program it wraps (for instance
+`Complexity.run_camusS`); the declarations of memory themselves were checked by reading.
 
 Tables are written in place. Every table of the programs is threaded through them and no older
 version of a table is read after it was written, except in the knapsack of Section 2.4, which reads

@@ -23,6 +23,8 @@ that are not.
 * `Brooqs.net32_displays`: it displays `xy|zw` and neither `xz|yw` nor `xw|yz`.
 * `Brooqs.net32_anomaly`: for `γ = 1/2`, `ℓ = h₁ = h₂ = 1/20` and `L = 3`,
   `CF(xy|zw) < CF(xz|yw) = CF(xw|yz)`.
+* `Brooqs.net32_long`: with `ℓ = 3` instead, `CF(xz|yw) = CF(xw|yz) < CF(xy|zw)`: the anomaly
+  depends on the edge lengths.
 
 ## Proof
 
@@ -603,5 +605,31 @@ theorem net32_anomaly {x y z w : X} (hxy : x ≠ y) (hxz : x ≠ z) (hxw : x ≠
       simp
     nlinarith
   nlinarith [mul_le_mul hu1 hu1 (by norm_num) (by linarith), mul_le_mul hu2 hv1 hv0.le zero_le_one]
+
+/-- **The anomaly depends on the edge lengths.** With the parameters of `net32_anomaly` but an edge
+of length `ℓ = 3` below the hybrid node, the quartet `xy|zw` that `N₃₂` displays has strictly the
+largest CF, and the two others have equal CFs: about `0.960` against `0.020`. -/
+theorem net32_long {x y z w : X} (hxy : x ≠ y) (hxz : x ≠ z) (hxw : x ≠ w) (hyz : y ≠ z)
+    (hyw : y ≠ w) (hzw : z ≠ w) :
+    (net32 (1 / 2) 3 (1 / 20) (1 / 20) 3 x y z w).quartetCF x z y w <
+        (net32 (1 / 2) 3 (1 / 20) (1 / 20) 3 x y z w).quartetCF x y z w ∧
+      (net32 (1 / 2) 3 (1 / 20) (1 / 20) 3 x y z w).quartetCF x z y w =
+        (net32 (1 / 2) 3 (1 / 20) (1 / 20) 3 x y z w).quartetCF x w y z := by
+  obtain ⟨h1, h2, h3⟩ := net32_quartetCF hxy hxz hxw hyz hyw hzw (1 / 2) 3 (1 / 20) (1 / 20) 3
+  rw [h1, h2, h3]
+  refine ⟨?_, rfl⟩
+  -- `e^{-3} ≤ 1/4` and `e^{-1/20} ≤ 1`
+  have e3 : Real.exp (-3 : ℝ) ≤ 1 / 4 := by
+    have h4 : (4 : ℝ) ≤ Real.exp 3 := by
+      have := Real.add_one_le_exp (3 : ℝ)
+      linarith
+    have hk : Real.exp (-3 : ℝ) * Real.exp 3 = 1 := by
+      rw [← Real.exp_add]
+      simp
+    nlinarith [Real.exp_pos (-3 : ℝ)]
+  have e3p := Real.exp_pos (-3 : ℝ)
+  have ehp := Real.exp_pos (-(1 / 20 : ℝ))
+  have eh1 : Real.exp (-(1 / 20 : ℝ)) ≤ 1 := Real.exp_le_one_iff.2 (by norm_num)
+  nlinarith [mul_pos e3p ehp, mul_le_mul_of_nonneg_left eh1 e3p.le]
 
 end Brooqs

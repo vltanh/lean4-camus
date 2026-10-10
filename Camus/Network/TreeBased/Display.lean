@@ -331,9 +331,9 @@ theorem induced_iff_cuts (H : DisplayedSubdivision t N S) (ht : t.WellLabelled) 
         H.taxa_preserved.symm.subset)] at hcut
       exact absurd hcut (by simp)
 
-/-- The tree of a switching is determined by its quartets: two trees whose subdivisions are the
-same switching `S` have the same taxa and induce the same quartets, those cut by the edges of
-`S`. -/
+/-- The quartets of the tree of a switching are determined by the switching: two trees whose
+subdivisions are the same switching `S` have the same taxa and induce the same quartets, those cut
+by the edges of `S`. -/
 theorem induced_eq {t' : PhyloTree} (H : DisplayedSubdivision t N S)
     (H' : DisplayedSubdivision t' N S) : t.taxa = t'.taxa ∧ ∀ q : Quartet,
       q.induced t = q.induced t' := by

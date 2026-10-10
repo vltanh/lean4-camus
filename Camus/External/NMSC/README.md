@@ -37,13 +37,14 @@ its corollary) and [`Brooqs.quartetCF_eq_of_components`](Cycle.lean#L825) in `Cy
   its displayed quartets ([`Brooqs.Net.Displays`](Displayed.lean#L729)).
 - `ThreeCycle.lean`: the quartet CFs of a 3-cycle above two taxa, `N₃₂`, and the anomaly: the only
   quartet that `N₃₂` displays on its four taxa can be strictly the least probable
-  ([`Brooqs.net32_anomaly`](ThreeCycle.lean#L581)).
+  ([`Brooqs.net32_anomaly`](ThreeCycle.lean#L583)), or strictly the most probable, depending on the edge lengths
+  ([`Brooqs.net32_long`](ThreeCycle.lean#L612)).
 - `GeneLaw.lean`: the gene tree distribution is a probability distribution, and independent gene
   trees with that law ([`Brooqs.Net.genes`](GeneLaw.lean#L150)).
 - `Splits.lean`, `FourComponents.lean`, `Pairs.lean`, `Pattern.lean`: the CF pattern that Quartet
   Filtering presumes holds for every set of four taxa except in the anomalous configuration
-  ([`Brooqs.Net.regularOn_of_not_anomalous`](Pattern.lean#L871)), and its weaker part holds always
-  ([`Brooqs.Net.weakPattern`](Pattern.lean#L880)).
+  ([`Brooqs.Net.regularOn_of_not_anomalous`](Pattern.lean#L872)), and its weaker part holds always
+  ([`Brooqs.Net.weakPattern`](Pattern.lean#L881)).
 
 The consequences for Sections 3.2 to 3.4 of CAMUS are in [`Camus/Pipelines/NMSC/`](../../Pipelines/NMSC), with the graph
 of a network in the representation of CAMUS ([`Camus/Pipelines/NMSC/BaseTree.lean`](../../Pipelines/NMSC/BaseTree.lean),

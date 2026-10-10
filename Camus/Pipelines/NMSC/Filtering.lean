@@ -22,14 +22,16 @@ two quartet trees (`NMSC.threshold`), almost surely, for all large numbers of ge
 Filtering returns exactly the quartet trees of the gene trees that are in Q(N_r), with their
 multiplicities (`NMSC.nmsc_filterQuartets`).
 
-The pattern holds on every set of four taxa except in one configuration: a cycle with two of the
+The pattern holds on every set of four taxa outside one configuration: a cycle with two of the
 four taxa below its hybrid node and the two others in two other components
 (`Brooqs.Net.Anomalous`, `Brooqs.Net.regularOn_of_not_anomalous`). So Quartet Filtering is
 consistent for Q(N_r) on networks without this configuration (`NMSC.NoAnomaly`,
 `NMSC.nmsc_filterQuartets_of_noAnomaly`), for instance networks whose hybrid nodes each have a
 single leaf below them (`NMSC.noAnomaly_of_below`). It is not in general:
-`Camus/Pipelines/NMSC/Anomaly.lean` shows a network on which the only quartet tree in Q(N_r) on four
-taxa is strictly the least probable, and Quartet Filtering then fails for every threshold.
+`Camus/Pipelines/NMSC/Anomaly.lean` shows a network in this configuration on which the only quartet
+tree in Q(N_r) on four taxa is strictly the least probable, and Quartet Filtering then fails for
+every threshold; with other edge lengths the pattern holds in the same configuration
+(`Brooqs.net32_long`).
 
 ## Main results
 
@@ -84,8 +86,9 @@ def ratios (N : Brooqs.Net L) : Finset ℝ :=
     (quartetProb N (x.1.quartet x.2.1) - quartetProb N (x.1.quartet x.2.2)) /
       (quartetProb N (x.1.quartet x.2.1) + quartetProb N (x.1.quartet x.2.2))
 
-/-- The threshold `t₀(N)` of Section 3.4: the least of the ratios `(p₂ − p₃)/(p₂ + p₃)` of the sets
-of four taxa on which `N` displays two quartet trees, and `1` if there are none. -/
+/-- The bound `t₀(N)` on the threshold, the population form of Section 3.4's condition
+"t < (f2−f3)/(f2+f3)": the least of the ratios `(p₂ − p₃)/(p₂ + p₃)` of the sets of four taxa on
+which `N` displays two quartet trees, and `1` if there are none (each ratio is at most `1`). -/
 def threshold (N : Brooqs.Net L) : ℝ := (insert 1 (ratios N)).min' (insert_nonempty _ _)
 
 /-- `t < t₀(N)` iff `t < 1` and `t` is below every ratio. -/

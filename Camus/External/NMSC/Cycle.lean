@@ -848,9 +848,4 @@ theorem quartetCF_eq_of_components {X : Type u} [DecidableEq X] (N : Net X) (hN 
     omega
   rw [quartetCF_eq_sum_top N hN.2 Ω s hsN h3, nc_sum_top Ω hN.2 s hinj hlt hs]
 
-/-- The taxa of the components of a cycle are taxa of the network. -/
-theorem Net.Cycle.component_subset_taxa {X : Type u} [DecidableEq X] {N : Net X} (Ω : N.Cycle)
-    (i : ℕ) : Ω.component i ⊆ N.taxa :=
-  nc_component_subset Ω i
-
 end Brooqs

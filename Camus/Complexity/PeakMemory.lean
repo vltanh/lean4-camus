@@ -15,9 +15,9 @@ program `Complexity.camus` of `Camus/Complexity/Program.lean` with its memory, i
 `Complexity.run_camusS`), and proves both claims for the peak of a run: at every step, the program
 holds at most `9 |V(T)| + 3 |V(T)|² ≤ 48 n²` cells besides its input (`Complexity.peak_camusS`,
 `Complexity.peak_camusS_le`), and with the input, `T` and the `|Q|` distinct quartets of `Q` with
-their multiplicities, at most `68 n⁴` cells (`Complexity.camus_memory`). The same holds with the
-backtracking of Section 2.2 (`Complexity.camusNetworkS`, `Complexity.peak_camusNetworkS`):
-`11 |V(T)| + 4 |V(T)|²` cells.
+their multiplicities, at most `68 n⁴` cells (`Complexity.camus_memory`). With the backtracking of
+Section 2.2 (`Complexity.camusNetworkS`, `Complexity.peak_camusNetworkS`), the program holds at most
+`11 |V(T)| + 4 |V(T)|²` cells besides its input.
 
 What is charged, in cells (`Camus/Complexity/Space.lean`):
 

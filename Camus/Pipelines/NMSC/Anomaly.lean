@@ -10,8 +10,8 @@ Section 3.3 motivates Quartet Filtering (Algorithm 1): "The motivation for this 
 do not want to include quartet trees that are not in Q(Nr). On the other hand, we do not want to
 eliminate these quartet trees." It also notes that "there is no guarantee that the tree T* that
 ASTRAL produces will be in T". This file shows that, for one level-1 network under the NMSC,
-Algorithm 1 does both things that the paper does not want, whatever the threshold, and that the
-tree of maximum quartet support score is not a displayed tree.
+Algorithm 1 does both things that the paper does not want, whatever the threshold, and that no
+tree of maximum quartet support score is a displayed tree.
 
 The network is `N₃₂` of `Brooqs.net32_anomaly` on the taxa `0, 1, 2, 3` (`NMSC.anomalyNet`): `0`
 and `1` below the hybrid node of a 3-cycle, `2` on a side of the cycle and `3` outside it. Of the
@@ -30,6 +30,8 @@ for the quartet trees that this graph displays (`NMSC.anomaly_filterQuartets_gra
 
 * `NMSC.anomalyNet`, `NMSC.anomalyNet_displaysQuartet`, `NMSC.anomalyNet_quartetProb`: the network,
   its displayed quartet trees on `0, 1, 2, 3`, and their probabilities.
+* `NMSC.anomalyNet_anomalous`, `NMSC.not_noAnomaly_anomalyNet`: the four taxa are in the
+  anomalous configuration of `Brooqs.Net.Anomalous`.
 * `NMSC.anomalyNet_not_regularOn`: the four taxa do not have the CF pattern that Quartet Filtering
   presumes (`NMSC.RegularOn`).
 * `NMSC.anomaly_filterQuartets`, `NMSC.anomaly_filterQuartets_genes`: for every threshold, almost
@@ -126,6 +128,18 @@ private def an_tree : PhyloTree := .fork (.fork (.leaf 0) (.leaf 2)) (.fork (.le
 private theorem an_tree_facts : an_tree.WellLabelled ∧ an_tree.taxa = taxa4 ∧
     (key4.quartet 1).induced an_tree = true := by
   refine ⟨by decide, by decide, by decide⟩
+
+/-- The four taxa `0, 1, 2, 3` of the network are in the anomalous configuration
+(`Brooqs.Net.Anomalous`): `0` and `1` below the hybrid node of the 3-cycle, `2` on a side of it and
+`3` outside it. -/
+theorem anomalyNet_anomalous : anomalyNet.Anomalous (keyTaxon key4 keyTaxa_key4) := by
+  refine ⟨Brooqs.net32Cycle (X := taxa4) (1 / 2) (1 / 20) (1 / 20) (1 / 20) 3 ⟨0, by decide⟩
+    ⟨1, by decide⟩ ⟨2, by decide⟩ ⟨3, by decide⟩, ?_, ?_, ?_⟩ <;> decide
+
+/-- The network is not covered by `NMSC.nmsc_filterQuartets_of_noAnomaly`: it has the anomalous
+configuration. -/
+theorem not_noAnomaly_anomalyNet : ¬ NoAnomaly anomalyNet :=
+  fun h => h _ (by decide) anomalyNet_anomalous
 
 /-- The four taxa `0, 1, 2, 3` of the network do not have the CF pattern that Quartet Filtering
 presumes (`RegularOn`): the quartet tree it displays is not the most probable. -/
