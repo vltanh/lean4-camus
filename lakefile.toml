@@ -8,6 +8,11 @@ autoImplicit = false
 maxSynthPendingDepth = 3
 
 [[require]]
+name = "ADR11"
+git = "https://github.com/vltanh/lean4-adr11"
+rev = "2db7f81359758bc49f52bc13c51f2640f8f2a7fd"
+
+[[require]]
 name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.35.0-rc4"

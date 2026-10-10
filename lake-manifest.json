@@ -15,6 +15,18 @@
       "configFile": "lakefile.lean"
     },
     {
+      "url": "https://github.com/vltanh/lean4-adr11",
+      "type": "git",
+      "subDir": null,
+      "scope": "",
+      "rev": "2db7f81359758bc49f52bc13c51f2640f8f2a7fd",
+      "name": "ADR11",
+      "manifestFile": "lake-manifest.json",
+      "inputRev": "2db7f81359758bc49f52bc13c51f2640f8f2a7fd",
+      "inherited": false,
+      "configFile": "lakefile.toml"
+    },
+    {
       "url": "https://github.com/leanprover-community/plausible",
       "type": "git",
       "subDir": null,
