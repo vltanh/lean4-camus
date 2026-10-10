@@ -11,12 +11,14 @@ Section 3.2 of the paper argues that its SNP pipeline is statistically consisten
 of Warnow, Tabatabaee and Evans (2025), Section 4.2 ("WTE"), in which every site picks a tree
 displayed by the network `N` and evolves down it. This file defines that model on a rooted binary
 level-1 network `N`, with any finite set of states `σ` (WTE use the four nucleotides). Its
-parameters, with the constraints that WTE list (`External.SiteParameters`), are a positive
-transmission probability `j(e)` on each edge `e` into a reticulation, summing to 1 at each
-reticulation; a positive distribution of the state at the root; and substitution probabilities
-`p(e, s, s')`, a stochastic matrix on each edge, with `p(e, s, s') > 0` for `s ≠ s'` on the tree
-edges (the edges into vertices of indegree 1) and no change on the reticulation edges. The model
-(`External.SiteModel`) also asks `p(e, s, s) > 0` on the tree edges, as WTE's Theorem 7 does. A
+parameters, with the constraints that WTE list (`External.SiteParameters`), are WTE's designation
+of reticulation edges (at least one of the two edges into each reticulation; the other edges are
+tree edges); a positive transmission probability `j(e)` on each edge `e` into a reticulation,
+summing to 1 at each reticulation; a positive distribution of the state at the root; and
+substitution probabilities `p(e, s, s')`, a stochastic matrix on each edge, with
+`p(e, s, s') > 0` for `s ≠ s'` on the tree edges and no change on the reticulation edges. The
+model (`External.SiteModel`) also asks `p(e, s, s) > 0` on the tree edges, as WTE's Theorem 7
+does. A
 site history (`External.SiteHistory`) is a switching `S` of `N` (the tree the site evolves down,
 before the clean-up of Definition 1) and a state at every vertex. Its probability
 (`External.SiteParameters.weight`) is the product of the transmission probabilities of the edges
@@ -267,10 +269,16 @@ end MarkovTree
 
 /-- The parameters of WTE's single site model (their Section 4.2) on the network `N`, with
 states in the finite type `σ` (WTE use the four nucleotides), and exactly the constraints that
-WTE list. A tree edge is an edge into a vertex of indegree 1, a reticulation edge an edge into a
-vertex of indegree 2.
-* `transmission e` is the transmission probability j(e) of an edge `e` into a reticulation:
-  positive, and summing to 1 over the edges into each reticulation (so also below 1, as WTE ask).
+WTE list.
+* `reticulationEdges` is WTE's designation of reticulation edges (their Section 2.1.2): "any edge
+  entering a tree node is a tree edge, but if an edge enters a reticulate node it may be denoted a
+  tree edge or a reticulation edge; we only require that at least one edge entering any given
+  reticulate node be designated as a reticulation edge". So the reticulation edges are edges into
+  reticulations (vertices of indegree 2), at least one into each, and the other edges are the
+  tree edges.
+* `transmission e` is the transmission probability j(e) of an edge `e` into a reticulation,
+  reticulation edge or tree edge: positive, and summing to 1 over the edges into each reticulation
+  (so also below 1, as WTE ask).
 * `root s` is the probability of the state `s` at the root, positive for every state.
 * `substitution e s s'` is the probability p(e, s, s') of the state `s'` at the head of `e` given
   the state `s` at its tail: each row sums to 1, a change `s ≠ s'` has positive probability on a
@@ -280,6 +288,10 @@ These constraints do not give the step of the proof of WTE's Theorem 6 that ever
 quartet, of `N` comes from an SNP of positive probability
 (`External.theorem6_step_needs_stay`); `External.SiteModel` adds the missing one. -/
 structure SiteParameters (N : RootedNetwork) (σ : Type*) [Fintype σ] where
+  reticulationEdges : Finset (ℕ × ℕ)
+  reticulationEdges_into : ∀ e ∈ reticulationEdges, e ∈ N.edges ∧ N.indegree e.2 = 2
+  reticulationEdges_cover : ∀ v ∈ N.vertices, N.indegree v = 2 →
+    ∃ e ∈ reticulationEdges, e.2 = v
   transmission : ℕ × ℕ → ℝ≥0
   transmission_pos : ∀ e ∈ N.edges, N.indegree e.2 = 2 → 0 < transmission e
   transmission_sum : ∀ v ∈ N.vertices, N.indegree v = 2 →
@@ -289,8 +301,9 @@ structure SiteParameters (N : RootedNetwork) (σ : Type*) [Fintype σ] where
   root_sum : ∑ s, root s = 1
   substitution : ℕ × ℕ → σ → σ → ℝ≥0
   substitution_sum : ∀ e ∈ N.edges, ∀ s, ∑ s', substitution e s s' = 1
-  change_pos : ∀ e ∈ N.edges, N.indegree e.2 = 1 → ∀ s s', s ≠ s' → 0 < substitution e s s'
-  no_change : ∀ e ∈ N.edges, N.indegree e.2 = 2 → ∀ s s', s ≠ s' → substitution e s s' = 0
+  change_pos : ∀ e ∈ N.edges, e ∉ reticulationEdges → ∀ s s', s ≠ s' →
+    0 < substitution e s s'
+  no_change : ∀ e ∈ reticulationEdges, ∀ s s', s ≠ s' → substitution e s s' = 0
 
 /-- WTE's single site model (their Section 4.2) on the network `N`: the parameters of
 `External.SiteParameters`, and `stay_pos`: no change, p(e, s, s), has positive probability on a
@@ -301,7 +314,7 @@ Theorem 6 needs it ("it is easy to see that the probability that c changes on e 
 in T is strictly positive"; without it the step fails, `External.theorem6_step_needs_stay`), and
 their Theorem 7 assumes it (`0 < p_on ≤ p(e, s, s)`). -/
 structure SiteModel (N : RootedNetwork) (σ : Type*) [Fintype σ] extends SiteParameters N σ where
-  stay_pos : ∀ e ∈ N.edges, N.indegree e.2 = 1 → ∀ s, 0 < substitution e s s
+  stay_pos : ∀ e ∈ N.edges, e ∉ reticulationEdges → ∀ s, 0 < substitution e s s
 
 /-- A site history on `N`: the switching `S` of `N` that the site evolves down (WTE: "each
 character essentially picks a tree in T_N down which to evolve"), and a state at every vertex.
@@ -687,18 +700,17 @@ theorem law_apply (M : SiteParameters N σ) (hN : N.RootedBinaryLevelOne) (A : S
   · simp [hA]
 
 /-- On a reticulation edge the state stays the same with probability 1. -/
-theorem stay_eq_one (M : SiteParameters N σ) {e : ℕ × ℕ} (he : e ∈ N.edges)
-    (h2 : N.indegree e.2 = 2) (s : σ) : M.substitution e s s = 1 := by
-  rw [← M.substitution_sum e he s]
-  exact (Finset.sum_eq_single s (fun b _ hb => M.no_change e he h2 s b (Ne.symm hb))
+theorem stay_eq_one (M : SiteParameters N σ) {e : ℕ × ℕ} (he : e ∈ M.reticulationEdges)
+    (s : σ) : M.substitution e s s = 1 := by
+  rw [← M.substitution_sum e (M.reticulationEdges_into e he).1 s]
+  exact (Finset.sum_eq_single s (fun b _ hb => M.no_change e he s b (Ne.symm hb))
     (by simp)).symm
 
-/-- The head of an edge of a rooted binary level-1 network has indegree 1 or 2. -/
-theorem indegree_head (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ} (he : e ∈ N.edges) :
-    N.indegree e.2 = 1 ∨ N.indegree e.2 = 2 := by
-  obtain ⟨hr, hv⟩ := Finset.mem_erase.mp (Switchings.head_mem_slot hN he)
-  rcases hN.2.2.2.2.2.2.2.2.2.1 e.2 hv hr with h | h | h
-  exacts [Or.inl h.1, Or.inl h.1, Or.inr h.1]
+/-- An edge into a vertex of indegree 1 is a tree edge. -/
+theorem not_mem_reticulationEdges (M : SiteParameters N σ) {e : ℕ × ℕ}
+    (h1 : N.indegree e.2 = 1) : e ∉ M.reticulationEdges := fun he => by
+  have := (M.reticulationEdges_into e he).2
+  omega
 
 end SiteParameters
 
@@ -706,13 +718,14 @@ namespace SiteModel
 
 variable {N : RootedNetwork} {σ : Type*} [Fintype σ]
 
-/-- On every edge of a rooted binary level-1 network, no change has positive probability. -/
-theorem stay_pos_edge (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne) {e : ℕ × ℕ}
-    (he : e ∈ N.edges) (s : σ) : 0 < M.substitution e s s := by
-  rcases SiteParameters.indegree_head hN he with h | h
-  · exact M.stay_pos e he h s
-  · rw [M.stay_eq_one he h s]
+/-- On every edge, no change has positive probability: probability 1 on a reticulation edge, and
+`stay_pos` on a tree edge. -/
+theorem stay_pos_edge (M : SiteModel N σ) {e : ℕ × ℕ} (he : e ∈ N.edges) (s : σ) :
+    0 < M.substitution e s s := by
+  by_cases hr : e ∈ M.reticulationEdges
+  · rw [M.toSiteParameters.stay_eq_one hr s]
     exact one_pos
+  · exact M.stay_pos e he hr s
 
 end SiteModel
 
@@ -1015,9 +1028,9 @@ theorem weight_snp_pos (M : SiteModel N σ) (hN : N.RootedBinaryLevelOne)
     by_cases hexy : e = (x, y)
     · subst hexy
       rw [SiteHistory.snp_state_tail, SiteHistory.snp_state_head]
-      exact M.change_pos _ (hS.1 he) hy s₀ s₁ hs
+      exact M.change_pos _ (hS.1 he) (M.not_mem_reticulationEdges hy) s₀ s₁ hs
     · rw [SiteHistory.snp_state_eq hN hS hxy s₀ s₁ he hexy]
-      exact M.stay_pos_edge hN (hS.1 he) _
+      exact M.stay_pos_edge (hS.1 he) _
 
 /-- The proof of WTE's Theorem 6, for quartets: every quartet `q` displayed by `N` is a quartet
 of an SNP of positive probability. Some switching `S` has an edge `(x, y)` into a vertex of
@@ -1051,11 +1064,19 @@ end SiteModel
 namespace SiteModel
 
 /-- A model on every network `N`, so that the hypotheses of the consistency theorems are not
-vacuous: transmission probabilities 1/2 (an edge into a reticulation of a rooted binary network
-is one of two), the uniform distribution at the root, the uniform row on tree edges, and no change
-on reticulation edges. -/
+vacuous: both edges into each reticulation are reticulation edges, the transmission
+probabilities are 1/2 (an edge into a reticulation of a rooted binary network is one of two), the
+distribution at the root is uniform, the rows on the tree edges are uniform, and the state does
+not change on the reticulation edges. -/
 noncomputable def uniform (N : RootedNetwork) (σ : Type*) [Fintype σ] [DecidableEq σ]
     [Nonempty σ] : SiteModel N σ where
+  reticulationEdges := N.edges.filter fun e => N.indegree e.2 = 2
+  reticulationEdges_into e he := Finset.mem_filter.mp he
+  reticulationEdges_cover v _ h2 := by
+    have hc : (N.edges.filter fun e => e.2 = v).card = 2 := h2
+    obtain ⟨e, he⟩ := Finset.card_pos.mp (by omega : 0 < (N.edges.filter fun e => e.2 = v).card)
+    obtain ⟨heN, hev⟩ := Finset.mem_filter.mp he
+    exact ⟨e, Finset.mem_filter.mpr ⟨heN, by rw [hev]; exact h2⟩, hev⟩
   transmission _ := 2⁻¹
   transmission_pos _ _ _ := by positivity
   transmission_sum v _ h2 := by
@@ -1077,15 +1098,17 @@ noncomputable def uniform (N : RootedNetwork) (σ : Type*) [Fintype σ] [Decidab
     · simp [h2]
     · simp only [h2, ite_false, Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
       exact mul_inv_cancel₀ (by exact_mod_cast Fintype.card_ne_zero)
-  change_pos e _ h1 _ _ _ := by
+  change_pos e he hr _ _ _ := by
     have := Fintype.card_pos (α := σ)
-    simp only [h1, show (1 : ℕ) ≠ 2 by decide, ite_false]
+    have h2 : N.indegree e.2 ≠ 2 := fun h2 => hr (Finset.mem_filter.mpr ⟨he, h2⟩)
+    simp only [h2, ite_false]
     positivity
-  stay_pos e _ h1 _ := by
+  stay_pos e he hr _ := by
     have := Fintype.card_pos (α := σ)
-    simp only [h1, show (1 : ℕ) ≠ 2 by decide, ite_false]
+    have h2 : N.indegree e.2 ≠ 2 := fun h2 => hr (Finset.mem_filter.mpr ⟨he, h2⟩)
+    simp only [h2, ite_false]
     positivity
-  no_change e _ h2 s s' hs := by simp [h2, hs]
+  no_change e he s s' hs := by simp [(Finset.mem_filter.mp he).2, hs]
 
 end SiteModel
 
