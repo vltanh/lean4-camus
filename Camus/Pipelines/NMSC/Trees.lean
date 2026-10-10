@@ -3,6 +3,7 @@ module
 public import Camus.Pipelines.NMSC.Recovery
 public import Camus.Pipelines.NMSC.Swap
 public import Camus.Network.TreeBased.Root
+public import Camus.Network.TreeBased.Display
 
 /-!
 # Sections 3.2 and 3.3 under the NMSC: recovery through every tree of the network
@@ -34,8 +35,10 @@ displayed trees of `N` that delete, at each cycle, the hybrid edge of a side wit
 
 * `NMSC.nmsc_recovery_builtOn`: Sections 3.2 to 3.4 under the NMSC, through every tree of the
   graph of `N`, with an outgroup.
-* `NMSC.graph_outgroup`, `NMSC.nmsc_recovery_outgroup`: a leaf child of the root of `N` is an
-  outgroup of its graph.
+* `NMSC.graph_outgroup`, `NMSC.graph_outgroup_right`, `NMSC.nmsc_recovery_outgroup`: a leaf child
+  of the root of `N` is an outgroup of its graph.
+* `NMSC.displaysQuartet_iff_exists_builtOn`: Q(N_r) is the union of the sets Q(T) over the trees
+  `T` of the graph of `N`.
 * `NMSC.displaysTree_baseTree_of_sideSwap`, `NMSC.nmsc_recovery_sideSwap`: recovery through the
   base tree of `N` with the sides of some cycles exchanged.
 * `NMSC.nodeDisplayed`, `NMSC.nodeDisplayed_subset`, `NMSC.exists_sideSwap_of_mem_nodeDisplayed`:
@@ -104,6 +107,66 @@ theorem graph_outgroup {N N' : Brooqs.Net L} {ℓ₁ ℓ₂ : ℝ} {z : L} (hN :
   refine mem_union_left _ (mem_biUnion.2 ⟨[false], ?_, ?_⟩)
   · exact mem_erase.2 ⟨by simp, (PhyloTree.mem_nodes_iff _ _).2 ⟨_, hroot⟩⟩
   · simp [Realization.wire, hout, hghost, wireEdges, parent]
+
+/-- The pairs of the graph of a network whose root has the leaf `z` as its right child are in the
+left child of the root. -/
+private theorem tr_pairs_tree_leaf_right {ℓ₁ ℓ₂ : ℝ} {z : L} {N' : Brooqs.Net L}
+    {e : Address × Address} (he : e ∈ pairs (.tree ℓ₁ N' ℓ₂ (.leaf z))) :
+    e.1 ≠ [true] ∧ e.2 ≠ [true] := by
+  simp only [pairs, mem_union, mem_liftPairs, notMem_empty, false_and, exists_false,
+    or_false] at he
+  obtain ⟨f, -, rfl⟩ := he
+  exact ⟨by simp, by simp⟩
+
+/-- `NMSC.graph_outgroup` with the outgroup as the right child of the root:
+`N = tree ℓ₁ N' ℓ₂ (leaf z)`. -/
+theorem graph_outgroup_right {N N' : Brooqs.Net L} {ℓ₁ ℓ₂ : ℝ} {z : L} (hN : N.WellFormed)
+    (hz : N = .tree ℓ₁ N' ℓ₂ (.leaf z)) :
+    (z : ℕ) ∈ (Realization.graph (baseTree N) (pairs N)).taxa ∧
+      ((Realization.graph (baseTree N) (pairs N)).root,
+          (Realization.graph (baseTree N) (pairs N)).leaf z) ∈
+        (Realization.graph (baseTree N) (pairs N)).edges := by
+  subst hz
+  have hroot : (baseTree (.tree ℓ₁ N' ℓ₂ (.leaf z))).nodeAt [true] = some (.leaf z) :=
+    nodeAt_fork_true _ _
+  refine ⟨?_, ?_⟩
+  · change (z : ℕ) ∈ (PhyloTree.fork (baseTree N') (.leaf z)).taxa
+    rw [taxa_fork]
+    exact mem_union_right _ (by simp [PhyloTree.taxa, PhyloTree.labels])
+  -- the leaf of `z` is at the address `[true]`, and the wire above it has no added vertex
+  have hleaf : Realization.leafAddress (baseTree (.tree ℓ₁ N' ℓ₂ (.leaf z))) z = [true] :=
+    Realization.leafAddress_eq (wellLabelled_baseTree hN) hroot
+  have hout : Realization.outerEndpoints (baseTree (.tree ℓ₁ N' ℓ₂ (.leaf z)))
+      (pairs (.tree ℓ₁ N' ℓ₂ (.leaf z))) [true] = [] := by
+    refine List.flatMap_eq_nil_iff.2 fun e he => ?_
+    obtain ⟨h1, h2⟩ := tr_pairs_tree_leaf_right (Finset.mem_toList.1 he)
+    simp [h1, h2]
+  have hghost : Realization.ghostEndpoints (baseTree (.tree ℓ₁ N' ℓ₂ (.leaf z)))
+      (pairs (.tree ℓ₁ N' ℓ₂ (.leaf z))) [true] = [] := by
+    refine List.flatMap_eq_nil_iff.2 fun e he => ?_
+    obtain ⟨h1, -⟩ := tr_pairs_tree_leaf_right (Finset.mem_toList.1 he)
+    simp [h1]
+  change (Address.code [], Address.code (Realization.leafAddress
+      (baseTree (.tree ℓ₁ N' ℓ₂ (.leaf z))) z)) ∈
+    Realization.supportEdges (baseTree (.tree ℓ₁ N' ℓ₂ (.leaf z)))
+      (pairs (.tree ℓ₁ N' ℓ₂ (.leaf z))) ∪ _
+  rw [hleaf]
+  refine mem_union_left _ (mem_biUnion.2 ⟨[true], ?_, ?_⟩)
+  · exact mem_erase.2 ⟨by simp, (PhyloTree.mem_nodes_iff _ _).2 ⟨_, hroot⟩⟩
+  · simp [Realization.wire, hout, hghost, wireEdges, parent]
+
+/-! ### The trees of the graph of `N` and Q(N_r) -/
+
+/-- **Definition 1** (`mthst1`) for the graph of `N`: Q(N_r) = ∪_{t∈𝒯} Q(t). A metric level-1
+network `N` with distinct leaf labels on the taxa `L` displays the quartet tree `q` iff some tree
+`T` of its graph `Realization.graph (baseTree N) (pairs N)`, in the sense of Definition 1, induces
+`q`. In particular every tree of the graph induces only quartet trees of Q(N_r). -/
+theorem displaysQuartet_iff_exists_builtOn {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) (q : Quartet) :
+    DisplaysQuartet N q ↔ ∃ T : PhyloTree,
+      (Realization.graph (baseTree N) (pairs N)).BuiltOn T ∧ q.induced T = true :=
+  (graph_displaysQuartet_iff hN htaxa q).symm.trans
+    (RootedNetwork.displays_iff_exists_builtOn (graph_anchoredExtension hN).1 q)
 
 /-! ### Recovery through every tree of the graph of `N` -/
 
@@ -191,6 +254,207 @@ theorem nmsc_recovery_outgroup {N N' : Brooqs.Net L} {ℓ₁ ℓ₂ : ℝ} {z : 
       Nonempty (R.Iso (Realization.graph (baseTree N) (pairs N))) :=
   nmsc_recovery_builtOn hN htaxa hna G hind hid hlaw ht ht₀ (graph_outgroup hN hNz).1
     (graph_outgroup hN hNz).2 T hT identifiable
+
+end Genes
+
+/-! ### The base trees of the exchanges of the sides -/
+
+/-- Exchanging the sides of cycles keeps the sides with a node. -/
+theorem hasNode_of_sideSwap {S S' : Brooqs.Side L} (h : S.SideSwap S') :
+    hasNode S' = hasNode S := by
+  cases h <;> rfl
+
+mutual
+/-- The displayed trees of `N` (`Brooqs.Net.displayed`) that, at each cycle, delete the hybrid edge
+of a side with a node: the hybrid component hangs from the bottom of `S₁` when `S₂` has a node,
+and from the bottom of `S₂` when `S₁` has a node. At a cycle one of whose sides is a single hybrid
+edge, from the top node to the hybrid node, the hybrid component hangs from the top node through
+that edge. -/
+def nodeDisplayed : Brooqs.Net L → List (Finset (Finset L))
+  | .leaf x => [{{x}}]
+  | .tree _ N₁ _ N₂ =>
+      (nodeDisplayed N₁).flatMap fun K₁ => (nodeDisplayed N₂).map fun K₂ =>
+        insert (N₁.taxa ∪ N₂.taxa) (K₁ ∪ K₂)
+  | .cycle _ S₁ S₂ _ H =>
+      (nodeDisplayed H).flatMap fun K =>
+        (if hasNode S₂ then
+          (sideNodeDisplayed S₁ H.taxa).flatMap fun K₁ => (sideNodeDisplayed S₂ ∅).map fun K₂ =>
+            insert (S₁.taxa ∪ S₂.taxa ∪ H.taxa) (K ∪ K₁ ∪ K₂)
+        else []) ++
+        (if hasNode S₁ then
+          (sideNodeDisplayed S₁ ∅).flatMap fun K₁ => (sideNodeDisplayed S₂ H.taxa).map fun K₂ =>
+            insert (S₁.taxa ∪ S₂.taxa ∪ H.taxa) (K ∪ K₁ ∪ K₂)
+        else [])
+
+/-- The clusters along a side in the displayed trees of `NMSC.nodeDisplayed`, with the taxa `T`
+below its hybrid edge. -/
+def sideNodeDisplayed : Brooqs.Side L → Finset L → List (Finset (Finset L))
+  | .hyb _, _ => [∅]
+  | .node _ _ M S, T => (sideNodeDisplayed S T).flatMap fun K => (nodeDisplayed M).map fun K' =>
+      insert (T ∪ S.taxa ∪ M.taxa) (K ∪ K')
+end
+
+mutual
+/-- The trees of `NMSC.nodeDisplayed N` are displayed trees of `N`. -/
+theorem nodeDisplayed_subset : ∀ {N : Brooqs.Net L} {K : Finset (Finset L)},
+    K ∈ nodeDisplayed N → K ∈ N.displayed
+  | .leaf _, _, hK => by simpa [nodeDisplayed, Brooqs.Net.displayed] using hK
+  | .tree _ N₁ _ N₂, _, hK => by
+      simp only [nodeDisplayed, Brooqs.Net.displayed, List.mem_flatMap, List.mem_map] at hK ⊢
+      obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+      exact ⟨K₁, nodeDisplayed_subset hK₁, K₂, nodeDisplayed_subset hK₂, rfl⟩
+  | .cycle _ S₁ S₂ _ H, _, hK => by
+      simp only [nodeDisplayed, Brooqs.Net.displayed, List.mem_flatMap, List.mem_append] at hK ⊢
+      obtain ⟨K₀, hK₀, hK⟩ := hK
+      refine ⟨K₀, nodeDisplayed_subset hK₀, ?_⟩
+      rcases hK with hK | hK
+      · by_cases h2 : hasNode S₂ = true
+        · simp only [h2, ↓reduceIte, List.mem_flatMap, List.mem_map] at hK
+          obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+          exact Or.inl ⟨K₁, sideNodeDisplayed_subset hK₁,
+            List.mem_map.2 ⟨K₂, sideNodeDisplayed_subset hK₂, rfl⟩⟩
+        · simp [h2] at hK
+      · by_cases h1 : hasNode S₁ = true
+        · simp only [h1, ↓reduceIte, List.mem_flatMap, List.mem_map] at hK
+          obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+          exact Or.inr ⟨K₁, sideNodeDisplayed_subset hK₁,
+            List.mem_map.2 ⟨K₂, sideNodeDisplayed_subset hK₂, rfl⟩⟩
+        · simp [h1] at hK
+
+/-- The clusters along a side in `NMSC.sideNodeDisplayed` are those of the displayed trees. -/
+theorem sideNodeDisplayed_subset : ∀ {S : Brooqs.Side L} {T : Finset L}
+    {K : Finset (Finset L)}, K ∈ sideNodeDisplayed S T → K ∈ S.displayed T
+  | .hyb _, _, _, hK => by simpa [sideNodeDisplayed, Brooqs.Side.displayed] using hK
+  | .node _ _ M S, _, _, hK => by
+      simp only [sideNodeDisplayed, Brooqs.Side.displayed, List.mem_flatMap,
+        List.mem_map] at hK ⊢
+      obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+      exact ⟨K₁, sideNodeDisplayed_subset hK₁, K₂, nodeDisplayed_subset hK₂, rfl⟩
+end
+
+mutual
+/-- **The trees of `NMSC.nodeDisplayed N` are the base trees of the exchanges.** Every displayed
+tree of `N` that deletes, at each cycle, the hybrid edge of a side with a node is the displayed
+tree `NMSC.baseClusters N'` of the base tree of `N` with the sides of some cycles exchanged: those
+whose hybrid component hangs from the bottom of `S₂`. -/
+theorem exists_sideSwap_of_mem_nodeDisplayed : ∀ {N : Brooqs.Net L} {K : Finset (Finset L)},
+    K ∈ nodeDisplayed N → ∃ N', N.SideSwap N' ∧ baseClusters N' = K
+  | .leaf x, _, hK => by
+      simp only [nodeDisplayed, List.mem_singleton] at hK
+      exact ⟨.leaf x, .leaf x, by rw [hK]; rfl⟩
+  | .tree _ N₁ _ N₂, _, hK => by
+      simp only [nodeDisplayed, List.mem_flatMap, List.mem_map] at hK
+      obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+      obtain ⟨N₁', h₁, rfl⟩ := exists_sideSwap_of_mem_nodeDisplayed hK₁
+      obtain ⟨N₂', h₂, rfl⟩ := exists_sideSwap_of_mem_nodeDisplayed hK₂
+      exact ⟨_, .tree h₁ h₂, by simp only [baseClusters, h₁.taxa_eq, h₂.taxa_eq]⟩
+  | .cycle _ S₁ S₂ _ H, _, hK => by
+      simp only [nodeDisplayed, List.mem_flatMap, List.mem_append] at hK
+      obtain ⟨K₀, hK₀, hK⟩ := hK
+      obtain ⟨H', hH, rfl⟩ := exists_sideSwap_of_mem_nodeDisplayed hK₀
+      rcases hK with hK | hK
+      -- the hybrid component hangs from `S₁`, and `S₂` has a node: no exchange
+      · by_cases h2 : hasNode S₂ = true
+        · simp only [h2, ↓reduceIte, List.mem_flatMap, List.mem_map] at hK
+          obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+          obtain ⟨S₁', h₁, rfl⟩ := exists_sideSwap_of_mem_sideNodeDisplayed hK₁
+          obtain ⟨S₂', h₂', rfl⟩ := exists_sideSwap_of_mem_sideNodeDisplayed hK₂
+          refine ⟨_, .cycle h₁ h₂' hH, ?_⟩
+          simp only [baseClusters, hasNode_of_sideSwap h₂', h2, ↓reduceIte, hH.taxa_eq,
+            h₁.taxa_eq, h₂'.taxa_eq]
+        · simp [h2] at hK
+      -- the hybrid component hangs from `S₂`, and `S₁` has a node: the sides are exchanged
+      · by_cases h1 : hasNode S₁ = true
+        · simp only [h1, ↓reduceIte, List.mem_flatMap, List.mem_map] at hK
+          obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+          obtain ⟨S₁', h₁', rfl⟩ := exists_sideSwap_of_mem_sideNodeDisplayed hK₁
+          obtain ⟨S₂', h₂, rfl⟩ := exists_sideSwap_of_mem_sideNodeDisplayed hK₂
+          refine ⟨_, .swap h₁' h₂ hH, ?_⟩
+          simp only [baseClusters, hasNode_of_sideSwap h₁', h1, ↓reduceIte, hH.taxa_eq,
+            h₁'.taxa_eq, h₂.taxa_eq]
+          rw [union_comm S₂'.taxa, union_right_comm (baseClusters H')]
+        · simp [h1] at hK
+
+/-- The clusters along a side in `NMSC.sideNodeDisplayed` are those of the base tree of the side
+with the sides of some cycles exchanged. -/
+theorem exists_sideSwap_of_mem_sideNodeDisplayed : ∀ {S : Brooqs.Side L} {T : Finset L}
+    {K : Finset (Finset L)}, K ∈ sideNodeDisplayed S T →
+      ∃ S', S.SideSwap S' ∧ sideBaseClusters S' T = K
+  | .hyb ℓ, _, _, hK => by
+      simp only [sideNodeDisplayed, List.mem_singleton] at hK
+      exact ⟨.hyb ℓ, .hyb ℓ, by rw [hK]; rfl⟩
+  | .node _ _ M S, _, _, hK => by
+      simp only [sideNodeDisplayed, List.mem_flatMap, List.mem_map] at hK
+      obtain ⟨K₁, hK₁, K₂, hK₂, rfl⟩ := hK
+      obtain ⟨S', hS, rfl⟩ := exists_sideSwap_of_mem_sideNodeDisplayed hK₁
+      obtain ⟨M', hM, rfl⟩ := exists_sideSwap_of_mem_nodeDisplayed hK₂
+      exact ⟨_, .node hM hS, by simp only [sideBaseClusters, hS.taxa_eq, hM.taxa_eq]⟩
+end
+
+/-- The base tree of `N` with the sides of some cycles exchanged is a displayed tree of `N`
+(`NMSC.DisplaysTree`). -/
+theorem displaysTree_baseTree_of_sideSwap {N N' : Brooqs.Net L} (h : N.SideSwap N')
+    (hN : N.WellFormed) (htaxa : ∀ x : L, x ∈ N.taxa) : DisplaysTree N (baseTree N') :=
+  (displaysTree_iff_of_sideSwap h _).2
+    (displaysTree_baseTree (h.wellFormed_iff.1 hN) fun x => h.taxa_eq ▸ htaxa x)
+
+/-- **Every displayed tree of `NMSC.nodeDisplayed N` is a base tree.** For each displayed tree `K`
+of `N` that deletes, at each cycle, the hybrid edge of a side with a node, the base tree of some
+exchange `N'` of the sides of cycles of `N` has the clusters of `K` as its clades. -/
+theorem exists_baseTree_of_mem_nodeDisplayed {N : Brooqs.Net L} (hN : N.WellFormed)
+    {K : Finset (Finset L)} (hK : K ∈ nodeDisplayed N) :
+    ∃ N', N.SideSwap N' ∧
+      (baseTree N').clades.toFinset = K.image (Finset.map (Coalescent.label L)) := by
+  obtain ⟨N', h, rfl⟩ := exists_sideSwap_of_mem_nodeDisplayed hK
+  exact ⟨N', h, clades_baseTree N' (h.wellFormed_iff.1 hN)⟩
+
+section Genes
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+  [MeasurableSpace (Finset (Finset L))] [MeasurableSingletonClass (Finset (Finset L))]
+
+open DynamicProgramming in
+/-- **Sections 3.2 to 3.4 under the NMSC, through the base tree of an exchange.** Let the gene
+trees be independent, each with the law of the NMSC on a metric level-1 network `N` with distinct
+leaf labels on the taxa `L`, without the anomalous configuration, and let `0 < t < t₀(N)`. Let `N'`
+be `N` with the sides of some cycles exchanged: the same network, with the same gene tree law,
+Q(N_r) and `t₀(N)` (`Camus/Pipelines/NMSC/Swap.lean`). Its base tree `T` is a displayed tree of `N`
+(`NMSC.displaysTree_baseTree_of_sideSwap`); these base trees are the displayed trees of
+`NMSC.nodeDisplayed N` (`NMSC.exists_baseTree_of_mem_nodeDisplayed`). Assume, as `recovery` does,
+that the graph `Nr = Realization.graph T (pairs N')` of `N'` is identifiable under inclusion among
+the networks built on `T`. Almost surely, for all large numbers `n` of genes, every network built
+on `T` that has the best score for the output `Q` of Quartet Filtering on the quartet trees of the
+first `n` gene trees, with the fewest reticulations among the networks with the best score, is
+isomorphic to `Nr`. -/
+theorem nmsc_recovery_sideSwap {N N' : Brooqs.Net L} (hNN' : N.SideSwap N') (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) (hna : NoAnomaly N) (G : ℕ → Ω → Finset (Finset L))
+    (hind : iIndepFun G P) (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) {t : ℝ} (ht : 0 < t)
+    (ht₀ : t < threshold N)
+    (identifiable : ∀ R : RootedNetwork, R.AnchoredExtension (baseTree N') →
+      (∀ q, (Realization.graph (baseTree N') (pairs N')).DisplaysQuartet q →
+        R.DisplaysQuartet q) →
+      R.reticulationCount ≤ (Realization.graph (baseTree N') (pairs N')).reticulationCount →
+      Nonempty (R.Iso (Realization.graph (baseTree N') (pairs N')))) :
+    ∀ᵐ ω ∂P, ∀ᶠ n in atTop, ∀ R : RootedNetwork, R.AnchoredExtension (baseTree N') →
+      (∀ R' : RootedNetwork, R'.AnchoredExtension (baseTree N') →
+        score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+            (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R') ≤
+          score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+            (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R)) →
+      (∀ R' : RootedNetwork, R'.AnchoredExtension (baseTree N') →
+        (∀ R'' : RootedNetwork, R''.AnchoredExtension (baseTree N') →
+          score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+              (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R'') ≤
+            score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+              (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R')) →
+        R.reticulationCount ≤ R'.reticulationCount) →
+      Nonempty (R.Iso (Realization.graph (baseTree N') (pairs N'))) :=
+  -- the hypotheses on `N` are those on `N'`
+  nmsc_recovery_graph (hNN'.wellFormed_iff.1 hN) (fun x => hNN'.taxa_eq ▸ htaxa x)
+    ((noAnomaly_iff_of_sideSwap hNN').1 hna) G hind hid
+    (fun T => (hlaw T).trans (by rw [hNN'.geneTreeDist_eq])) ht
+    (threshold_eq_of_sideSwap hNN' ▸ ht₀) identifiable
 
 end Genes
 
