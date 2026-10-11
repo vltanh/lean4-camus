@@ -24,6 +24,7 @@ import all Camus.DP.Frontier
 import all Camus.DP.Packing
 import all Camus.DP.Theorem1
 import all Camus.Defs
+import all Camus.External.NMSC.AnomalyGeneral
 import all Camus.External.NMSC.AnomalyRegion
 import all Camus.External.NMSC.AnomalyShapes
 import all Camus.External.NMSC.Arms
@@ -136,10 +137,15 @@ import all Camus.Pipelines.Filtering
 import all Camus.Pipelines.Inclusion
 import all Camus.Pipelines.InclusionOutgroup
 import all Camus.Pipelines.NMSC.Anomaly
+import all Camus.Pipelines.NMSC.AnomalyBoundary
+import all Camus.Pipelines.NMSC.AnomalyGeneral
 import all Camus.Pipelines.NMSC.AnomalyRegion
 import all Camus.Pipelines.NMSC.BaseTree
 import all Camus.Pipelines.NMSC.Bridge
+import all Camus.Pipelines.NMSC.DisplayedTrees
 import all Camus.Pipelines.NMSC.Filtering
+import all Camus.Pipelines.NMSC.GraphTrees
+import all Camus.Pipelines.NMSC.Pipeline
 import all Camus.Pipelines.NMSC.Quartets
 import all Camus.Pipelines.NMSC.Recovery
 import all Camus.Pipelines.NMSC.Swap
@@ -291,12 +297,22 @@ meta def paperResults : List (String × Name) :=
    ("Sec 3.3, ASTRAL's tree need not be displayed", ``Camus.NMSC.anomaly_astral),
    ("Sec 3.3, recovery under the NMSC", ``Camus.NMSC.nmsc_recovery_graph),
    ("Sec 3.3, recovery under the NMSC through every tree", ``Camus.NMSC.nmsc_recovery_builtOn),
+   ("Sec 3.3, the trees of the graph of N are its displayed trees",
+    ``Camus.NMSC.builtOn_clades_iff),
+   ("Sec 3.3, recovery under the NMSC through every displayed tree",
+    ``Camus.NMSC.nmsc_recovery_displayed),
+   ("Sec 3.3, the pipeline through one of the underlying trees",
+    ``Camus.NMSC.nmsc_recovery_underlying),
    ("Sec 3.3, the NMSC does not depend on the order of the sides of a cycle",
     ``Brooqs.Net.SideSwap.geneTreeDist_eq),
    ("Sec 3.3, the region of the anomaly of the 3-cycle (E9)", ``Brooqs.net32_anomalous_iff),
    ("Sec 3.3, the filter in the region of the anomaly (E9)", ``Camus.NMSC.net32On_filterQuartets),
    ("Sec 3.3, the filter outside the region of the anomaly (E9)",
     ``Camus.NMSC.net32On_filterQuartets_regular),
+   ("Sec 3.3, the anomaly in every network (E9)", ``Brooqs.Net.Cycle.anomalous_iff_of_anomalous),
+   ("Sec 3.3, the filter drops Q(N_r) iff the anomaly holds (E9)", ``Camus.NMSC.anomalous_drop_iff),
+   ("Sec 3.3, the filter on the boundary of the anomaly (E9)",
+    ``Camus.NMSC.not_ae_filterQuartets_of_equal),
    ("Sec 3.3, uniqueness fails under the NMSC (E7)", ``Camus.NMSC.nmsc_uniqueness_counterexample),
    ("Sec 3.4, Algorithm 1", ``Camus.Algorithm1.filterQuartets_mono),
    ("Sec 3.4, threshold as a ratio", ``Camus.retainSecond_iff_ratio),

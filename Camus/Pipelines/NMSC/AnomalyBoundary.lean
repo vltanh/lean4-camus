@@ -9,8 +9,8 @@ On four taxa in the anomalous configuration, Quartet Filtering (Algorithm 1) eve
 quartet tree of Q(N_r) in the anomaly zone and eventually keeps exactly its copies outside the zone
 and off its boundary (`NMSC.anomalous_filterQuartets`). On the boundary the three quartet trees on
 the four taxa are equally probable (`NMSC.anomalous_filterQuartets_boundary`): Algorithm 1
-eventually keeps the copies of a single quartet tree, the most frequent one, but which one keeps
-changing. This file proves that neither outcome is almost sure there: it is not almost sure that,
+eventually keeps the copies of a single quartet tree, the most frequent one. This file proves
+that neither outcome is almost sure there: it is not almost sure that,
 for all large numbers of genes, Algorithm 1 returns on the four taxa exactly the copies of the
 quartet tree of Q(N_r) (`NMSC.not_ae_filterQuartets_of_equal`), nor that it returns no copy of it
 (`NMSC.not_ae_drop_of_equal`). So, for every threshold `0 < t < t₀(N)`, Algorithm 1 almost surely
@@ -630,8 +630,8 @@ theorem not_ae_filterQuartets_of_equal {N : Brooqs.Net L} (hN : N.WellFormed) {k
 equally probable.** Under the assumptions of `NMSC.not_ae_filterQuartets_of_equal`, for every
 threshold `t`, it is not almost sure that, for all large numbers `n` of genes, Algorithm 1 returns
 no copy of the displayed quartet tree `k.quartet d`: whenever it is strictly the most frequent,
-Algorithm 1 keeps its copies, and it is so with probability at least `1/9` for every number of
-genes (`NMSC.card_strictLabels_succ`). -/
+Algorithm 1 keeps its copies, and it is so with probability at least `1/9` for every positive
+number of genes (`NMSC.card_strictLabels_succ`). -/
 theorem not_ae_drop_of_equal {N : Brooqs.Net L} (hN : N.WellFormed) {k : QuartetKey}
     (hk : keyTaxa k ⊆ L) (d : Fin 3) (hthird : ∀ u, quartetProb N (k.quartet u) = 1 / 3)
     (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
@@ -745,7 +745,7 @@ Under the assumptions of `NMSC.anomalous_filterQuartets`, with `p`, `γ`, the po
 the quartet tree of Q(N_r) on the four taxa `k` iff `1 - p < p D`. In the anomaly zone it drops it
 (`NMSC.filterQuartets_block_of_least`); outside the zone and off its boundary it keeps all its
 copies (`NMSC.filterQuartets_block_of_most`); on the boundary it keeps them with probability at
-least `1/9` at every number of genes (`NMSC.not_ae_drop_of_equal`). -/
+least `1/9` at every positive number of genes (`NMSC.not_ae_drop_of_equal`). -/
 theorem anomalous_drop_iff {N : Brooqs.Net L} (hN : N.WellFormed)
     (htaxa : ∀ x : L, x ∈ N.taxa) {k : QuartetKey} (hk : keyTaxa k ⊆ L) (C : N.Cycle)
     {i j a b : Fin 4} (hinj : Function.Injective ![i, j, a, b])

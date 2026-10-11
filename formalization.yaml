@@ -25,9 +25,9 @@ project:
     argument; and a tree of a network need not be a basis for it (Section 3.2). Under the network
     coalescent, on a network in an anomalous configuration known from the literature, with suitable
     edge lengths, Quartet Filtering keeps a quartet that the network does not display and drops the
-    one it does (Sections 3.3 and 3.4); for the 3-cycle above two taxa the region of parameters in
-    which this happens is determined, up to its boundary. A corrected recovery theorem holds under identifiability under inclusion and a tie-break toward
-    the fewest reticulations.
+    one it does (Sections 3.3 and 3.4); the region of parameters in which this happens is determined
+    exactly, in every network. A corrected recovery theorem holds under identifiability under
+    inclusion and a tie-break toward the fewest reticulations.
   authors: ["The-Anh Vu-Le"]
   license: "Apache-2.0"
   responsible_maintainers: ["The-Anh Vu-Le"]
@@ -87,26 +87,25 @@ status:
     level-1 network is built on one of its trees with at most n - 1 reticulations, the running time
     O(n^2 (|Q| + n)) and the peak memory O(n^4) of Section 2.3 for CAMUS written as a program in a
     cost semantics with time and space (the memory of each step declared in the program and checked
-    by reading), with the quartet test in constant time, the four properties
-    of the networks of Section 2.4 for the networks returned by backtracking with the running time
-    O(n^2 (|Q| + m^3 n)) of the program that computes them, Observation 2 of Warnow, Tabatabaee and
-    Evans and the convergence of the quartets of SNPs under their site model, Section 3.2's argument
-    as one statement about the SNP pipeline (ASTRAL's tree equals the true tree up to the order of
+    by reading), with the quartet test in constant time, the four properties of the networks of
+    Section 2.4 for the networks returned by backtracking with the running time O(n^2 (|Q| + m^3 n))
+    of the program that computes them, Observation 2 of Warnow, Tabatabaee and Evans and the
+    convergence of the quartets of SNPs under their site model, Section 3.2's argument as one
+    statement about the SNP pipeline (ASTRAL's tree equals the true tree up to the order of
     children, by Steel's theorem that quartets determine a tree), Algorithm 1's test and its
     motivation under the multispecies coalescent and the network multispecies coalescent, and under
-    the latter the recovery through every tree of the network with an outgroup (under
-    identifiability and the tie-break) and the symmetry of
-    the model under the exchange of the two sides of a cycle. Refutes
-    Section 2.4's monotonicity claim for exact numbers of reticulations and its stopping rule, and
-    Section 3.2's uniqueness claim (also with the fewest-reticulation tie-break, and in the site
-    model under every hypothesis of its argument) and its claim that any tree of a network is a
-    basis for it, and proves corrected versions; shows that Quartet Filtering keeps a quartet the
-    network does not display under the network coalescent, on a network in the anomalous
-    configuration of Ané et al. (2024) with suitable edge lengths, and determines the region of
-    parameters in which this happens on the 3-cycle above two taxa, up to its boundary. Equation (1) is read over distinct quartets and Pairs(v) restricted to pairs that
-    give a network. Not formalized: that every displayed tree of a network of the network
-    coalescent, in the model's sense, is a tree of its graph in CAMUS's representation; the region
-    of the anomaly for arbitrary networks; and the experiments.
+    the latter the recovery through every displayed tree of the network and through ASTRAL's tree
+    when it is one of them, with an outgroup (under identifiability and the tie-break) and the
+    symmetry of the model under the exchange of the two sides of a cycle. Refutes Section 2.4's
+    monotonicity claim for exact numbers of reticulations and its stopping rule, and Section 3.2's
+    uniqueness claim (also with the fewest-reticulation tie-break, and in the site model under every
+    hypothesis of its argument) and its claim that any tree of a network is a basis for it, and
+    proves corrected versions; shows that Quartet Filtering keeps a quartet the network does not
+    display under the network coalescent, on a network in the anomalous configuration of Ané et al.
+    (2024) with suitable edge lengths, and determines the region of parameters in which this
+    happens, in every network, with the behavior of the filter on its boundary. Equation (1) is read
+    over distinct quartets and Pairs(v) restricted to pairs that give a network. Not formalized: the
+    experiments.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -180,8 +179,22 @@ automation:
         spend_usd: "not tracked"
         hardware: "local machine (Lean builds); model API"
       prompting_notes: "With the network-coalescent items of the report's Section 9 selected, the maintainer asked: \"Why don't you formalize this\"."
+    - method: "agent"
+      models: ["claude-opus-5-5"]
+      framework: "Claude Code 2.1.296"
+      tool_setup: >-
+        Sixth round (10 October 2026): formalize-math-paper skill 2.2.0
+        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and @@AG6@@ sub-agents: the
+        two sub-agents of the fifth round, resumed in new git worktrees, on the displayed trees of
+        the model and the pipeline of Section 3.3, and on the region of the anomaly in every network
+        with its boundary, and a read-only reviewer.
+      cost:
+        wall_time: "@@WALL6@@"
+        spend_usd: "not tracked"
+        hardware: "local machine (Lean builds); model API"
+      prompting_notes: "After the fifth round, the maintainer asked: \"Finish the job.\""
   spend_usd: "not tracked"
-  notes: "Five rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
+  notes: "Six rounds by two AI systems, at the maintainer's request; see CREDITS.md for the procedure and the figures, taken from the session transcripts."
 fidelity:
   divergences: >-
     Equation (1) is read over the distinct quartets of Q, with their multiplicities as weights,

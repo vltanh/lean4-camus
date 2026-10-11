@@ -46,7 +46,11 @@ its corollary) and [`Brooqs.quartetCF_eq_of_components`](Cycle.lean#L825) in `Cy
   ([`Brooqs.Net.SideSwap.geneTreeDist_eq`](Swap.lean#L307)) nor the displayed trees nor the anomalous configuration.
 - `AnomalyRegion.lean`: the exact region of the parameters of `N₃₂` in which the quartet it displays
   is the least probable ([`Brooqs.net32_anomalous_iff`](AnomalyRegion.lean#L140)); `AnomalyShapes.lean`: the two other
-  rootings of the same quarnet, whose CFs are those of `N₃₂` with lengths added.
+  rootings of the same quarnet, whose CFs are those of `N₃₂` with lengths added;
+  `AnomalyGeneral.lean`: the CFs of four taxa in the anomalous configuration of any network, those
+  of `N₃₂` with the probability that the two lineages below the hybrid node reach it apart
+  ([`Brooqs.Net.Cycle.apartProb`](AnomalyGeneral.lean#L422)) and lengths added along the sides
+  ([`Brooqs.Net.Cycle.quartetCF_of_anomalous`](AnomalyGeneral.lean#L766)).
 - `Splits.lean`, `FourComponents.lean`, `Pairs.lean`, `Pattern.lean`: the CF pattern that Quartet
   Filtering presumes holds for every set of four taxa except in the anomalous configuration
   ([`Brooqs.Net.regularOn_of_not_anomalous`](Pattern.lean#L872)), and its weaker part holds always
