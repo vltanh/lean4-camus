@@ -978,6 +978,135 @@ theorem cladeBelow_keptSwitching (ht : t.WellLabelled) (hE : EdgeAbove.CycleSepa
           mem_keptSwitching.2 (Or.inr ⟨e, he, rfl, rfl⟩)
         exact ⟨_, ⟨hx, rfl⟩, by rw [hrec e he hx]; exact hae⟩
 
+
+/-! ### The family of the clades and the switchings of the canonical network -/
+
+/-- The clades of the tree of the switching that keeps the added edges of `F`, when no pair has a
+ghost donor: the clades of the vertices of `T`, and for each kept added edge the clade of its
+donor vertex, the clade of its donor end together with the subtree moved below it. -/
+def keptClades (t : PhyloTree) (F : Finset Pair) : Finset (Finset ℕ) :=
+  t.nodes.image (keptClade t F) ∪ F.image fun e => keptClade t F e.1 ∪ t.taxaAt e.2
+
+/-- With no ghost donor, the taxa brought to the wire above the donor end of a kept added edge
+are the subtree of its recipient end. -/
+theorem donorTaxa_of_mem (hE : EdgeAbove.CycleSeparated t E) (hF : F ⊆ E)
+    (hng : ∀ e ∈ E, ¬e.1 <+: e.2) {e : Pair} (he : e ∈ F) :
+    donorTaxa t F e.1 = t.taxaAt e.2 := by
+  have hu : ∀ f ∈ F, f.1 = e.1 → f = e := by
+    intro f hf hfe
+    have hdf : donor t f ∈ outerEndpoints t E e.1 := mem_outerEndpoints.mpr
+      ⟨f, hF hf, Or.inl ⟨hfe, fun h => hng f (hF hf) (hfe ▸ h ▸ lca_prefix_right f.1 f.2), rfl⟩⟩
+    have hde : donor t e ∈ outerEndpoints t E e.1 := mem_outerEndpoints.mpr
+      ⟨e, hF he, Or.inl ⟨rfl, fun h => hng e (hF he) (h ▸ lca_prefix_right e.1 e.2), rfl⟩⟩
+    exact donor_injective t (hE.1 (hF hf)) (hE.1 (hF he)) (outerEndpoints_mem_unique hE hdf hde)
+  ext a
+  simp only [donorTaxa, Finset.mem_biUnion, Finset.mem_filter]
+  constructor
+  · rintro ⟨f, ⟨hf, hfe⟩, ha⟩
+    rw [← hu f hf hfe]
+    exact ha
+  · exact fun ha => ⟨e, ⟨he, rfl⟩, ha⟩
+
+/-- **The clades of the tree of the switching that keeps the added edges of `F`.** For a
+cycle-separated family `E` without ghost donors and `F ⊆ E`, the sets of taxa below the vertices
+of `Realization.graph t E` in `Realization.keptSwitching t E F` are `Realization.keptClades t F`.
+-/
+theorem image_cladeBelow_keptSwitching (ht : t.WellLabelled) (hE : EdgeAbove.CycleSeparated t E)
+    (hF : F ⊆ E) (hng : ∀ e ∈ E, ¬e.1 <+: e.2) :
+    (graph t E).vertices.image ((graph t E).cladeBelow (keptSwitching t E F)) =
+      keptClades t F := by
+  have hnog : ∀ c, ghostEndpoints t E c = [] := by
+    intro c
+    apply List.eq_nil_iff_forall_not_mem.2
+    intro v hv
+    obtain ⟨e, he, he1, het, -⟩ := mem_ghostEndpoints.mp hv
+    exact hng e he (he1 ▸ het ▸ lca_prefix_right e.1 e.2)
+  have hcl := cladeBelow_keptSwitching (F := F) ht hE hF
+  ext C
+  simp only [Finset.mem_image, keptClades, Finset.mem_union]
+  constructor
+  · rintro ⟨v, hv, rfl⟩
+    rw [vertices_covered t E hE.1] at hv
+    rcases Finset.mem_union.1 hv with hv | hv
+    · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.1 hv
+      exact Or.inl ⟨p, hp, ((hcl _).1 p hp rfl).symm⟩
+    · obtain ⟨c, hc, hv⟩ := Finset.mem_biUnion.1 hv
+      obtain ⟨hc0, hc⟩ := Finset.mem_erase.1 hc
+      rw [wireInterior_eq, hnog, List.append_nil, List.mem_toFinset] at hv
+      rw [(hcl v).2.1 c hc hc0 hv]
+      by_cases hd : ∃ e ∈ F, e.1 = c
+      · obtain ⟨e, he, rfl⟩ := hd
+        exact Or.inr ⟨e, he, by rw [donorTaxa_of_mem hE hF hng he]⟩
+      · have hd' : donorTaxa t F c = ∅ := by
+          ext a
+          simp only [donorTaxa, Finset.mem_biUnion, Finset.mem_filter, Finset.notMem_empty,
+            iff_false]
+          rintro ⟨e, ⟨he, he1⟩, -⟩
+          exact hd ⟨e, he, he1⟩
+        exact Or.inl ⟨c, hc, by rw [hd', Finset.union_empty]⟩
+  · rintro (⟨p, hp, rfl⟩ | ⟨e, he, rfl⟩)
+    · refine ⟨Address.code p, ?_, (hcl _).1 p hp rfl⟩
+      rw [vertices_covered t E hE.1]
+      exact Finset.mem_union_left _ (Finset.mem_image_of_mem _ hp)
+    · have ha := admissible_of_mem hE (hF he)
+      have hdm : donor t e ∈ outerEndpoints t E e.1 := mem_outerEndpoints.mpr
+        ⟨e, hF he, Or.inl ⟨rfl, fun h => hng e (hF he) (h ▸ lca_prefix_right e.1 e.2), rfl⟩⟩
+      refine ⟨donor t e, ?_, ?_⟩
+      · rw [vertices_covered t E hE.1]
+        refine Finset.mem_union_right _ (Finset.mem_biUnion.2 ⟨e.1,
+          Finset.mem_erase.2 ⟨ha.2.2.1, ha.1⟩, ?_⟩)
+        rw [wireInterior_eq]
+        exact List.mem_toFinset.2 (List.mem_append_left _ hdm)
+      · rw [(hcl _).2.1 e.1 ha.1 ha.2.2.1 hdm, donorTaxa_of_mem hE hF hng he]
+
+/-- **Every switching keeps a set of added edges.** A switching `S` of `Realization.graph t E` is
+`Realization.keptSwitching t E F` for the set `F` of the pairs whose added edge is in `S`. -/
+theorem switching_eq_keptSwitching (ht : t.WellLabelled) (hE : EdgeAbove.CycleSeparated t E)
+    {S : Finset (ℕ × ℕ)} (hS : (graph t E).Switching S) :
+    S = keptSwitching t E (E.filter fun e => (donor t e, recipient t e) ∈ S) := by
+  have hG := levelOne t ht E hE
+  have hSu := support_switching t E hE.1
+  ext ⟨x, y⟩
+  rw [mem_keptSwitching]
+  simp only [Finset.mem_filter]
+  constructor
+  · intro hxy
+    rcases Finset.mem_union.1 (hS.1 hxy) with hsup | hadd
+    · refine Or.inl ⟨hsup, fun e ⟨he, heS⟩ hye => ?_⟩
+      subst hye
+      have hxe := hS.eq_of_edge hG hxy heS
+      subst hxe
+      exact added_edge_not_support hE.1 he hsup
+    · obtain ⟨e, he, hxe⟩ := Finset.mem_image.1 hadd
+      simp only [Prod.mk.injEq] at hxe
+      obtain ⟨rfl, rfl⟩ := hxe
+      exact Or.inr ⟨e, ⟨he, hxy⟩, rfl, rfl⟩
+  · rintro (⟨hsup, hnr⟩ | ⟨e, ⟨-, heS⟩, rfl, rfl⟩)
+    · have hyV : y ∈ (graph t E).vertices := (hG.2.1 _ (Finset.mem_union_left _ hsup)).2
+      have hyr : y ≠ (graph t E).root := by
+        intro h
+        have h0 := support_root_incoming_empty t E
+        have hmem : (x, y) ∈ (supportEdges t E).filter (fun e => e.2 = Address.code []) :=
+          Finset.mem_filter.2 ⟨hsup, h⟩
+        rw [h0] at hmem
+        simp at hmem
+      obtain ⟨z, hz⟩ := Finset.card_eq_one.1 (hS.2 y hyV hyr)
+      have hzF : z ∈ S.filter (fun e => e.2 = y) := by rw [hz]; exact Finset.mem_singleton_self z
+      obtain ⟨hzS, hz2⟩ := Finset.mem_filter.1 hzF
+      clear hzF hz
+      obtain ⟨z1, z2⟩ := z
+      simp only at hz2
+      subst hz2
+      rcases Finset.mem_union.1 (hS.1 hzS) with hzs | hza
+      · have hzx := hSu.eq_of_edge hG hzs hsup
+        subst hzx
+        exact hzS
+      · obtain ⟨e, he, hze⟩ := Finset.mem_image.1 hza
+        simp only [Prod.mk.injEq] at hze
+        obtain ⟨rfl, rfl⟩ := hze
+        exact absurd rfl (hnr e ⟨he, hzS⟩)
+    · exact heS
+
 end Realization
 
 end Camus
