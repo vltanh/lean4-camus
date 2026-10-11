@@ -366,7 +366,8 @@ variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasur
 /-- **Section 3.3: Quartet Filtering on four taxa in the anomalous configuration.** Under the
 assumptions of `NMSC.anomalous_quartetProb`, let the gene trees be independent, each with the law
 of the NMSC on `N`. With `p`, `γ`, and the positive lengths `h₁`, `h₂`, `L₀` of
-`NMSC.anomalous_quartetProb`, and `D = γ(1 - γ)(1 - e^{-L₀}) - γ²(1 - e^{-h₁}) - (1 - γ)²(1 - e^{-h₂})`:
+`NMSC.anomalous_quartetProb`, and
+`D = γ(1 - γ)(1 - e^{-L₀}) - γ²(1 - e^{-h₁}) - (1 - γ)²(1 - e^{-h₂})`:
 * if `1 - p < p D` (the anomaly zone), for every threshold `t`, almost surely, for all large
   numbers `n` of genes, Algorithm 1 returns no copy of the quartet tree of Q(N_r) on the four taxa
   `k` and returns a quartet tree on `k` that is not in Q(N_r);
