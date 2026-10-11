@@ -533,6 +533,451 @@ theorem recipient_clade (ht : t.WellLabelled) (hE : EdgeAbove.CycleSeparated t E
     have h3 : a ∉ t.taxaAt e₀.2 := fun h => ha (PhyloTree.taxaAt_subset t _ h)
     simp only [Finset.mem_union, h1, h2, h3, or_self]
 
+
+/-! ### The wires of the canonical network -/
+
+theorem wireEdges_cons_of_ne_nil (a : ℕ) {L : List ℕ} (hL : L ≠ []) :
+    wireEdges (a :: L) = insert (a, L.headD 0) (wireEdges L) := by
+  cases L with
+  | nil => exact absurd rfl hL
+  | cons b L => rw [wireEdges_cons_cons]; rfl
+
+/-- On a path without repetition, the edge out of `v` goes to the vertex after `v`. -/
+theorem mem_wireEdges_iff_of_nodup {A B : List ℕ} {v x : ℕ} (h : (A ++ v :: B).Nodup) :
+    (v, x) ∈ wireEdges (A ++ v :: B) ↔ B ≠ [] ∧ x = B.headD 0 := by
+  induction A with
+  | nil =>
+    cases B with
+    | nil => simp [wireEdges]
+    | cons b B =>
+      simp only [List.nil_append] at h ⊢
+      rw [wireEdges_cons_cons, Finset.mem_insert]
+      constructor
+      · rintro (h' | h')
+        · simp only [Prod.mk.injEq] at h'
+          exact ⟨List.cons_ne_nil _ _, h'.2⟩
+        · exact absurd (edge_first_mem h') (List.nodup_cons.1 h).1
+      · rintro ⟨-, rfl⟩
+        exact Or.inl rfl
+  | cons a A ih =>
+    have hne : A ++ v :: B ≠ [] := by simp
+    rw [List.cons_append, wireEdges_cons_of_ne_nil a hne, Finset.mem_insert]
+    have hav : a ≠ v := fun hav => (List.nodup_cons.1 h).1 (by rw [hav]; simp)
+    constructor
+    · rintro (h' | h')
+      · exact absurd (congrArg Prod.fst h').symm hav
+      · exact (ih (List.nodup_cons.1 h).2).1 h'
+    · intro h'
+      exact Or.inr ((ih (List.nodup_cons.1 h).2).2 h')
+
+/-- The first vertex below the upper end of the wire above `c`: its outer endpoint, or else its
+ghost donor, or else `c` itself. -/
+noncomputable def firstBelow (t : PhyloTree) (E : Finset Pair) (c : Address) : ℕ :=
+  (outerEndpoints t E c ++ ghostEndpoints t E c ++ [Address.code c]).headD 0
+
+/-- The vertex after the outer endpoint of the wire above `c`: its ghost donor, or else `c`. -/
+noncomputable def afterOuter (t : PhyloTree) (E : Finset Pair) (c : Address) : ℕ :=
+  (ghostEndpoints t E c ++ [Address.code c]).headD 0
+
+theorem wire_eq (t : PhyloTree) (E : Finset Pair) (c : Address) :
+    wire t E c = [] ++ Address.code (parent c) ::
+      (outerEndpoints t E c ++ ghostEndpoints t E c ++ [Address.code c]) := by
+  simp [wire, List.append_assoc]
+
+/-- The support edges out of a vertex `p` of `T` go to the first vertices below the upper ends of
+the wires above its children. -/
+theorem mem_support_code {p : Address} (hE : E ⊆ EdgeAbove.candidates t) (hp : p ∈ t.nodes)
+    {x : ℕ} : (Address.code p, x) ∈ supportEdges t E ↔
+      ∃ c ∈ t.nodes, c ≠ [] ∧ parent c = p ∧ x = firstBelow t E c := by
+  constructor
+  · intro h
+    obtain ⟨c, hc, hcx⟩ := Finset.mem_biUnion.mp h
+    obtain ⟨hc0, hc⟩ := Finset.mem_erase.mp hc
+    have hpc : p = parent c :=
+      (mem_code_dropLast_iff hp).1 (edge_first_mem_dropLast hcx)
+    refine ⟨c, hc, hc0, hpc.symm, ?_⟩
+    have hnd := wire_nodup t E hE hc hc0
+    rw [wire_eq, ← hpc] at hcx hnd
+    exact ((mem_wireEdges_iff_of_nodup hnd).1 hcx).2
+  · rintro ⟨c, hc, hc0, rfl, rfl⟩
+    refine Finset.mem_biUnion.mpr ⟨c, Finset.mem_erase.mpr ⟨hc0, hc⟩, ?_⟩
+    have hnd := wire_nodup t E hE hc hc0
+    rw [wire_eq] at hnd ⊢
+    exact (mem_wireEdges_iff_of_nodup hnd).2 ⟨by simp, rfl⟩
+
+/-- The support edge out of the outer endpoint of the wire above `c` goes to the vertex after it.
+-/
+theorem mem_support_outer (hE : EdgeAbove.CycleSeparated t E) {c : Address} (hc : c ∈ t.nodes)
+    (hc0 : c ≠ []) {v : ℕ} (hv : v ∈ outerEndpoints t E c) {x : ℕ} :
+    (v, x) ∈ supportEdges t E ↔ x = afterOuter t E c := by
+  have hint : v ∈ wireInterior (wire t E c) := by
+    rw [wireInterior_eq]
+    exact List.mem_toFinset.2 (List.mem_append_left _ hv)
+  have h := congrArg (fun S => (v, x) ∈ S) (support_outgoing_eq_wire t E hE.1 hc hc0 hint)
+  simp only [Finset.mem_filter, and_true] at h
+  rw [h]
+  have hw : wire t E c = [Address.code (parent c)] ++ v ::
+      (ghostEndpoints t E c ++ [Address.code c]) := by
+    simp [wire, outerEndpoints_eq_singleton hE hv]
+  have hnd := wire_nodup t E hE.1 hc hc0
+  rw [hw] at hnd ⊢
+  rw [mem_wireEdges_iff_of_nodup hnd]
+  simp [afterOuter]
+
+/-- The support edge out of the ghost donor of the wire above `c` goes to `c`. -/
+theorem mem_support_ghost (hE : EdgeAbove.CycleSeparated t E) {c : Address} (hc : c ∈ t.nodes)
+    (hc0 : c ≠ []) {v : ℕ} (hv : v ∈ ghostEndpoints t E c) {x : ℕ} :
+    (v, x) ∈ supportEdges t E ↔ x = Address.code c := by
+  have hint : v ∈ wireInterior (wire t E c) := by
+    rw [wireInterior_eq]
+    exact List.mem_toFinset.2 (List.mem_append_right _ hv)
+  have h := congrArg (fun S => (v, x) ∈ S) (support_outgoing_eq_wire t E hE.1 hc hc0 hint)
+  simp only [Finset.mem_filter, and_true] at h
+  rw [h]
+  have hw : wire t E c = ([Address.code (parent c)] ++ outerEndpoints t E c) ++ v ::
+      [Address.code c] := by
+    simp [wire, ghostEndpoints_eq_singleton hE hv]
+  have hnd := wire_nodup t E hE.1 hc hc0
+  rw [hw] at hnd ⊢
+  rw [mem_wireEdges_iff_of_nodup hnd]
+  simp
+
+theorem mem_keptSwitching {v x : ℕ} :
+    (v, x) ∈ keptSwitching t E F ↔
+      ((v, x) ∈ supportEdges t E ∧ ∀ e ∈ F, x ≠ recipient t e) ∨
+        ∃ e ∈ F, donor t e = v ∧ recipient t e = x := by
+  simp only [keptSwitching, Finset.mem_union, Finset.mem_filter, Finset.mem_image,
+    Prod.mk.injEq]
+
+
+/-- The taxa that the kept added edges of the ghost donors at `c` bring. -/
+def ghostTaxa (t : PhyloTree) (F : Finset Pair) (c : Address) : Finset ℕ :=
+  (F.filter fun e => e.1 = c ∧ EdgeAbove.target e = c).biUnion fun e => t.taxaAt e.2
+
+theorem headD_mem_append (L : List ℕ) (x d : ℕ) : (L ++ [x]).headD d ∈ L ++ [x] := by
+  cases L <;> simp
+
+/-- The first vertex below the upper end of the wire above `c` is a recipient of a kept added
+edge iff a kept added edge enters this wire. -/
+theorem firstBelow_recipient_iff (hE : EdgeAbove.CycleSeparated t E) (hF : F ⊆ E)
+    {c : Address} (hc : c ∈ t.nodes) :
+    (∃ e ∈ F, firstBelow t E c = recipient t e) ↔ ∃ e ∈ F, e.2 = c := by
+  constructor
+  · rintro ⟨e, he, h⟩
+    have hmem : firstBelow t E c ∈ outerEndpoints t E c ++ ghostEndpoints t E c ++
+        [Address.code c] := headD_mem_append _ _ _
+    simp only [List.mem_append, List.mem_singleton] at hmem
+    rcases hmem with (hmem | hmem) | hmem
+    · obtain ⟨f, hf, ⟨-, -, hd⟩ | ⟨hf2, hr⟩⟩ := mem_outerEndpoints.mp hmem
+      · exact absurd (hd.symm.trans h) (donor_ne_recipient t f e)
+      · have := recipient_injective t (hE.1 hf) (hE.1 (hF he)) (hr.symm.trans h)
+        subst this
+        exact ⟨f, he, hf2⟩
+    · obtain ⟨f, -, -, -, hd⟩ := mem_ghostEndpoints.mp hmem
+      exact absurd (hd.symm.trans h) (donor_ne_recipient t f e)
+    · exact absurd (hmem.symm.trans h).symm (recipient_ne_code e hc)
+  · rintro ⟨e, he, rfl⟩
+    have hmem : recipient t e ∈ outerEndpoints t E e.2 :=
+      mem_outerEndpoints.mpr ⟨e, hF he, Or.inr ⟨rfl, rfl⟩⟩
+    refine ⟨e, he, ?_⟩
+    simp [firstBelow, outerEndpoints_eq_singleton hE hmem]
+
+/-- The kept added edge out of the donor `v` of the wire above `c`: its pair has donor end `c`. -/
+theorem donor_end_of_mem {c : Address} {e : Pair} (hE : EdgeAbove.CycleSeparated t E)
+    (hF : F ⊆ E) (he : e ∈ F) {v : ℕ} (hv : v ∈ outerEndpoints t E c ++ ghostEndpoints t E c)
+    (hd : donor t e = v) : e.1 = c := by
+  rcases List.mem_append.1 hv with hv | hv
+  · obtain ⟨f, hf, ⟨hf1, -, hd'⟩ | ⟨-, hr⟩⟩ := mem_outerEndpoints.mp hv
+    · rw [donor_injective t (hE.1 (hF he)) (hE.1 hf) (hd.trans hd')]
+      exact hf1
+    · exact absurd (hd.trans hr) (donor_ne_recipient t e f)
+  · obtain ⟨f, hf, hf1, -, hd'⟩ := mem_ghostEndpoints.mp hv
+    rw [donor_injective t (hE.1 (hF he)) (hE.1 hf) (hd.trans hd')]
+    exact hf1
+
+/-- The taxa of the graph whose leaf is a fresh vertex: none. -/
+theorem leaf_ne_fresh {c : Address} {v : ℕ}
+    (hv : v ∈ outerEndpoints t E c ++ ghostEndpoints t E c) {a : ℕ} (ha : a ∈ t.taxa) :
+    (graph t E).leaf a ≠ v := by
+  intro h
+  change Address.code (leafAddress t a) = v at h
+  have hl := leafAddress_mem_nodes ha
+  rcases List.mem_append.1 hv with hv | hv
+  · obtain ⟨f, -, ⟨-, -, hd⟩ | ⟨-, hr⟩⟩ := mem_outerEndpoints.mp hv
+    · exact donor_ne_code f hl (hd.symm.trans h.symm)
+    · exact recipient_ne_code f hl (hr.symm.trans h.symm)
+  · obtain ⟨f, -, -, -, hd⟩ := mem_ghostEndpoints.mp hv
+    exact donor_ne_code f hl (hd.symm.trans h.symm)
+
+/-- The claim of `Realization.cladeBelow_keptSwitching` at one vertex `v`. -/
+def KeptCladeClaim (t : PhyloTree) (E F : Finset Pair) (v : ℕ) : Prop :=
+  (∀ p ∈ t.nodes, Address.code p = v →
+    (graph t E).cladeBelow (keptSwitching t E F) v = keptClade t F p) ∧
+  (∀ c ∈ t.nodes, c ≠ [] → v ∈ outerEndpoints t E c →
+    (graph t E).cladeBelow (keptSwitching t E F) v = keptClade t F c ∪ donorTaxa t F c) ∧
+  (∀ c ∈ t.nodes, c ≠ [] → v ∈ ghostEndpoints t E c →
+    (graph t E).cladeBelow (keptSwitching t E F) v = keptClade t F c ∪ ghostTaxa t F c)
+
+/-- From the claims at the vertices below the upper end of the wire above `c`, the clade below the
+first of them. -/
+theorem cladeBelow_firstBelow (hF : F ⊆ E) {c : Address}
+    (hc : c ∈ t.nodes) (hc0 : c ≠ []) (h : KeptCladeClaim t E F (firstBelow t E c)) :
+    (graph t E).cladeBelow (keptSwitching t E F) (firstBelow t E c) =
+      keptClade t F c ∪ donorTaxa t F c := by
+  rcases ho : outerEndpoints t E c with _ | ⟨w, L⟩
+  · rcases hg : ghostEndpoints t E c with _ | ⟨g, L'⟩
+    · -- no fresh vertex: the first vertex is `c`, and no pair has donor end `c`
+      have hfb : firstBelow t E c = Address.code c := by simp [firstBelow, ho, hg]
+      rw [h.1 c hc hfb.symm]
+      have hd : donorTaxa t F c = ∅ := by
+        ext a
+        simp only [donorTaxa, Finset.mem_biUnion, Finset.mem_filter, Finset.notMem_empty,
+          iff_false]
+        rintro ⟨e, ⟨he, he1⟩, -⟩
+        by_cases hg' : EdgeAbove.target e = c
+        · have := (mem_ghostEndpoints (t := t)).mpr ⟨e, hF he, he1, hg', rfl⟩
+          rw [hg] at this
+          simp at this
+        · have := (mem_outerEndpoints (t := t)).mpr ⟨e, hF he, Or.inl ⟨he1, hg', rfl⟩⟩
+          rw [ho] at this
+          simp at this
+      rw [hd, Finset.union_empty]
+    · -- the first vertex is the ghost donor; no pair has a non-ghost donor at `c`
+      have hgm : g ∈ ghostEndpoints t E c := by rw [hg]; simp
+      have hfb : firstBelow t E c = g := by simp [firstBelow, ho, hg]
+      rw [hfb] at h ⊢
+      rw [h.2.2 c hc hc0 hgm]
+      congr 1
+      unfold ghostTaxa donorTaxa
+      congr 1
+      refine Finset.filter_congr fun e he => ⟨fun h1 => h1.1, fun h1 => ⟨h1, ?_⟩⟩
+      by_contra hg'
+      have := (mem_outerEndpoints (t := t)).mpr ⟨e, hF he, Or.inl ⟨h1, hg', rfl⟩⟩
+      rw [ho] at this
+      simp at this
+  · have hwm : w ∈ outerEndpoints t E c := by rw [ho]; simp
+    have hfb : firstBelow t E c = w := by simp [firstBelow, ho]
+    rw [hfb] at h ⊢
+    exact h.2.1 c hc hc0 hwm
+
+
+/-- From the claims at the vertex after the outer endpoint of the wire above `c`, the clade below
+it. -/
+theorem cladeBelow_afterOuter (hF : F ⊆ E) {c : Address} (hc : c ∈ t.nodes) (hc0 : c ≠ [])
+    (h : KeptCladeClaim t E F (afterOuter t E c)) :
+    (graph t E).cladeBelow (keptSwitching t E F) (afterOuter t E c) =
+      keptClade t F c ∪ ghostTaxa t F c := by
+  rcases hg : ghostEndpoints t E c with _ | ⟨g, L'⟩
+  · have hfb : afterOuter t E c = Address.code c := by simp [afterOuter, hg]
+    rw [h.1 c hc hfb.symm]
+    have hd : ghostTaxa t F c = ∅ := by
+      ext a
+      simp only [ghostTaxa, Finset.mem_biUnion, Finset.mem_filter, Finset.notMem_empty,
+        iff_false]
+      rintro ⟨e, ⟨he, he1, hg'⟩, -⟩
+      have := (mem_ghostEndpoints (t := t)).mpr ⟨e, hF he, he1, hg', rfl⟩
+      rw [hg] at this
+      simp at this
+    rw [hd, Finset.union_empty]
+  · have hgm : g ∈ ghostEndpoints t E c := by rw [hg]; simp
+    have hfb : afterOuter t E c = g := by simp [afterOuter, hg]
+    rw [hfb] at h ⊢
+    exact h.2.2 c hc hc0 hgm
+
+/-- **The clades of the switching that keeps the added edges of `F`.** In
+`Realization.graph t E`, with the switching `Realization.keptSwitching t E F`, the clade below
+the vertex of `T` at `p` is `keptClade t F p`; below the outer endpoint of the wire above `c` it is
+`keptClade t F c ∪ donorTaxa t F c`, and below its ghost donor `keptClade t F c ∪ ghostTaxa t F c`.
+-/
+theorem cladeBelow_keptSwitching (ht : t.WellLabelled) (hE : EdgeAbove.CycleSeparated t E)
+    (hF : F ⊆ E) (v : ℕ) : KeptCladeClaim t E F v := by
+  have hG := levelOne t ht E hE
+  have hSG : keptSwitching t E F ⊆ (graph t E).edges := keptSwitching_subset hF
+  induction h : (graph t E).reachCount (keptSwitching t E F) v using Nat.strong_induction_on
+    generalizing v with
+  | _ n ih =>
+  -- the claims hold at the children of `v`
+  have hch : ∀ y, (v, y) ∈ keptSwitching t E F → KeptCladeClaim t E F y := fun y hy =>
+    ih _ (h ▸ RootedNetwork.reachCount_lt hG hSG hy) y rfl
+  -- below the recipient of a kept added edge lies the clade of its recipient end
+  have hrec : ∀ e ∈ F, (v, recipient t e) ∈ keptSwitching t E F →
+      (graph t E).cladeBelow (keptSwitching t E F) (recipient t e) = t.taxaAt e.2 := by
+    intro e he hy
+    have hmem : recipient t e ∈ outerEndpoints t E e.2 :=
+      mem_outerEndpoints.mpr ⟨e, hF he, Or.inr ⟨rfl, rfl⟩⟩
+    have ha := admissible_of_mem hE (hF he)
+    rw [(hch _ hy).2.1 e.2 ha.2.1 ha.2.2.2.1 hmem]
+    exact recipient_clade ht hE hF (hF he)
+  refine ⟨?_, ?_, ?_⟩
+  -- a vertex `p` of `T`
+  · rintro p hp rfl
+    obtain ⟨sub, hsub⟩ := (t.mem_nodes_iff p).1 hp
+    rw [RootedNetwork.cladeBelow_eq_children]
+    cases sub with
+    | leaf a₀ =>
+      -- a leaf: its taxon, and no child
+      rw [keptClade_leaf hE hF hsub]
+      have hnc : ∀ y, (Address.code p, y) ∉ keptSwitching t E F := by
+        intro y hy
+        rcases mem_keptSwitching.1 hy with ⟨hy, -⟩ | ⟨e, -, hd, -⟩
+        · obtain ⟨c, hc, hc0, hcp, -⟩ := (mem_support_code hE.1 hp).1 hy
+          obtain ⟨sc, hsc⟩ := (t.mem_nodes_iff c).1 hc
+          rcases (parent_eq_iff hc0).1 hcp with rfl | rfl <;>
+          · rw [PhyloTree.nodeAt_append, hsub] at hsc
+            simp [PhyloTree.nodeAt] at hsc
+        · exact donor_ne_code e hp hd
+      ext a
+      simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_biUnion, Finset.mem_singleton]
+      constructor
+      · rintro (⟨ha, hla⟩ | ⟨x, ⟨hx, hx1⟩, -⟩)
+        · change Address.code (leafAddress t a) = Address.code p at hla
+          have hl := Address.code_injective hla
+          have h' := leafAddress_nodeAt ha
+          rw [hl, hsub] at h'
+          simpa using h'.symm
+        · obtain ⟨x1, x2⟩ := x
+          simp only at hx1
+          subst hx1
+          exact absurd hx (hnc x2)
+      · intro haa
+        subst haa
+        refine Or.inl ⟨?_, ?_⟩
+        · exact List.mem_toFinset.2 (PhyloTree.leaf_label_mem hsub)
+        · change Address.code (leafAddress t a) = Address.code p
+          rw [leafAddress_eq ht hsub]
+    | fork l r =>
+      -- an internal vertex: the wires above its two children
+      rw [keptClade_fork ht hE hF hsub]
+      ext a
+      simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_biUnion]
+      have hnl : ¬(a ∈ (graph t E).taxa ∧ (graph t E).leaf a = Address.code p) := by
+        rintro ⟨ha, hla⟩
+        change Address.code (leafAddress t a) = Address.code p at hla
+        have h' := leafAddress_nodeAt ha
+        rw [Address.code_injective hla, hsub] at h'
+        cases h'
+      simp only [hnl, false_or]
+      constructor
+      · rintro ⟨⟨x1, y⟩, ⟨hx, hx1⟩, hay⟩
+        simp only at hx1 hay
+        subst hx1
+        rcases mem_keptSwitching.1 hx with ⟨hy, hnr⟩ | ⟨e, -, hd, -⟩
+        · obtain ⟨c, hc, hc0, hcp, rfl⟩ := (mem_support_code hE.1 hp).1 hy
+          have hcut : ¬∃ e ∈ F, e.2 = c := fun hc' => by
+            obtain ⟨e, he, h'⟩ := (firstBelow_recipient_iff hE hF hc).2 hc'
+            exact hnr e he h'
+          rw [cladeBelow_firstBelow hF hc hc0 (hch _ hx)] at hay
+          rcases (parent_eq_iff hc0).1 hcp with rfl | rfl
+          · exact Or.inl (mem_wireTaxa.2 ⟨hcut, Finset.mem_union.1 hay⟩)
+          · exact Or.inr (mem_wireTaxa.2 ⟨hcut, Finset.mem_union.1 hay⟩)
+        · exact absurd hd (donor_ne_code e hp)
+      · intro ha
+        obtain ⟨b, hb⟩ : ∃ b : Bool, a ∈ wireTaxa t F (p ++ [b]) := by
+          rcases ha with ha | ha
+          · exact ⟨false, ha⟩
+          · exact ⟨true, ha⟩
+        obtain ⟨hcut, hab⟩ := mem_wireTaxa.1 hb
+        have hc : p ++ [b] ∈ t.nodes := (t.mem_nodes_iff _).2
+          ⟨if b then r else l, by rw [PhyloTree.nodeAt_append, hsub]; cases b <;>
+            simp [PhyloTree.nodeAt]⟩
+        have hc0 : p ++ [b] ≠ [] := by simp
+        have hx : (Address.code p, firstBelow t E (p ++ [b])) ∈ keptSwitching t E F := by
+          refine mem_keptSwitching.2 (Or.inl ⟨(mem_support_code hE.1 hp).2
+            ⟨p ++ [b], hc, hc0, parent_append_singleton p b, rfl⟩, fun e he h' => ?_⟩)
+          exact hcut ((firstBelow_recipient_iff hE hF hc).1 ⟨e, he, h'⟩)
+        refine ⟨_, ⟨hx, rfl⟩, ?_⟩
+        rw [cladeBelow_firstBelow hF hc hc0 (hch _ hx)]
+        exact Finset.mem_union.2 hab
+  -- the outer endpoint of the wire above `c`
+  · intro c hc hc0 hv
+    have hvm : v ∈ outerEndpoints t E c ++ ghostEndpoints t E c := List.mem_append_left _ hv
+    rw [RootedNetwork.cladeBelow_eq_children]
+    ext a
+    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_biUnion]
+    have hnl : ¬(a ∈ (graph t E).taxa ∧ (graph t E).leaf a = v) :=
+      fun h' => leaf_ne_fresh hvm h'.1 h'.2
+    simp only [hnl, false_or]
+    have hafter : (v, afterOuter t E c) ∈ keptSwitching t E F := by
+      refine mem_keptSwitching.2 (Or.inl ⟨(mem_support_outer hE hc hc0 hv).2 rfl,
+        fun e _ h' => ?_⟩)
+      have hmem : afterOuter t E c ∈ ghostEndpoints t E c ++ [Address.code c] :=
+        headD_mem_append _ _ _
+      rcases List.mem_append.1 hmem with hmem | hmem
+      · obtain ⟨f, -, -, -, hd⟩ := mem_ghostEndpoints.mp hmem
+        exact donor_ne_recipient t f e (hd.symm.trans h')
+      · exact recipient_ne_code e hc ((List.mem_singleton.1 hmem).symm.trans h').symm
+    have hA := cladeBelow_afterOuter hF hc hc0 (hch _ hafter)
+    constructor
+    · rintro ⟨⟨x1, y⟩, ⟨hx, hx1⟩, hay⟩
+      simp only at hx1 hay
+      subst hx1
+      rcases mem_keptSwitching.1 hx with ⟨hy, -⟩ | ⟨e, he, hd, rfl⟩
+      · rw [(mem_support_outer hE hc hc0 hv).1 hy, hA] at hay
+        rcases Finset.mem_union.1 hay with hay | hay
+        · exact Or.inl hay
+        · simp only [ghostTaxa, donorTaxa, Finset.mem_biUnion, Finset.mem_filter] at hay ⊢
+          obtain ⟨e, ⟨he, he1, -⟩, hae⟩ := hay
+          exact Or.inr ⟨e, ⟨he, he1⟩, hae⟩
+      · rw [hrec e he hx] at hay
+        simp only [donorTaxa, Finset.mem_biUnion, Finset.mem_filter]
+        exact Or.inr ⟨e, ⟨he, donor_end_of_mem hE hF he hvm hd⟩, hay⟩
+    · rintro (ha | ha)
+      · exact ⟨_, ⟨hafter, rfl⟩, by rw [hA]; exact Finset.mem_union_left _ ha⟩
+      · simp only [donorTaxa, Finset.mem_biUnion, Finset.mem_filter] at ha
+        obtain ⟨e, ⟨he, he1⟩, hae⟩ := ha
+        by_cases hg' : EdgeAbove.target e = c
+        · refine ⟨_, ⟨hafter, rfl⟩, ?_⟩
+          rw [hA]
+          simp only [ghostTaxa, Finset.mem_union, Finset.mem_biUnion, Finset.mem_filter]
+          exact Or.inr ⟨e, ⟨he, he1, hg'⟩, hae⟩
+        · have hdm : donor t e ∈ outerEndpoints t E c :=
+            mem_outerEndpoints.mpr ⟨e, hF he, Or.inl ⟨he1, hg', rfl⟩⟩
+          have hdv : donor t e = v := by
+            have := outerEndpoints_eq_singleton hE hv
+            rw [this] at hdm
+            exact List.mem_singleton.1 hdm
+          have hx : (v, recipient t e) ∈ keptSwitching t E F :=
+            mem_keptSwitching.2 (Or.inr ⟨e, he, hdv, rfl⟩)
+          exact ⟨_, ⟨hx, rfl⟩, by rw [hrec e he hx]; exact hae⟩
+  -- the ghost donor of the wire above `c`
+  · intro c hc hc0 hv
+    have hvm : v ∈ outerEndpoints t E c ++ ghostEndpoints t E c := List.mem_append_right _ hv
+    obtain ⟨e₂, he₂, he₂1, he₂t, rfl⟩ := mem_ghostEndpoints.mp hv
+    rw [RootedNetwork.cladeBelow_eq_children]
+    ext a
+    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_biUnion]
+    have hnl : ¬(a ∈ (graph t E).taxa ∧ (graph t E).leaf a = donor t e₂) :=
+      fun h' => leaf_ne_fresh hvm h'.1 h'.2
+    simp only [hnl, false_or]
+    have hcode : (donor t e₂, Address.code c) ∈ keptSwitching t E F :=
+      mem_keptSwitching.2 (Or.inl ⟨(mem_support_ghost hE hc hc0 hv).2 rfl,
+        fun e _ h' => recipient_ne_code e hc h'.symm⟩)
+    have hC := (hch _ hcode).1 c hc rfl
+    constructor
+    · rintro ⟨⟨x1, y⟩, ⟨hx, hx1⟩, hay⟩
+      simp only at hx1 hay
+      subst hx1
+      rcases mem_keptSwitching.1 hx with ⟨hy, -⟩ | ⟨e, he, hd, rfl⟩
+      · rw [(mem_support_ghost hE hc hc0 hv).1 hy, hC] at hay
+        exact Or.inl hay
+      · rw [hrec e he hx] at hay
+        have hee : e = e₂ := donor_injective t (hE.1 (hF he)) (hE.1 he₂) hd
+        subst hee
+        simp only [ghostTaxa, Finset.mem_biUnion, Finset.mem_filter]
+        exact Or.inr ⟨e, ⟨he, he₂1, he₂t⟩, hay⟩
+    · rintro (ha | ha)
+      · exact ⟨_, ⟨hcode, rfl⟩, by rw [hC]; exact ha⟩
+      · simp only [ghostTaxa, Finset.mem_biUnion, Finset.mem_filter] at ha
+        obtain ⟨e, ⟨he, he1, het⟩, hae⟩ := ha
+        have hee : e = e₂ := by
+          have hdm := (mem_ghostEndpoints (t := t)).mpr ⟨e, hF he, he1, het, rfl⟩
+          rw [ghostEndpoints_eq_singleton hE hv] at hdm
+          exact donor_injective t (hE.1 (hF he)) (hE.1 he₂) (List.mem_singleton.1 hdm)
+        subst hee
+        have hx : (donor t e, recipient t e) ∈ keptSwitching t E F :=
+          mem_keptSwitching.2 (Or.inr ⟨e, he, rfl, rfl⟩)
+        exact ⟨_, ⟨hx, rfl⟩, by rw [hrec e he hx]; exact hae⟩
+
 end Realization
 
 end Camus
