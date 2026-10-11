@@ -723,6 +723,66 @@ theorem exists_builtOn_of_mem_displayed {N : Brooqs.Net L} (hN : N.WellFormed)
   obtain ⟨S, hS, hSK⟩ := exists_switching_of_mem_displayed hN hK
   exact exists_builtOn_of_switching_clades hN hS hSK
 
+
+/-! ### Recovery through every displayed tree -/
+
+section Genes
+
+open Filter Topology MeasureTheory ProbabilityTheory Coalescent Algorithm1
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+  [MeasurableSpace (Finset (Finset L))] [MeasurableSingletonClass (Finset (Finset L))]
+
+open DynamicProgramming in
+/-- **Sections 3.2 to 3.4 under the NMSC, through every displayed tree of `N`.** Let the gene trees
+be independent, each with the law of the NMSC on a metric level-1 network `N` with distinct leaf
+labels on the taxa `L`, without the anomalous configuration, and let `0 < t < t₀(N)`; let the root
+of the graph `Nr = Realization.graph (baseTree N) (pairs N)` of `N` have an outgroup leaf `z` as a
+child. For every displayed tree `K` of `N` ("T* is one of the underlying trees", Section 3.3),
+there is a tree `T` of `Nr` (Definition 1) whose clades are the clusters of `K`, and if `Nr` is
+identifiable under inclusion among the networks built on `T`, then almost surely, for all large
+numbers `n` of genes, every network built on `T` that has the best score for the output `Q` of
+Quartet Filtering on the quartet trees of the first `n` gene trees, with the fewest reticulations
+among the networks with the best score, is isomorphic to `Nr`: "CAMUS will add the correct
+reticulations and return N" (Section 3.2). -/
+theorem nmsc_recovery_displayed {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) (hna : NoAnomaly N) (G : ℕ → Ω → Finset (Finset L))
+    (hind : iIndepFun G P) (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) {t : ℝ} (ht : 0 < t)
+    (ht₀ : t < threshold N) {z : ℕ} (hz : z ∈ (Realization.graph (baseTree N) (pairs N)).taxa)
+    (hzr : ((Realization.graph (baseTree N) (pairs N)).root,
+        (Realization.graph (baseTree N) (pairs N)).leaf z) ∈
+      (Realization.graph (baseTree N) (pairs N)).edges)
+    {K : Finset (Finset L)} (hK : K ∈ N.displayed) :
+    ∃ T : PhyloTree, (Realization.graph (baseTree N) (pairs N)).BuiltOn T ∧
+      T.clades.toFinset = K.image (Finset.map (Coalescent.label L)) ∧
+      ((∀ R : RootedNetwork, R.AnchoredExtension T →
+        (∀ q, (Realization.graph (baseTree N) (pairs N)).DisplaysQuartet q →
+          R.DisplaysQuartet q) →
+        R.reticulationCount ≤ (Realization.graph (baseTree N) (pairs N)).reticulationCount →
+        Nonempty (R.Iso (Realization.graph (baseTree N) (pairs N)))) →
+      ∀ᵐ ω ∂P, ∀ᶠ n in atTop, ∀ R : RootedNetwork, R.AnchoredExtension T →
+        (∀ R' : RootedNetwork, R'.AnchoredExtension T →
+          score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+              (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R') ≤
+            score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+              (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R)) →
+        (∀ R' : RootedNetwork, R'.AnchoredExtension T →
+          (∀ R'' : RootedNetwork, R''.AnchoredExtension T →
+            score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+                (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R'') ≤
+              score (filterQuartets t (geneQuartets (fun i => G i ω) n))
+                (repertoire (filterQuartets t (geneQuartets (fun i => G i ω) n)) R')) →
+          R.reticulationCount ≤ R'.reticulationCount) →
+        Nonempty (R.Iso (Realization.graph (baseTree N) (pairs N)))) := by
+  -- the displayed tree is a tree of the graph (Definition 1)
+  obtain ⟨T, hT, hc⟩ := exists_builtOn_of_mem_displayed hN hK
+  -- and Section 3.2's argument applies through it
+  exact ⟨T, hT, hc, fun identifiable => nmsc_recovery_builtOn hN htaxa hna G hind hid hlaw ht
+    ht₀ hz hzr T hT identifiable⟩
+
+end Genes
+
 end NMSC
 
 end Camus
