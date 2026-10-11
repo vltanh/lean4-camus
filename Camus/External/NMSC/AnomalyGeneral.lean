@@ -44,6 +44,9 @@ quartet is strictly less probable than the two others iff
   `Brooqs.Net.Cycle.apartProb_le_one`, `Brooqs.Net.Cycle.apartProb_cherry`,
   `Brooqs.Net.Cycle.below_forestDist`: the probability that the two lineages below the hybrid
   node reach it apart.
+* `Brooqs.expectedScore_cycle_outside`, `Brooqs.expectedScore_cycle_sides`,
+  `Brooqs.expectedScore_cycle_oneSide`: the CF of the displayed quartet in the three cases, with the
+  lengths added up explicitly.
 * `Brooqs.Net.Cycle.quartetCF_of_anomalous`, `Brooqs.Net.Cycle.splitCF_of_anomalous`: the three
   quartet CFs, with the two taxa below the hybrid node labelled `0` and `1`, or with any labels.
 * `Brooqs.Net.Cycle.anomalous_iff_of_anomalous`: the anomaly criterion.
@@ -514,6 +517,71 @@ theorem Net.Cycle.apartProb_cherry {N : Net X} (Ω : N.Cycle) {s : Fin 4 → X}
   simp [hne]
 
 /-! ### The quartet CFs -/
+
+/-- **One of the two other taxa on a side, the other outside the cycle.** Let the lineages `0`
+and `1` arrive at the hybrid node of `cycle γ S₁ S₂ ℓ H` apart with probability `p`, the side `S₁`
+hold exactly the sampled lineage `k` (`k = 2` or `3`), from a pendant network, and the side `S₂`
+none. The expected score at the top node is the CF of `xy|zw` of `N₃₂` with `p` in place of
+`e^{-ℓ}`, `h₁ = S₁.lenBelow (s k)` (the length of `S₁` below the node of `k`),
+`L = S₁.lenAbove (s k)` (above it) and `h₂ = S₂.length`. -/
+theorem expectedScore_cycle_outside {s : Fin 4 → X} (hs : Function.Injective s) {k : Fin 4}
+    (hk0 : k ≠ 0) (hk1 : k ≠ 1) (γ ℓ p : ℝ) (S₁ S₂ : Side X) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{0}, {1}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({0} ∪ {1}) {{0}, {1}}) 1)
+    (hS₁n : S₁.leaves.Nodup) (h1 : S₁.lin s = {k}) (h2 : S₂.lin s = ∅) :
+    ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
+      1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-S₁.lenBelow (s k))) +
+        (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-S₂.length)) +
+          2 * γ * (1 - γ) * (Real.exp (-S₁.lenAbove (s k)) / 3)) :=
+  expectedScore_top_outside hs hk0 hk1 γ ℓ _ _ _ p S₁ S₂ H hH
+    (Side.forestDist_of_lin_single hS₁n h1) (Side.forestDist_of_lin_empty h2)
+
+/-- **The two other taxa on the two sides.** As `Brooqs.expectedScore_cycle_outside`, with the side
+`S₁` holding exactly the sampled lineage `k` and the side `S₂` exactly `m` (`{k, m} = {2, 3}`):
+the CF of `N₃₂` with `p` in place of `e^{-ℓ}`, `h₁ = S₁.lenBelow (s k)`, `h₂ = S₂.lenBelow (s m)`,
+and `L = S₁.lenAbove (s k) + S₂.lenAbove (s m)`, the length of the path between the nodes of `k`
+and `m` through the top node. -/
+theorem expectedScore_cycle_sides {s : Fin 4 → X} (hs : Function.Injective s) {k m : Fin 4}
+    (hk0 : k ≠ 0) (hk1 : k ≠ 1) (hm0 : m ≠ 0) (hm1 : m ≠ 1) (hkm : k ≠ m) (γ ℓ p : ℝ)
+    (S₁ S₂ : Side X) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{0}, {1}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({0} ∪ {1}) {{0}, {1}}) 1)
+    (hS₁n : S₁.leaves.Nodup) (hS₂n : S₂.leaves.Nodup) (h1 : S₁.lin s = {k})
+    (h2 : S₂.lin s = {m}) :
+    ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
+      1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-S₁.lenBelow (s k))) +
+        (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-S₂.lenBelow (s m))) +
+          2 * γ * (1 - γ) * (Real.exp (-(S₁.lenAbove (s k) + S₂.lenAbove (s m))) / 3)) :=
+  expectedScore_top_sides hs hk0 hk1 hm0 hm1 hkm γ ℓ _ _ _ _ p S₁ S₂ H hH
+    (Side.forestDist_of_lin_single hS₁n h1) (Side.forestDist_of_lin_single hS₂n h2)
+
+/-- **The two other taxa on one side.** As `Brooqs.expectedScore_cycle_outside`, with the metric
+side `S₁` holding exactly the sampled lineages `2` and `3`, from two pendant networks, and the side
+`S₂` none. With `u` the one hanging higher and `v` the other: the CF of `N₃₂` with `p` in place of
+`e^{-ℓ}`, `h₁ = S₁.lenBelow (s v)`, `h₂ = S₁.lenAbove (s u) + S₂.length` and
+`L = S₁.lenAbove (s v) - S₁.lenAbove (s u) > 0`, the length between the two nodes. -/
+theorem expectedScore_cycle_oneSide {s : Fin 4 → X} (hs : Function.Injective s) (γ ℓ p : ℝ)
+    (S₁ S₂ : Side X) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{0}, {1}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({0} ∪ {1}) {{0}, {1}}) 1)
+    (hS₁m : S₁.IsMetric) (hS₁n : S₁.leaves.Nodup) (h1 : S₁.lin s = {2, 3})
+    (hp : ∀ n ∈ S₁.nodes, #(n.2.2.lin s) ≤ 1) (h2 : S₂.lin s = ∅) :
+    ∃ u v : Fin 4, ((u = 2 ∧ v = 3) ∨ (u = 3 ∧ v = 2)) ∧
+      0 < S₁.lenAbove (s v) - S₁.lenAbove (s u) ∧
+      ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
+        1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-S₁.lenBelow (s v))) +
+          (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-(S₁.lenAbove (s u) + S₂.length))) +
+            2 * γ * (1 - γ) * (Real.exp (-(S₁.lenAbove (s v) - S₁.lenAbove (s u))) / 3)) := by
+  obtain ⟨u, v, huv, hpos, hE⟩ :=
+    Side.forestDist_of_lin_pair (k := 2) (m := 3) (by decide) hS₁m hS₁n h1 hp
+  have hcases : (u ≠ 0 ∧ u ≠ 1 ∧ v ≠ 0 ∧ v ≠ 1 ∧ u ≠ v) := by
+    rcases huv with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> decide
+  obtain ⟨hu0, hu1, hv0, hv1, huv'⟩ := hcases
+  exact ⟨u, v, huv, hpos, expectedScore_top_oneSide hs hu0 hu1 hv0 hv1 huv' γ ℓ _ _ _ _ p S₁ S₂ H
+    hH hE (Side.forestDist_of_lin_empty h2)⟩
 
 /-- The expected score at the top node of a cycle whose side `S₁` brings at least one of the
 lineages `2`, `3`, the side `S₂` the other or none, and below whose hybrid node the lineages `0`

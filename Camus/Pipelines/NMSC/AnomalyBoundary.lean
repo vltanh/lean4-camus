@@ -5,37 +5,49 @@ public import Camus.Pipelines.NMSC.AnomalyGeneral
 /-!
 # Section 3.3: Quartet Filtering on the boundary of the anomaly zone
 
-On four taxa in the anomalous configuration, Quartet Filtering (Algorithm 1) eventually fails in
-the anomaly zone and eventually keeps exactly the quartet tree of Q(N_r) outside it
-(`NMSC.anomalous_filterQuartets`). On the boundary of the zone the three quartet trees on the four
-taxa are equally probable (`NMSC.anomalous_filterQuartets_boundary`): Algorithm 1 eventually keeps
-the copies of a single quartet tree, the most frequent one, but which one keeps changing. This file
-proves that it does not almost surely end up keeping the quartet tree of Q(N_r)
-(`NMSC.not_ae_filterQuartets_of_equal`): the event that, for all large numbers of genes, Algorithm
-1 returns on the four taxa exactly the copies of the quartet tree of Q(N_r) has probability less
-than `1`.
+On four taxa in the anomalous configuration, Quartet Filtering (Algorithm 1) eventually drops the
+quartet tree of Q(N_r) in the anomaly zone and eventually keeps exactly its copies outside the zone
+and off its boundary (`NMSC.anomalous_filterQuartets`). On the boundary the three quartet trees on
+the four taxa are equally probable (`NMSC.anomalous_filterQuartets_boundary`): Algorithm 1
+eventually keeps the copies of a single quartet tree, the most frequent one, but which one keeps
+changing. This file proves that neither outcome is almost sure there: it is not almost sure that,
+for all large numbers of genes, Algorithm 1 returns on the four taxa exactly the copies of the
+quartet tree of Q(N_r) (`NMSC.not_ae_filterQuartets_of_equal`), nor that it returns no copy of it
+(`NMSC.not_ae_drop_of_equal`). So, for every threshold `0 < t < t₀(N)`, Algorithm 1 almost surely
+ends up dropping the quartet tree of Q(N_r) on four taxa in the anomalous configuration exactly in
+the anomaly zone (`NMSC.anomalous_drop_iff`).
 
 ## Main results
 
-* `NMSC.induces_unique`: a good forest induces at most one quartet tree on four taxa.
-* `NMSC.prob_counts_eq`: when the three quartet trees are equally probable, the probability that a
-  given quartet tree is a most frequent one among the first `n` gene trees does not depend on it.
-* `NMSC.not_ae_filterQuartets_of_equal`: on four taxa whose three quartet trees have probability
-  `1/3` and on which the network displays one of them, Algorithm 1 does not almost surely end up
-  returning exactly the copies of the displayed one.
-* `NMSC.anomalous_not_ae_filterQuartets_boundary`: the same in the anomalous configuration, on the
-  boundary of the anomaly zone.
+* `NMSC.induces_unique`, `NMSC.induces_iff_blockLabel`: a gene tree induces exactly one quartet
+  tree on four taxa, almost surely.
+* `NMSC.prob_labels_eq`, `NMSC.prob_labels_mem`: when the three quartet trees are equally probable,
+  the quartet trees of the first `n` gene trees are independent and uniform.
+* `NMSC.card_maxLabels`, `NMSC.card_maxLabels_le`, `NMSC.card_strictLabels_succ`: counting
+  sequences of labels in which a label is most frequent, or strictly most frequent.
+* `NMSC.not_ae_filterQuartets_of_equal`, `NMSC.anomalous_not_ae_filterQuartets_boundary`: on the
+  boundary, Algorithm 1 does not almost surely end up returning exactly the copies of the displayed
+  quartet tree.
+* `NMSC.not_ae_drop_of_equal`: on the boundary, it does not almost surely end up dropping it.
+* `NMSC.anomalous_drop_iff`: Algorithm 1 almost surely ends up dropping the quartet tree of Q(N_r)
+  iff the four taxa are in the anomaly zone.
 
 ## Proof
 
 If, almost surely, for all large `n`, Algorithm 1 keeps exactly the copies of the displayed quartet
 tree `d`, then `d` is eventually a most frequent quartet tree (Algorithm 1 keeps all the copies of
-a most frequent one), so the probability `P(A_n^d)` that it is a most frequent one tends to `1`. The
-quartet trees of the gene trees on the four taxa are independent and uniform on the three, so
-`P(A_n^u)` is the same for the three quartet trees `u`: the law of the first `n` of them is
-invariant under any permutation of the three (`NMSC.prob_counts_eq`). Then the probability that the
-three are most frequent at once tends to `1`; but for `n ≡ 1 (mod 3)` the three counts, which add
-up to `n`, cannot be equal.
+a most frequent one), so the probability `P(A_n^d)` that it is a most frequent one tends to `1`
+(`NMSC.tendsto_prob_of_ae_eventually`). The quartet trees of the gene trees on the four taxa are
+independent and uniform on the three, so `P(A_n^u)` is the same for the three quartet trees `u`:
+the law of the first `n` of them is invariant under any permutation of the three
+(`NMSC.card_maxLabels`). Then the probability that the three are most frequent at once tends to
+`1`; but for `n ≡ 1 (mod 3)` the three counts, which add up to `n`, cannot be equal.
+
+If instead Algorithm 1 almost surely ends up dropping `d`, then `d` is eventually not strictly the
+most frequent, since Algorithm 1 keeps the copies of a strictly most frequent quartet tree. But
+among `n + 1` uniform labels, `d` is strictly the most frequent with probability at least `1/9`:
+when no label is strictly the most frequent, the last one is not a most frequent one among the
+first `n`, which leaves at most two of the three values (`NMSC.card_strictLabels_succ`).
 -/
 
 @[expose] public noncomputable section
@@ -253,6 +265,129 @@ theorem card_maxLabels_le {n : ℕ} (hn : n % 3 = 1) : 3 * #(maxLabels n 0) ≤ 
   have hC : #C = #A := hu 2
   omega
 
+/-- The sequences of `n` labels in which `u` is strictly the most frequent label. -/
+def strictLabels (n : ℕ) (u : Fin 3) : Finset (Fin n → Fin 3) :=
+  univ.filter fun y => ∀ u', u' ≠ u → labelCount y u' < labelCount y u
+
+/-- The count of a label among `n + 1` labels: its count among the first `n`, plus one if it is the
+last. -/
+theorem labelCount_succ {n : ℕ} (y : Fin (n + 1) → Fin 3) (u : Fin 3) :
+    labelCount y u = labelCount (Fin.init y) u + if y (Fin.last n) = u then 1 else 0 := by
+  unfold labelCount
+  rw [card_filter, card_filter, Fin.sum_univ_castSucc]
+  rfl
+
+/-- **The last label is strictly most frequent often enough.** Among the sequences of `n + 1`
+labels, at least a ninth have `u` as strictly the most frequent label: the sequences without a
+strictly most frequent label are at most `2 · 3^n`, since their last label is not a most frequent
+one among the first `n`, and the three labels play the same role. -/
+theorem card_strictLabels_succ (n : ℕ) (u : Fin 3) : 3 ^ n ≤ 3 * #(strictLabels (n + 1) u) := by
+  -- the three labels play the same role
+  have hsym : ∀ v w : Fin 3, #(strictLabels (n + 1) v) = #(strictLabels (n + 1) w) := by
+    intro v w
+    set σ := Equiv.swap v w
+    have hσσ : ∀ x, σ (σ x) = x := fun x => Equiv.swap_apply_self v w x
+    have hcnt : ∀ (y : Fin (n + 1) → Fin 3) x, labelCount (σ ∘ y) x = labelCount y (σ x) := by
+      intro y x
+      unfold labelCount
+      congr 1
+      ext i
+      simp only [mem_filter, mem_univ, true_and, Function.comp_apply]
+      constructor
+      · intro h
+        rw [← h, hσσ]
+      · intro h
+        rw [h, hσσ]
+    have hmem : ∀ y : Fin (n + 1) → Fin 3, y ∈ strictLabels (n + 1) v →
+        σ ∘ y ∈ strictLabels (n + 1) w := by
+      intro y hy
+      simp only [strictLabels, mem_filter, mem_univ, true_and, hcnt] at hy ⊢
+      intro x hx
+      rw [show σ w = v from Equiv.swap_apply_right v w]
+      refine hy (σ x) fun h => hx ?_
+      rw [← hσσ x, h]
+      exact Equiv.swap_apply_left v w
+    have hmem' : ∀ y : Fin (n + 1) → Fin 3, y ∈ strictLabels (n + 1) w →
+        σ ∘ y ∈ strictLabels (n + 1) v := by
+      intro y hy
+      simp only [strictLabels, mem_filter, mem_univ, true_and, hcnt] at hy ⊢
+      intro x hx
+      rw [show σ v = w from Equiv.swap_apply_left v w]
+      refine hy (σ x) fun h => hx ?_
+      rw [← hσσ x, h]
+      exact Equiv.swap_apply_right v w
+    refine card_nbij' (fun y => σ ∘ y) (fun y => σ ∘ y) (fun y hy => hmem y hy)
+      (fun y hy => hmem' y hy) (fun y _ => ?_) (fun y _ => ?_)
+    · funext i
+      simp [hσσ]
+    · funext i
+      simp [hσσ]
+  -- the sequences without a strictly most frequent label
+  set R : Finset (Fin (n + 1) → Fin 3) := univ.filter fun y => ∀ v, y ∉ strictLabels (n + 1) v
+  have hR : #R ≤ 2 * 3 ^ n := by
+    -- the last label is not the most frequent label `q₁` of the first `n`
+    have hlast : ∀ y ∈ R, y (Fin.last n) ≠ (rank (labelCount (Fin.init y))).1 := by
+      intro y hy hq
+      simp only [R, mem_filter, mem_univ, true_and] at hy
+      refine hy (y (Fin.last n)) ?_
+      simp only [strictLabels, mem_filter, mem_univ, true_and]
+      intro u' hu'
+      rw [labelCount_succ, labelCount_succ, ite_eq_right (Ne.symm hu'), ite_eq_left rfl, hq]
+      have hmax : labelCount (Fin.init y) u' ≤
+          labelCount (Fin.init y) (rank (labelCount (Fin.init y))).1 := by
+        obtain ⟨h12, h23⟩ := rank_ordered (labelCount (Fin.init y))
+        rcases rank_covers (labelCount (Fin.init y)) u' with h | h | h <;> rw [h] <;> omega
+      omega
+    let f : (Fin (n + 1) → Fin 3) → (Fin n → Fin 3) × Fin 2 := fun y =>
+      (Fin.init y, if y (Fin.last n) = (rank (labelCount (Fin.init y))).2.1 then 0 else 1)
+    have hinj : Set.InjOn f R := by
+      intro y hy y' hy' h
+      simp only [f, Prod.mk.injEq] at h
+      obtain ⟨hinit, hbit⟩ := h
+      have hcov := rank_covers (labelCount (Fin.init y))
+      have hdist := rank_distinct (labelCount (Fin.init y))
+      have h1 := hlast y hy
+      have h2 := hlast y' hy'
+      rw [← hinit] at h2 hbit
+      have hl : y (Fin.last n) = y' (Fin.last n) := by
+        rcases hcov (y (Fin.last n)) with ha | ha | ha <;>
+          rcases hcov (y' (Fin.last n)) with hb | hb | hb
+        all_goals first
+          | exact absurd ha h1
+          | exact absurd hb h2
+          | (rw [ha, hb]; done)
+          | (rw [ite_eq_left ha, ite_eq_right (fun h => hdist.2.2 (h.symm.trans hb))] at hbit
+             exact absurd hbit (by decide))
+          | (rw [ite_eq_right (fun h => hdist.2.2 (h.symm.trans ha)), ite_eq_left hb] at hbit
+             exact absurd hbit (by decide))
+      rw [← Fin.snoc_init_self y, ← Fin.snoc_init_self y', hinit, hl]
+    calc #R ≤ #(univ : Finset ((Fin n → Fin 3) × Fin 2)) :=
+          card_le_card_of_injOn f (fun _ _ => mem_univ _) hinj
+      _ = 2 * 3 ^ n := by simp [mul_comm]
+  -- every sequence is in one of the four sets
+  have hcover : (univ : Finset (Fin (n + 1) → Fin 3)) ⊆
+      strictLabels (n + 1) 0 ∪ strictLabels (n + 1) 1 ∪ strictLabels (n + 1) 2 ∪ R := by
+    intro y _
+    by_cases h : ∀ v, y ∉ strictLabels (n + 1) v
+    · exact mem_union_right _ (by simp [R, h])
+    · simp only [not_forall, not_not] at h
+      obtain ⟨v, hv⟩ := h
+      have hv3 : ∀ v : Fin 3, v = 0 ∨ v = 1 ∨ v = 2 := by decide
+      rcases hv3 v with rfl | rfl | rfl <;> simp [hv]
+  have hcard := card_le_card hcover
+  have hu := card_union_le (strictLabels (n + 1) 0 ∪ strictLabels (n + 1) 1 ∪
+    strictLabels (n + 1) 2) R
+  have hu' := card_union_le (strictLabels (n + 1) 0 ∪ strictLabels (n + 1) 1)
+    (strictLabels (n + 1) 2)
+  have hu'' := card_union_le (strictLabels (n + 1) 0) (strictLabels (n + 1) 1)
+  have huniv : #(univ : Finset (Fin (n + 1) → Fin 3)) = 3 ^ (n + 1) := by simp
+  have e0 := hsym 0 u
+  have e1 := hsym 1 u
+  have e2 := hsym 2 u
+  rw [pow_succ] at huniv
+  omega
+
+
 section Genes
 
 variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
@@ -334,16 +469,15 @@ theorem prob_labels_eq {N : Brooqs.Net L} (hN : N.WellFormed) {k : QuartetKey}
   rw [hset, hind.measure_inter_preimage_eq_mul (range n) (fun i _ => MeasurableSet.of_discrete)]
   simp only [hone, prod_const, card_range]
 
-/-- **Every label is most frequent with the same probability.** If the three quartet trees on `k`
-have probability `1/3`, the probability that the quartet tree `u` is a most frequent one among the
-quartet trees that the first `n` gene trees induce on `k` is `#(maxLabels n u) / 3^n`, the same for
-the three. -/
-theorem prob_counts_eq {N : Brooqs.Net L} (hN : N.WellFormed) {k : QuartetKey}
+/-- If the three quartet trees on `k` have probability `1/3`, the labels of the first `n` gene trees
+form a sequence of the set `S` with probability `#S / 3^n`. -/
+theorem prob_labels_mem {N : Brooqs.Net L} (hN : N.WellFormed) {k : QuartetKey}
     (hk : keyTaxa k ⊆ L) (hthird : ∀ u, quartetProb N (k.quartet u) = 1 / 3)
     (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
     (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
-    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) (n : ℕ) (u : Fin 3) :
-    P (labels k G n ⁻¹' ↑(maxLabels n u)) = #(maxLabels n u) * (1 / 3 : ENNReal) ^ n := by
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) (n : ℕ)
+    (S : Finset (Fin n → Fin 3)) :
+    P (labels k G n ⁻¹' ↑S) = #S * (1 / 3 : ENNReal) ^ n := by
   have hmeas : AEMeasurable (labels k G n) P := by
     refine AEMeasurable.of_eval fun i => ?_
     exact (Measurable.of_discrete (f := blockLabel k)).comp_aemeasurable
@@ -352,6 +486,41 @@ theorem prob_counts_eq {N : Brooqs.Net L} (hN : N.WellFormed) {k : QuartetKey}
     ← sum_measure_singleton]
   simp only [Measure.map_apply_of_aemeasurable hmeas (measurableSet_singleton _),
     prob_labels_eq hN hk hthird G hind hid hlaw n, sum_const, nsmul_eq_mul]
+
+/-- **Every label is most frequent with the same probability.** If the three quartet trees on `k`
+have probability `1/3`, the probability that the quartet tree `u` is a most frequent one among the
+quartet trees that the first `n` gene trees induce on `k` is `#(maxLabels n u) / 3^n`, the same for
+the three (`NMSC.card_maxLabels`). -/
+theorem prob_counts_eq {N : Brooqs.Net L} (hN : N.WellFormed) {k : QuartetKey}
+    (hk : keyTaxa k ⊆ L) (hthird : ∀ u, quartetProb N (k.quartet u) = 1 / 3)
+    (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
+    (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) (n : ℕ) (u : Fin 3) :
+    P (labels k G n ⁻¹' ↑(maxLabels n u)) = #(maxLabels n u) * (1 / 3 : ENNReal) ^ n :=
+  prob_labels_mem hN hk hthird G hind hid hlaw n _
+
+/-- If almost surely, for all large `n`, the event `A n` holds, its probability tends to `1`. -/
+theorem tendsto_prob_of_ae_eventually {A : ℕ → Set Ω} (h : ∀ᵐ ω ∂P, ∀ᶠ n in atTop, ω ∈ A n) :
+    Tendsto (fun n => P (A n)) atTop (𝓝 1) := by
+  set B : ℕ → Set Ω := fun m => {ω | ∀ n, m ≤ n → ω ∈ A n} with hB
+  have hBmono : Monotone B := fun m m' hmm' ω hω n hn => hω n (hmm'.trans hn)
+  have hnull : P (⋃ m, B m)ᶜ = 0 := by
+    have h' : ∀ᵐ ω ∂P, ω ∈ ⋃ m, B m := by
+      filter_upwards [h] with ω hω
+      obtain ⟨m, hm⟩ := eventually_atTop.1 hω
+      exact Set.mem_iUnion.2 ⟨m, hm⟩
+    exact ae_iff.1 h'
+  have hBU : P (⋃ m, B m) = 1 := by
+    refine le_antisymm prob_le_one ?_
+    calc (1 : ENNReal) = P Set.univ := measure_univ.symm
+      _ = P ((⋃ m, B m) ∪ (⋃ m, B m)ᶜ) := by rw [Set.union_compl_self]
+      _ ≤ P (⋃ m, B m) + P (⋃ m, B m)ᶜ := measure_union_le _ _
+      _ = P (⋃ m, B m) := by rw [hnull, add_zero]
+  have hlimB : Tendsto (fun m => P (B m)) atTop (𝓝 1) := by
+    have := tendsto_measure_iUnion_atTop (μ := P) hBmono
+    rwa [hBU] at this
+  exact tendsto_of_tendsto_of_tendsto_of_le_of_le hlimB tendsto_const_nhds
+    (fun m => measure_mono fun ω hω => hω m le_rfl) (fun n => prob_le_one)
 
 /-- Algorithm 1 keeps all the copies of a most frequent quartet tree: if it returns on the four taxa
 `k` exactly the copies of `k.quartet d`, then `d` is a most frequent quartet tree on `k`. -/
@@ -430,26 +599,7 @@ theorem not_ae_filterQuartets_of_equal {N : Brooqs.Net L} (hN : N.WellFormed) {k
     rw [hn u']
     simp only [hdisp]
   -- so the probability that `d` is most frequent tends to `1`
-  set B : ℕ → Set Ω := fun m => {ω | ∀ n, m ≤ n → ω ∈ A n} with hB
-  have hBmono : Monotone B := fun m m' hmm' ω hω n hn => hω n (hmm'.trans hn)
-  have hnull : P (⋃ m, B m)ᶜ = 0 := by
-    have h : ∀ᵐ ω ∂P, ω ∈ ⋃ m, B m := by
-      filter_upwards [H2] with ω hω
-      obtain ⟨m, hm⟩ := eventually_atTop.1 hω
-      exact Set.mem_iUnion.2 ⟨m, hm⟩
-    exact ae_iff.1 h
-  have hBU : P (⋃ m, B m) = 1 := by
-    refine le_antisymm prob_le_one ?_
-    calc (1 : ENNReal) = P Set.univ := measure_univ.symm
-      _ = P ((⋃ m, B m) ∪ (⋃ m, B m)ᶜ) := by rw [Set.union_compl_self]
-      _ ≤ P (⋃ m, B m) + P (⋃ m, B m)ᶜ := measure_union_le _ _
-      _ = P (⋃ m, B m) := by rw [hnull, add_zero]
-  have hlimB : Tendsto (fun m => P (B m)) atTop (𝓝 1) := by
-    have := tendsto_measure_iUnion_atTop (μ := P) hBmono
-    rwa [hBU] at this
-  have hlimA : Tendsto (fun n => P (A n)) atTop (𝓝 1) :=
-    tendsto_of_tendsto_of_tendsto_of_le_of_le hlimB tendsto_const_nhds
-      (fun m => measure_mono fun ω hω => hω m le_rfl) (fun n => prob_le_one)
+  have hlimA : Tendsto (fun n => P (A n)) atTop (𝓝 1) := tendsto_prob_of_ae_eventually H2
   -- but for `n ≡ 1 (mod 3)` its probability is at most `2/3`
   have hvalue : ∀ n, (P (A n)).toReal = #(maxLabels n d) * (1 / 3 : ℝ) ^ n := fun n => by
     rw [hA]
@@ -472,6 +622,92 @@ theorem not_ae_filterQuartets_of_equal {N : Brooqs.Net L} (hN : N.WellFormed) {k
   obtain ⟨n₀, hn₀⟩ := eventually_atTop.1 (hlimR.eventually_const_lt (show (5 / 6 : ℝ) < 1 by
     norm_num))
   have h1 := hn₀ (3 * n₀ + 1) (by omega)
+  have h2 := hle n₀
+  linarith
+
+/-- **Quartet Filtering does not almost surely drop the displayed quartet tree when the three are
+equally probable.** Under the assumptions of `NMSC.not_ae_filterQuartets_of_equal`, for every
+threshold `t`, it is not almost sure that, for all large numbers `n` of genes, Algorithm 1 returns
+no copy of the displayed quartet tree `k.quartet d`: whenever it is strictly the most frequent,
+Algorithm 1 keeps its copies, and it is so with probability at least `1/9` for every number of
+genes (`NMSC.card_strictLabels_succ`). -/
+theorem not_ae_drop_of_equal {N : Brooqs.Net L} (hN : N.WellFormed) {k : QuartetKey}
+    (hk : keyTaxa k ⊆ L) (d : Fin 3) (hthird : ∀ u, quartetProb N (k.quartet u) = 1 / 3)
+    (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
+    (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) (t : ℝ) :
+    ¬ ∀ᵐ ω ∂P, ∀ᶠ n in atTop,
+      (filterQuartets t (geneQuartets (fun i => G i ω) n)).count (k.quartet d) = 0 := by
+  intro H
+  -- almost surely, the counts of the quartet trees are the counts of the labels
+  have hcount : ∀ᵐ ω ∂P, ∀ n u, (geneQuartets (fun i => G i ω) n).count (k.quartet u) =
+      labelCount (labels k G n ω) u := by
+    filter_upwards [ae_geneTreeDist_ne_zero G hid hlaw] with ω hω
+    intro n u
+    rw [count_geneQuartets, bd_card_range]
+    unfold labelCount labels
+    congr 1
+    ext i
+    simp only [mem_filter, mem_univ, true_and]
+    exact induces_iff_blockLabel hN hk hthird (hω i) u
+  -- if Algorithm 1 eventually drops `d`, `d` is eventually not strictly most frequent
+  set A : ℕ → Set Ω := fun n => labels k G n ⁻¹' ↑(univ \ strictLabels n d) with hA
+  have H2 : ∀ᵐ ω ∂P, ∀ᶠ n in atTop, ω ∈ A n := by
+    filter_upwards [H, hcount] with ω hω hc
+    filter_upwards [hω] with n hn
+    simp only [hA, Set.mem_preimage, coe_sdiff, coe_univ, Set.mem_sdiff, Set.mem_univ, true_and,
+      mem_coe]
+    intro hstrict
+    simp only [strictLabels, mem_filter, mem_univ, true_and] at hstrict
+    set Q := geneQuartets (fun i => G i ω) n
+    set f := frequencies (Q.map quartetEquiv) k
+    have hf : ∀ u, f u = Q.count (k.quartet u) := fun u => frequencies_map Q k u
+    have hlt : ∀ u, u ≠ d → f u < f d := fun u hu => by
+      rw [hf, hf, hc, hc]
+      exact hstrict u hu
+    have h1 : (rank f).1 = d := rank_fst_eq_of_lt hlt
+    have htop : (filterQuartets t Q).count (k.quartet d) = f d := by
+      rw [count_filterQuartets, ← h1]
+      exact filterBlock_top_count t (Q.map quartetEquiv) k
+    obtain ⟨u, hu⟩ : ∃ u : Fin 3, u ≠ d := ⟨d + 1, by
+      have : ∀ d : Fin 3, d + 1 ≠ d := by decide
+      exact this d⟩
+    have := hlt u hu
+    rw [hn] at htop
+    omega
+  have hlimA : Tendsto (fun n => P (A n)) atTop (𝓝 1) := tendsto_prob_of_ae_eventually H2
+  -- but `d` is strictly most frequent with probability at least `1/9`
+  have hvalue : ∀ n, (P (A n)).toReal =
+      (3 ^ n - #(strictLabels n d) : ℝ) * (1 / 3 : ℝ) ^ n := fun n => by
+    rw [hA]
+    simp only
+    rw [prob_labels_mem hN hk hthird G hind hid hlaw n, ENNReal.toReal_mul, ENNReal.toReal_pow,
+      ENNReal.toReal_natCast, ENNReal.toReal_div, ENNReal.toReal_one, ENNReal.toReal_ofNat,
+      card_sdiff_of_subset (subset_univ _), card_univ, Fintype.card_fun, Fintype.card_fin,
+      Fintype.card_fin, Nat.cast_sub (by
+        calc #(strictLabels n d) ≤ #(univ : Finset (Fin n → Fin 3)) := card_le_univ _
+          _ = 3 ^ n := by simp), Nat.cast_pow]
+    norm_num
+  have hle : ∀ m, (P (A (m + 1))).toReal ≤ 8 / 9 := fun m => by
+    rw [hvalue]
+    have hcard := card_strictLabels_succ m d
+    have hcard' : (3 : ℝ) ^ m ≤ 3 * #(strictLabels (m + 1) d) := by exact_mod_cast hcard
+    have hpos : (0 : ℝ) < 3 ^ m := by positivity
+    rw [div_pow, one_pow, pow_succ]
+    rw [show ((3 : ℝ) ^ m * 3 - #(strictLabels (m + 1) d)) * (1 / (3 ^ m * 3)) =
+      1 - #(strictLabels (m + 1) d) / (3 ^ m * 3) by field_simp]
+    rw [show (8 / 9 : ℝ) = 1 - 1 / 9 by norm_num]
+    have : 1 / 9 ≤ (#(strictLabels (m + 1) d) : ℝ) / (3 ^ m * 3) := by
+      rw [div_le_div_iff₀ (by norm_num) (by positivity)]
+      linarith
+    linarith
+  have hlimR : Tendsto (fun n => (P (A n)).toReal) atTop (𝓝 1) := by
+    have := (ENNReal.tendsto_toReal ENNReal.one_ne_top).comp hlimA
+    rw [ENNReal.toReal_one] at this
+    exact this
+  obtain ⟨n₀, hn₀⟩ := eventually_atTop.1 (hlimR.eventually_const_lt (show (17 / 18 : ℝ) < 1 by
+    norm_num))
+  have h1 := hn₀ (n₀ + 1) (by omega)
   have h2 := hle n₀
   linarith
 
@@ -501,6 +737,98 @@ theorem anomalous_not_ae_filterQuartets_boundary {N : Brooqs.Net L} (hN : N.Well
     anomalous_filterQuartets_boundary hN htaxa hk C hinj hbelow h3 h1 G hind hid hlaw
   exact ⟨h₁, h₂, L₀, p1, p2, p3, fun hzone t =>
     not_ae_filterQuartets_of_equal hN hk hdisp (hb hzone).1 G hind hid hlaw t⟩
+
+/-- **Section 3.3: Quartet Filtering drops the quartet tree of Q(N_r) exactly in the anomaly zone.**
+Under the assumptions of `NMSC.anomalous_filterQuartets`, with `p`, `γ`, the positive lengths `h₁`,
+`h₂`, `L₀` of `NMSC.anomalous_quartetProb` and
+`D = γ(1 - γ)(1 - e^{-L₀}) - γ²(1 - e^{-h₁}) - (1 - γ)²(1 - e^{-h₂})`: for every threshold
+`0 < t < t₀(N)`, almost surely, for all large numbers `n` of genes, Algorithm 1 returns no copy of
+the quartet tree of Q(N_r) on the four taxa `k` iff `1 - p < p D`. In the anomaly zone it drops it
+(`NMSC.filterQuartets_block_of_least`); outside the zone and off its boundary it keeps all its
+copies (`NMSC.filterQuartets_block_of_most`); on the boundary it keeps them with probability at
+least `1/9` at every number of genes (`NMSC.not_ae_drop_of_equal`). -/
+theorem anomalous_drop_iff {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) {k : QuartetKey} (hk : keyTaxa k ⊆ L) (C : N.Cycle)
+    {i j a b : Fin 4} (hinj : Function.Injective ![i, j, a, b])
+    (hbelow : C.below.lin (keyTaxon k hk) = {i, j}) (h3 : 3 ≤ #(C.top.lin (keyTaxon k hk)))
+    (h1 : ∀ n ∈ C.side₁.nodes ++ C.side₂.nodes, #(n.2.2.lin (keyTaxon k hk)) ≤ 1)
+    (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
+    (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) :
+    ∃ h₁ h₂ L₀ : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L₀ ∧ ∀ t, 0 < t → t < threshold N →
+      ((∀ᵐ ω ∂P, ∀ᶠ n in atTop,
+          (filterQuartets t (geneQuartets (fun i => G i ω) n)).count
+            (k.quartet (pairIndex i j)) = 0) ↔
+        1 - C.apartProb ![keyTaxon k hk i, keyTaxon k hk j, keyTaxon k hk a, keyTaxon k hk b] <
+          C.apartProb ![keyTaxon k hk i, keyTaxon k hk j, keyTaxon k hk a, keyTaxon k hk b] *
+            (C.γ * (1 - C.γ) * (1 - Real.exp (-L₀)) - C.γ ^ 2 * (1 - Real.exp (-h₁)) -
+              (1 - C.γ) ^ 2 * (1 - Real.exp (-h₂)))) := by
+  obtain ⟨hdisp, h₁, h₂, L₀, p1, p2, p3, e0, e1⟩ :=
+    anomalous_quartetProb hN htaxa hk C hinj hbelow h3 h1
+  refine ⟨h₁, h₂, L₀, p1, p2, p3, fun t ht ht₀ => ⟨fun hdrop => ?_, fun hzone => ?_⟩⟩
+  · -- outside the zone, Algorithm 1 does not almost surely drop the displayed quartet tree
+    by_contra hzone
+    rcases (not_lt.1 hzone).lt_or_eq with hreg | hbd
+    · -- off the boundary: it keeps all its copies, and there are some
+      have hgt : ∀ u, u ≠ pairIndex i j →
+          quartetProb N (k.quartet u) < quartetProb N (k.quartet (pairIndex i j)) := by
+        intro u hu
+        rw [e0, e1 u hu]
+        linarith
+      have hkeep := filterQuartets_block_of_most hN htaxa (mem_keysOn.2 hk) hdisp hgt
+        (fun u u' hu hu' => by rw [e1 u hu, e1 u' hu']) G hind hid hlaw ht ht₀
+      obtain ⟨u, hu⟩ : ∃ u : Fin 3, u ≠ pairIndex i j := ⟨pairIndex i j + 1, by
+        have : ∀ d : Fin 3, d + 1 ≠ d := by decide
+        exact this _⟩
+      have hpos : 0 < quartetProb N (k.quartet (pairIndex i j)) :=
+        lt_of_le_of_lt (quartetProb_nonneg hN _) (hgt u hu)
+      have hcount : ∀ᵐ ω ∂P, ∀ᶠ n in atTop,
+          0 < (geneQuartets (fun i => G i ω) n).count (k.quartet (pairIndex i j)) := by
+        filter_upwards [ae_tendsto_block k G hind hid hlaw] with ω hω
+        filter_upwards [(hω (pairIndex i j)).eventually_const_lt hpos, eventually_gt_atTop 0]
+          with n hn hn0
+        have hn' : (0 : ℝ) < n := Nat.cast_pos.2 hn0
+        have h := mul_lt_mul_of_pos_right hn hn'
+        rw [zero_mul, div_mul_cancel₀ _ hn'.ne'] at h
+        exact_mod_cast h
+      obtain ⟨ω, hω⟩ := (hdrop.and (hkeep.and hcount)).exists
+      obtain ⟨n, hn⟩ := (hω.1.and (hω.2.1.and hω.2.2)).exists
+      have h0 := hn.2.1 (pairIndex i j)
+      rw [ite_eq_left ((hdisp _).2 rfl), hn.1] at h0
+      omega
+    · -- on the boundary: the three quartet trees have probability `1/3`
+      have hall : ∀ u, quartetProb N (k.quartet u) =
+          quartetProb N (k.quartet (pairIndex i j)) := fun u => by
+        by_cases hu : u = pairIndex i j
+        · rw [hu]
+        · rw [e1 u hu, e0]
+          linarith
+      have hsum : quartetProb N (k.quartet 0) + quartetProb N (k.quartet 1) +
+          quartetProb N (k.quartet 2) = 1 := by
+        obtain ⟨q0, q1, q2⟩ := quartetProb_eq_quartetCF N hN.2 k hk
+        rw [q0, q1, q2]
+        have hsN : ∀ l, keyTaxon k hk l ∈ N.taxa := fun l => htaxa _
+        rw [N.quartetCF_eq_splitCF_of (keyTaxon k hk) (i := 0) (j := 1) (k := 2) (l := 3)
+            (by decide),
+          N.quartetCF_eq_splitCF_of (keyTaxon k hk) (i := 0) (j := 2) (k := 1) (l := 3)
+            (by decide),
+          N.quartetCF_eq_splitCF_of (keyTaxon k hk) (i := 0) (j := 3) (k := 1) (l := 2)
+            (by decide)]
+        exact Brooqs.Net.splitCF_sum hN.2 hsN
+      have hthird : ∀ u, quartetProb N (k.quartet u) = 1 / 3 := fun u => by
+        rw [hall u]
+        rw [hall 0, hall 1, hall 2] at hsum
+        linarith
+      exact not_ae_drop_of_equal hN hk (pairIndex i j) hthird G hind hid hlaw t hdrop
+  · -- in the zone, Algorithm 1 drops it
+    have hlt : ∀ u, u ≠ pairIndex i j →
+        quartetProb N (k.quartet (pairIndex i j)) < quartetProb N (k.quartet u) := by
+      intro u hu
+      rw [e0, e1 u hu]
+      linarith
+    filter_upwards [filterQuartets_block_of_least hdisp hlt G hind hid hlaw t] with ω hω
+    filter_upwards [hω] with n hn
+    exact hn.1
 
 end Genes
 
