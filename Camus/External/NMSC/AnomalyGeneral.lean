@@ -47,8 +47,9 @@ quartet is strictly less probable than the two others iff
 * `Brooqs.expectedScore_cycle_outside`, `Brooqs.expectedScore_cycle_sides`,
   `Brooqs.expectedScore_cycle_oneSide`: the CF of the displayed quartet in the three cases, with the
   lengths added up explicitly.
-* `Brooqs.Net.Cycle.quartetCF_of_anomalous`, `Brooqs.Net.Cycle.splitCF_of_anomalous`: the three
-  quartet CFs, with the two taxa below the hybrid node labelled `0` and `1`, or with any labels.
+* `Brooqs.Net.Cycle.quartetCF_of_anomalous`, `Brooqs.Net.Cycle.splitCF_of_anomalous`,
+  `Brooqs.Net.Anomalous.splitCF`: the three quartet CFs, with the two taxa below the hybrid node
+  labelled `0` and `1`, with any labels, and from `Brooqs.Net.Anomalous`.
 * `Brooqs.Net.Cycle.anomalous_iff_of_anomalous`: the anomaly criterion.
 
 ## Proof
@@ -901,5 +902,39 @@ theorem Net.Cycle.splitCF_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω : N.C
       fin_cases a <;> fin_cases b <;> simp_all
     rw [← N.quartetCF_eq_splitCF_of s hinj']
     exact e2
+
+/-- **The quartet CFs of four taxa in the anomalous configuration** (`Brooqs.Net.Anomalous`). If
+four distinct taxa `s` of a metric network `N` with distinct leaf labels are in the anomalous
+configuration, there are a cycle `Ω` of `N` and labels with `s i` and `s j` below its hybrid node
+(`k` and `m` the two others) such that the CFs of the three splits are those of
+`Brooqs.Net.Cycle.splitCF_of_anomalous`: those of `N₃₂` with the probability `p` that the lineages
+of `s i` and `s j` reach the hybrid node apart in place of `e^{-ℓ}`, and positive lengths added up
+along the sides of `Ω`. -/
+theorem Net.Anomalous.splitCF {N : Net X} (hN : N.WellFormed) {s : Fin 4 → X}
+    (hs : Function.Injective s) (hsN : ∀ l, s l ∈ N.taxa) (hA : N.Anomalous s) :
+    ∃ (Ω : N.Cycle) (i j k m : Fin 4), Function.Injective ![i, j, k, m] ∧
+      Ω.below.lin s = {i, j} ∧ ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
+        N.splitCF s {i, j} = 1 - Ω.apartProb ![s i, s j, s k, s m] +
+          Ω.apartProb ![s i, s j, s k, s m] *
+            (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) +
+              (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
+                2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-L) / 3)) ∧
+        N.splitCF s {i, k} = Ω.apartProb ![s i, s j, s k, s m] *
+          (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
+            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) ∧
+        N.splitCF s {i, m} = Ω.apartProb ![s i, s j, s k, s m] *
+          (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
+            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) := by
+  obtain ⟨Ω, h2, h3, h1⟩ := hA
+  obtain ⟨i, j, hij, hP⟩ := card_eq_two.1 h2
+  obtain ⟨k, m, hik, him, hjk, hjm, hkm⟩ : ∃ k m : Fin 4,
+      i ≠ k ∧ i ≠ m ∧ j ≠ k ∧ j ≠ m ∧ k ≠ m := by
+    have key : ∀ i j : Fin 4, i ≠ j → ∃ k m : Fin 4,
+        i ≠ k ∧ i ≠ m ∧ j ≠ k ∧ j ≠ m ∧ k ≠ m := by decide
+    exact key i j hij
+  have hinj : Function.Injective ![i, j, k, m] := by
+    intro a b h
+    fin_cases a <;> fin_cases b <;> simp_all
+  exact ⟨Ω, i, j, k, m, hinj, hP, Ω.splitCF_of_anomalous hN hs hsN hinj hP h3 h1⟩
 
 end Brooqs

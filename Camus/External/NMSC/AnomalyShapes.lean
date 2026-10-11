@@ -1065,7 +1065,13 @@ theorem net32OneSide_regular_iff {x y z w : X} (hxy : x ≠ y) (hxz : x ≠ z) (
   rw [e0, e1]
   exact net32_regular_iff hxy hxz hxw hyz hyw hzw γ ℓ h₁ (a + h₂) b
 
-/-! ### The top node of a cycle, from the forests arriving along its sides -/
+/-! ### The top node of a cycle, from the forests arriving along its sides
+
+The computations above, for any network `H` below the hybrid node, from which the lineages `0` and
+`1` arrive apart with any probability `p`, and for any sides that act on the forests as those of
+`N₃₂`, `net32Sides` or `net32OneSide`: `Brooqs.expectedScore_top_outside`,
+`Brooqs.expectedScore_top_sides`, `Brooqs.expectedScore_top_oneSide`. They serve the anomalous
+configuration in an arbitrary network (`AnomalyGeneral.lean`). -/
 
 /-! The six placements of the lineages `i, j` when the fourth lineage is outside the cycle, as in
 `ThreeCycle.lean`. -/
