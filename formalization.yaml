@@ -184,12 +184,12 @@ automation:
       framework: "Claude Code 2.1.296"
       tool_setup: >-
         Sixth round (10 October 2026): formalize-math-paper skill 2.2.0
-        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and @@AG6@@ sub-agents: the
+        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 3 sub-agents: the
         two sub-agents of the fifth round, resumed in new git worktrees, on the displayed trees of
         the model and the pipeline of Section 3.3, and on the region of the anomaly in every network
         with its boundary, and a read-only reviewer.
       cost:
-        wall_time: "@@WALL6@@"
+        wall_time: "1.59 hours to the audited report; 2.6 hours of sub-agent working time"
         spend_usd: "not tracked"
         hardware: "local machine (Lean builds); model API"
       prompting_notes: "After the fifth round, the maintainer asked: \"Finish the job.\""

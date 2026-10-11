@@ -159,7 +159,7 @@ From [`REPORT.md`](REPORT.md):
   exchange of the sides of a cycle, and the region of the anomaly (10 October 2026, 1.1 hours, 3
   sub-agents); then, in a sixth round, the displayed trees of the model as the trees of the graph of
   `N`, the pipeline of Section 3.3, and the region of the anomaly in every network (10 October 2026,
-  @@R6@@).
+  1.6 hours, 3 sub-agents).
 - No person has reviewed the proofs yet; independent agents reviewed the statements, the proofs, the
   findings and the account of the literature. [`CREDITS.md`](CREDITS.md) gives the details.
 

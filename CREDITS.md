@@ -6,22 +6,22 @@ How this formalization was made, from the run logs and the session transcripts.
 
 - **Author and maintainer:** The-Anh Vu-Le, who asked for the formalization, chose its scope (the
   directed-graph model of networks, the corrected statements of Sections 2.4 and 3.2), asked for
-  the second to fifth rounds, and approved copying the network multispecies coalescent
+  the second to sixth rounds, and approved copying the network multispecies coalescent
   from their formalization of BROOQS.
-- **Formalization:** two AI systems, in five rounds. The first formalization was made by OpenAI's
+- **Formalization:** two AI systems, in six rounds. The first formalization was made by OpenAI's
   `gpt-6.1-sol` in Codex CLI 0.162.0-alpha.2, from an empty project, with three sub-agents. The
-  second round, a restyle with a new audit, and the third to fifth, which formalized what the
+  second round, a restyle with a new audit, and the third to sixth, which formalized what the
   second had left out, were made by Claude Opus 5.5 (`claude-opus-5-5`, Anthropic) in Claude Code
   2.1.296 (VS Code extension), in one session with sub-agents.
 - **Procedure:** the [formalize-math-paper](https://github.com/vltanh/formalize-math-paper) skill,
-  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in all five rounds.
+  version 2.2.0 (commit `d82a98e1237e5b864bb76185b1ebb5548092a184`), in all six rounds.
 - **Review:** no person has reviewed the proofs. In the first three rounds, agents other than the
   provers reviewed the statements against the paper and compared the proofs with the paper's; in
   the second and third rounds, other agents also checked the report's findings and its account of
   the literature against their sources. In the fourth round, an agent other than the prover
   reviewed the files of the SNP pipeline during the round, and four more reviewed the round's other
-  files after the report, at the author's request; in the fifth, one agent reviewed the round's
-  statements and the report's account of them.
+  files after the report, at the author's request; in the fifth and the sixth, one agent reviewed
+  each round's statements and the report's account of them.
 
 ## The first formalization (8 October 2026)
 
@@ -267,6 +267,49 @@ report of this round (`e9267c2`, 18:44 CDT), taken from the session's transcript
   0.16 million input tokens and 27 million cache reads. As in the earlier rounds, the sub-agents'
   recorded 0.06 million output tokens is a lower bound.
 - **Model calls:** 301, all to Claude Opus 5.5 (57 by the main session, 244 by the sub-agents).
+
+The figures leave out the work after the report: the credits, and the final checks of the
+packaging.
+
+## The sixth round (10 October 2026)
+
+After the fifth round, the report's Section 9 still listed, under the network coalescent, the
+identification of the displayed trees of the model with the trees of the graph of `N`, the region
+of the anomaly for an arbitrary network, the behavior of Quartet Filtering on the boundary of the
+region, and the model of Ané et al. with correlated parental origins. The author asked: "Finish the
+job."
+
+How it was made:
+
+- **The plan.** The main session judged that the model with correlated parental origins (`ρ > 0`) is
+  not the paper's model, and moved it from Section 9 to Section 11. It resumed the two sub-agents of
+  the fifth round, each in a new git worktree with a time box of three hours.
+- **The work.** The first described the switchings of a canonical network with several added
+  edges, proved in both directions that the trees of the graph of `N` are the displayed trees of
+  `N`, and derived the recovery through every displayed tree and through the tree of ASTRAL when
+  it is one of the underlying trees (Section 3.3). The second proved the probabilities of four taxa
+  in the anomalous configuration of any network, the behavior of Quartet Filtering in the region,
+  outside it and on its boundary, and that the filter ends up dropping the quartet of `Q(N_r)`
+  exactly in the region. Both finished in about an hour.
+- **Integration and review.** The main session found that several conclusions of the second
+  sub-agent were existential over lengths not tied to the network, and resumed it: the lengths are
+  now defined from the configuration. A read-only reviewer checked the round's statements,
+  recomputed the probabilities of eight networks with a cycle below the reticulation, and found no
+  false statement; it found that the report's recovery claims omitted two hypotheses, and some
+  wording that overstated the threshold range. The main session applied its findings.
+
+Figures, from 10 October 2026, 19:04 CDT (the author's request), to the commit that completes the
+report of this round (`6d85c20`, 20:39 CDT), taken from the session's transcript with the skill's
+`session_stats.py`:
+
+- **Elapsed time:** 1.59 hours (1 hour 35 minutes).
+- **Sub-agents:** 3: the two sub-agents of the fifth round, resumed (the second twice), and a
+  reviewer; at most 2 running at once; 2.6 hours of working time in all.
+- **Tool calls and tokens:** the sub-agents made 252 tool calls, with 2.01 million input tokens and
+  143 million cache reads; the main session made 24 tool calls, with 0.05 million output tokens,
+  0.08 million input tokens and 16 million cache reads. As in the earlier rounds, the sub-agents'
+  recorded 0.02 million output tokens is a lower bound.
+- **Model calls:** 275, all to Claude Opus 5.5 (27 by the main session, 248 by the sub-agents).
 
 The figures leave out the work after the report: the credits, and the final checks of the
 packaging.
