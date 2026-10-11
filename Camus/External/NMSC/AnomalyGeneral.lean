@@ -44,7 +44,8 @@ quartet is strictly less probable than the two others iff
   `Brooqs.Net.Cycle.apartProb_le_one`, `Brooqs.Net.Cycle.apartProb_cherry`,
   `Brooqs.Net.Cycle.below_forestDist`: the probability that the two lineages below the hybrid
   node reach it apart.
-* `Brooqs.Net.Cycle.quartetCF_of_anomalous`: the three quartet CFs.
+* `Brooqs.Net.Cycle.quartetCF_of_anomalous`, `Brooqs.Net.Cycle.splitCF_of_anomalous`: the three
+  quartet CFs, with the two taxa below the hybrid node labelled `0` and `1`, or with any labels.
 * `Brooqs.Net.Cycle.anomalous_iff_of_anomalous`: the anomaly criterion.
 
 ## Proof
@@ -740,5 +741,97 @@ theorem Net.Cycle.anomalous_iff_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω
   obtain ⟨h₁, h₂, L, p1, p2, p3, e0, e1, -⟩ := Ω.quartetCF_of_anomalous hN hs hsN hbelow h3 h1
   refine ⟨h₁, h₂, L, p1, p2, p3, ?_, ?_, ?_⟩ <;> rw [e0, e1] <;> constructor <;> intro h <;>
     linarith
+
+/-! ### Any labels -/
+
+private theorem ag_lin_comp {M : Net X} {s : Fin 4 → X} {i j k m : Fin 4}
+    (hinj : Function.Injective ![i, j, k, m]) :
+    M.lin s = (M.lin ![s i, s j, s k, s m]).map ⟨![i, j, k, m], hinj⟩ := by
+  have hsurj : Function.Surjective ![i, j, k, m] := Finite.surjective_of_injective hinj
+  ext x
+  simp only [mem_map, Function.Embedding.coeFn_mk, ag_mem_lin]
+  constructor
+  · intro hx
+    obtain ⟨l, rfl⟩ := hsurj x
+    refine ⟨l, ?_, rfl⟩
+    fin_cases l <;> exact hx
+  · rintro ⟨l, hl, rfl⟩
+    fin_cases l <;> exact hl
+
+/-- **The quartet CFs in the anomalous configuration, with any labels.** Let `N` be a metric
+network with distinct leaf labels, `s` four distinct taxa of `N`, and `Ω` a cycle of `N` with
+exactly `s i` and `s j` below its hybrid node, at least three of the four taxa below its top node,
+and at most one in each network hanging from its sides (`Brooqs.Net.Anomalous`); `k` and `m` are
+the two other labels. With `p` the probability that the lineages of `s i` and `s j` reach the hybrid
+node apart (`Brooqs.Net.Cycle.apartProb` for the taxa listed as `s i, s j, s k, s m`) and `γ` the
+inheritance probability of `Ω`, there are positive lengths `h₁`, `h₂`, `L` such that the CF of the
+split `{i, j}`, the only one that `N` displays, is
+`1 - p + p (γ²(1 - 2/3 e^{-h₁}) + (1 - γ)²(1 - 2/3 e^{-h₂}) + 2γ(1 - γ) e^{-L}/3)`, and the CFs of
+the splits `{i, k}` and `{i, m}` are both
+`p (γ² e^{-h₁}/3 + (1 - γ)² e^{-h₂}/3 + γ(1 - γ)(1 - e^{-L}/3))`. -/
+theorem Net.Cycle.splitCF_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω : N.Cycle)
+    {s : Fin 4 → X} (hs : Function.Injective s) (hsN : ∀ l, s l ∈ N.taxa) {i j k m : Fin 4}
+    (hinj : Function.Injective ![i, j, k, m]) (hbelow : Ω.below.lin s = {i, j})
+    (h3 : 3 ≤ #(Ω.top.lin s)) (h1 : ∀ n ∈ Ω.side₁.nodes ++ Ω.side₂.nodes, #(n.2.2.lin s) ≤ 1) :
+    ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
+      N.splitCF s {i, j} = 1 - Ω.apartProb ![s i, s j, s k, s m] +
+        Ω.apartProb ![s i, s j, s k, s m] *
+          (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) + (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
+            2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-L) / 3)) ∧
+      N.splitCF s {i, k} = Ω.apartProb ![s i, s j, s k, s m] *
+        (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
+          Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) ∧
+      N.splitCF s {i, m} = Ω.apartProb ![s i, s j, s k, s m] *
+        (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
+          Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) := by
+  have hij : i ≠ j := fun h => absurd (hinj (a₁ := 0) (a₂ := 1) h) (by decide)
+  have hik : i ≠ k := fun h => absurd (hinj (a₁ := 0) (a₂ := 2) h) (by decide)
+  have him : i ≠ m := fun h => absurd (hinj (a₁ := 0) (a₂ := 3) h) (by decide)
+  have hjk : j ≠ k := fun h => absurd (hinj (a₁ := 1) (a₂ := 2) h) (by decide)
+  have hjm : j ≠ m := fun h => absurd (hinj (a₁ := 1) (a₂ := 3) h) (by decide)
+  have hkm : k ≠ m := fun h => absurd (hinj (a₁ := 2) (a₂ := 3) h) (by decide)
+  have hs'inj : Function.Injective ![s i, s j, s k, s m] := by
+    intro a b h
+    fin_cases a <;> fin_cases b <;>
+      first
+      | rfl
+      | exact absurd (hs h) (by assumption)
+      | exact absurd (hs h).symm (by assumption)
+  have hsN' : ∀ l, ![s i, s j, s k, s m] l ∈ N.taxa := fun l => by
+    fin_cases l <;> exact hsN _
+  have hcard : ∀ M : Net X, #(M.lin ![s i, s j, s k, s m]) = #(M.lin s) := fun M => by
+    rw [ag_lin_comp (M := M) (s := s) hinj, card_map]
+  have hbelow' : Ω.below.lin ![s i, s j, s k, s m] = {0, 1} := by
+    have h := ag_lin_comp (M := Ω.below) (s := s) hinj
+    rw [hbelow] at h
+    ext l
+    have hl : l ∈ Ω.below.lin ![s i, s j, s k, s m] ↔
+        ![i, j, k, m] l ∈ ({i, j} : Finset (Fin 4)) := by
+      rw [h, mem_map]
+      constructor
+      · intro hl
+        exact ⟨l, hl, rfl⟩
+      · rintro ⟨l', hl', hll'⟩
+        rwa [← hinj hll']
+    rw [hl, mem_insert, mem_singleton, mem_insert, mem_singleton]
+    fin_cases l <;> simp [hij, hik.symm, him.symm, hjk.symm, hjm.symm, Ne.symm hij]
+  have h3' : 3 ≤ #(Ω.top.lin ![s i, s j, s k, s m]) := by rw [hcard]; exact h3
+  have h1' : ∀ n ∈ Ω.side₁.nodes ++ Ω.side₂.nodes, #(n.2.2.lin ![s i, s j, s k, s m]) ≤ 1 :=
+    fun n hn => by rw [hcard]; exact h1 n hn
+  obtain ⟨h₁, h₂, L, p1, p2, p3, e0, e1, e2⟩ :=
+    Ω.quartetCF_of_anomalous hN hs'inj hsN' hbelow' h3' h1'
+  refine ⟨h₁, h₂, L, p1, p2, p3, ?_, ?_, ?_⟩
+  · rw [← N.quartetCF_eq_splitCF_of s hinj]
+    exact e0
+  · have hinj' : Function.Injective ![i, k, j, m] := by
+      intro a b h
+      fin_cases a <;> fin_cases b <;> simp_all
+    rw [← N.quartetCF_eq_splitCF_of s hinj']
+    exact e1
+  · have hinj' : Function.Injective ![i, m, j, k] := by
+      intro a b h
+      fin_cases a <;> fin_cases b <;> simp_all
+    rw [← N.quartetCF_eq_splitCF_of s hinj']
+    exact e2
 
 end Brooqs
