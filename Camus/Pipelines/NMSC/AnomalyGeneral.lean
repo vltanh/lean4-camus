@@ -29,7 +29,8 @@ and with positive lengths `h₁`, `h₂`, `L` added up along the sides of `C`
 * if `p D = 1 - p`, the three quartet trees have probability `1/3`, and for every threshold `t > 0`,
   almost surely, for all large numbers of genes, Algorithm 1 returns on the four taxa the copies of
   a single quartet tree (`NMSC.anomalous_filterQuartets_boundary`, from
-  `NMSC.filterQuartets_block_of_equal`).
+  `NMSC.filterQuartets_block_of_equal`); it neither almost surely ends up keeping the one of
+  Q(N_r) nor almost surely ends up dropping it (`Camus/Pipelines/NMSC/AnomalyBoundary.lean`).
 
 ## Main results
 
