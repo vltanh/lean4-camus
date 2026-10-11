@@ -21,7 +21,9 @@ CFs of the 3-cycle above two taxa `N₃₂` (`Brooqs.net32_quartetCF`) with effe
   taxa form a cherry with an edge of length `ℓ` above it (`Brooqs.Net.Cycle.apartProb_cherry`);
 * lengths `h₁`, `h₂` and `L` added up along the sides of the cycle: the lengths between the hybrid
   node, the nodes from which the networks holding the two other taxa hang, and the top node
-  (`Brooqs.Side.lenBelow`, `Brooqs.Side.lenAbove`, `Brooqs.Side.length`). With one of the two
+  (`Brooqs.Side.lenBelow`, `Brooqs.Side.lenAbove`, `Brooqs.Side.length`), defined by the case
+  split below (`Brooqs.Net.Cycle.anomalyH₁`, `Brooqs.Net.Cycle.anomalyH₂`,
+  `Brooqs.Net.Cycle.anomalyL`). With one of the two
   other taxa, `z`, hanging from the side `S₁` and the other outside the cycle, `h₁` is the length of
   `S₁` below the node of `z`, `L` the length above it, and `h₂` the length of `S₂`. With `z` on `S₁`
   and `w` on `S₂`, `L` is the length of the path between their nodes through the top node. With
@@ -40,6 +42,9 @@ quartet is strictly less probable than the two others iff
 * `Brooqs.Side.forestDist_of_lin_empty`, `Brooqs.Side.forestDist_of_lin_single`,
   `Brooqs.Side.forestDist_of_lin_pair`: the lineages that a side brings to the top node of its
   cycle, when its pendant networks hold no sampled taxon, one, or two.
+* `Brooqs.sideLengths`, `Brooqs.Net.Cycle.anomalyLengths`, `Brooqs.Net.Cycle.anomalyH₁`,
+  `Brooqs.Net.Cycle.anomalyH₂`, `Brooqs.Net.Cycle.anomalyL`: the effective lengths, by the case
+  split of the configuration.
 * `Brooqs.Net.Cycle.apartProb`, `Brooqs.Net.Cycle.apartProb_nonneg`,
   `Brooqs.Net.Cycle.apartProb_le_one`, `Brooqs.Net.Cycle.apartProb_cherry`,
   `Brooqs.Net.Cycle.below_forestDist`: the probability that the two lineages below the hybrid
@@ -50,7 +55,8 @@ quartet is strictly less probable than the two others iff
 * `Brooqs.Net.Cycle.quartetCF_of_anomalous`, `Brooqs.Net.Cycle.splitCF_of_anomalous`,
   `Brooqs.Net.Anomalous.splitCF`: the three quartet CFs, with the two taxa below the hybrid node
   labelled `0` and `1`, with any labels, and from `Brooqs.Net.Anomalous`.
-* `Brooqs.Net.Cycle.anomalous_iff_of_anomalous`: the anomaly criterion.
+* `Brooqs.Net.Cycle.anomalous_iff_of_anomalous`, `Brooqs.Net.Cycle.anomalyExcess`: the anomaly
+  criterion.
 
 ## Proof
 
@@ -584,10 +590,55 @@ theorem expectedScore_cycle_oneSide {s : Fin 4 → X} (hs : Function.Injective s
   exact ⟨u, v, huv, hpos, expectedScore_top_oneSide hs hu0 hu1 hv0 hv1 huv' γ ℓ _ _ _ _ p S₁ S₂ H
     hH hE (Side.forestDist_of_lin_empty h2)⟩
 
+/-- The effective lengths `(h₁, h₂, L)` of a cycle whose side `S₁` holds one or two of the lineages
+`2` and `3` sampled by `s`, and the side `S₂` the other one or none, the lengths along the sides
+added up (`Brooqs.expectedScore_cycle_outside`, `Brooqs.expectedScore_cycle_sides`,
+`Brooqs.expectedScore_cycle_oneSide`):
+* both on `S₁`, `u` above `v`: `h₁ = S₁.lenBelow (s v)`, `h₂ = S₁.lenAbove (s u) + S₂.length`,
+  `L = S₁.lenAbove (s v) - S₁.lenAbove (s u)`;
+* `k` on `S₁` and `m` on `S₂`: `h₁ = S₁.lenBelow (s k)`, `h₂ = S₂.lenBelow (s m)`,
+  `L = S₁.lenAbove (s k) + S₂.lenAbove (s m)`;
+* `k` on `S₁` and the other outside the cycle: `h₁ = S₁.lenBelow (s k)`, `h₂ = S₂.length`,
+  `L = S₁.lenAbove (s k)`. -/
+def sideLengths (S₁ S₂ : Side X) (s : Fin 4 → X) : ℝ × ℝ × ℝ :=
+  if 2 ∈ S₁.lin s ∧ 3 ∈ S₁.lin s then
+    if S₁.lenAbove (s 2) < S₁.lenAbove (s 3) then
+      (S₁.lenBelow (s 3), S₁.lenAbove (s 2) + S₂.length, S₁.lenAbove (s 3) - S₁.lenAbove (s 2))
+    else
+      (S₁.lenBelow (s 2), S₁.lenAbove (s 3) + S₂.length, S₁.lenAbove (s 2) - S₁.lenAbove (s 3))
+  else if 2 ∈ S₁.lin s then
+    if 3 ∈ S₂.lin s then
+      (S₁.lenBelow (s 2), S₂.lenBelow (s 3), S₁.lenAbove (s 2) + S₂.lenAbove (s 3))
+    else (S₁.lenBelow (s 2), S₂.length, S₁.lenAbove (s 2))
+  else if 2 ∈ S₂.lin s then
+    (S₁.lenBelow (s 3), S₂.lenBelow (s 2), S₁.lenAbove (s 3) + S₂.lenAbove (s 2))
+  else (S₁.lenBelow (s 3), S₂.length, S₁.lenAbove (s 3))
+
+/-- The effective lengths `(h₁, h₂, L)` of the four taxa sampled by `s`, with `s 0` and `s 1` below
+the hybrid node of the cycle `Ω` and `s 2`, `s 3` hanging from its sides or outside it:
+`Brooqs.sideLengths` of the two sides, in the order that puts first a side holding one of `s 2`,
+`s 3`; with the sides exchanged, `h₁` and `h₂` are exchanged. -/
+def Net.Cycle.anomalyLengths {N : Net X} (Ω : N.Cycle) (s : Fin 4 → X) : ℝ × ℝ × ℝ :=
+  if (Ω.side₁.lin s).Nonempty then sideLengths Ω.side₁ Ω.side₂ s
+  else ((sideLengths Ω.side₂ Ω.side₁ s).2.1, (sideLengths Ω.side₂ Ω.side₁ s).1,
+    (sideLengths Ω.side₂ Ω.side₁ s).2.2)
+
+/-- The effective length `h₁` of the hybrid edge of inheritance probability `γ`
+(`Brooqs.Net.Cycle.anomalyLengths`). -/
+def Net.Cycle.anomalyH₁ {N : Net X} (Ω : N.Cycle) (s : Fin 4 → X) : ℝ := (Ω.anomalyLengths s).1
+
+/-- The effective length `h₂` of the hybrid edge of inheritance probability `1 - γ`
+(`Brooqs.Net.Cycle.anomalyLengths`). -/
+def Net.Cycle.anomalyH₂ {N : Net X} (Ω : N.Cycle) (s : Fin 4 → X) : ℝ := (Ω.anomalyLengths s).2.1
+
+/-- The effective length `L` of the tree edge of the cycle, between the nodes from which the two
+taxa other than those below the hybrid node hang (`Brooqs.Net.Cycle.anomalyLengths`). -/
+def Net.Cycle.anomalyL {N : Net X} (Ω : N.Cycle) (s : Fin 4 → X) : ℝ := (Ω.anomalyLengths s).2.2
+
 /-- The expected score at the top node of a cycle whose side `S₁` brings at least one of the
 lineages `2`, `3`, the side `S₂` the other or none, and below whose hybrid node the lineages `0`
-and `1` arrive apart with probability `p`: the CF of `N₃₂` with `p` in place of `e^{-ℓ}`, for
-positive lengths `h₁`, `h₂`, `L` added up along the sides. -/
+and `1` arrive apart with probability `p`: the CF of `N₃₂` with `p` in place of `e^{-ℓ}` and the
+positive lengths `sideLengths S₁ S₂ s`. -/
 private theorem ag_core {s : Fin 4 → X} (hs : Function.Injective s) (γ ℓ p : ℝ)
     (S₁ S₂ : Side X) (H : Net X)
     (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
@@ -597,10 +648,12 @@ private theorem ag_core {s : Fin 4 → X} (hs : Function.Injective s) (γ ℓ p 
     (hp : ∀ n ∈ S₁.nodes ++ S₂.nodes, #(n.2.2.lin s) ≤ 1)
     (hsub : S₁.lin s ∪ S₂.lin s ⊆ {2, 3}) (hdisj : Disjoint (S₁.lin s) (S₂.lin s))
     (hne : (S₁.lin s).Nonempty) :
-    ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
+    0 < (sideLengths S₁ S₂ s).1 ∧ 0 < (sideLengths S₁ S₂ s).2.1 ∧
+      0 < (sideLengths S₁ S₂ s).2.2 ∧
       ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
-        1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) +
-          (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) + 2 * γ * (1 - γ) * (Real.exp (-L) / 3)) := by
+        1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-(sideLengths S₁ S₂ s).1)) +
+          (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-(sideLengths S₁ S₂ s).2.1)) +
+            2 * γ * (1 - γ) * (Real.exp (-(sideLengths S₁ S₂ s).2.2) / 3)) := by
   have hA : ∀ A ∈ ({2, 3} : Finset (Fin 4)).powerset,
       A = ∅ ∨ A = {2} ∨ A = {3} ∨ A = {2, 3} := by decide
   have h1sub : S₁.lin s ⊆ {2, 3} := subset_union_left.trans hsub
@@ -608,42 +661,61 @@ private theorem ag_core {s : Fin 4 → X} (hs : Function.Injective s) (γ ℓ p 
   have hp₁ : ∀ n ∈ S₁.nodes, #(n.2.2.lin s) ≤ 1 := fun n hn => hp n (List.mem_append_left _ hn)
   have hmem₁ : ∀ {k : Fin 4}, k ∈ S₁.lin s → s k ∈ S₁.taxa := fun hk => ag_mem_lin_side.1 hk
   have hmem₂ : ∀ {k : Fin 4}, k ∈ S₂.lin s → s k ∈ S₂.taxa := fun hk => ag_mem_lin_side.1 hk
-  -- the side `S₁` brings one lineage `k`, the side `S₂` none or the other one `m`
-  have one : ∀ {k m : Fin 4}, k ≠ 0 → k ≠ 1 → m ≠ 0 → m ≠ 1 → k ≠ m → S₁.lin s = {k} →
-      (S₂.lin s = ∅ ∨ S₂.lin s = {m}) → ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
+  -- the side `S₁` brings one lineage `k`, the side `S₂` none
+  have outside : ∀ {k : Fin 4}, k ≠ 0 → k ≠ 1 → S₁.lin s = {k} → S₂.lin s = ∅ →
+      0 < S₁.lenBelow (s k) ∧ 0 < S₂.length ∧ 0 < S₁.lenAbove (s k) ∧
         ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
-          1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) +
-            (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
-              2 * γ * (1 - γ) * (Real.exp (-L) / 3)) := by
+          1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-S₁.lenBelow (s k))) +
+            (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-S₂.length)) +
+              2 * γ * (1 - γ) * (Real.exp (-S₁.lenAbove (s k)) / 3)) := by
+    intro k hk0 hk1 h1 h2
+    have hk : s k ∈ S₁.taxa := hmem₁ (by rw [h1]; exact mem_singleton_self k)
+    exact ⟨Side.lenBelow_pos _ hS₁m, Side.length_pos hS₂m, Side.lenAbove_pos hS₁m hk,
+      expectedScore_cycle_outside hs hk0 hk1 γ ℓ p S₁ S₂ H hH hS₁n h1 h2⟩
+  -- the side `S₁` brings `k`, the side `S₂` brings `m`
+  have sides : ∀ {k m : Fin 4}, k ≠ 0 → k ≠ 1 → m ≠ 0 → m ≠ 1 → k ≠ m → S₁.lin s = {k} →
+      S₂.lin s = {m} →
+      0 < S₁.lenBelow (s k) ∧ 0 < S₂.lenBelow (s m) ∧
+        0 < S₁.lenAbove (s k) + S₂.lenAbove (s m) ∧
+        ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
+          1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-S₁.lenBelow (s k))) +
+            (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-S₂.lenBelow (s m))) +
+              2 * γ * (1 - γ) * (Real.exp (-(S₁.lenAbove (s k) + S₂.lenAbove (s m))) / 3)) := by
     intro k m hk0 hk1 hm0 hm1 hkm h1 h2
     have hk : s k ∈ S₁.taxa := hmem₁ (by rw [h1]; exact mem_singleton_self k)
-    have hS₁ := Side.forestDist_of_lin_single hS₁n h1
-    rcases h2 with h2 | h2
-    · exact ⟨_, _, _, Side.lenBelow_pos _ hS₁m, Side.length_pos hS₂m, Side.lenAbove_pos hS₁m hk,
-        expectedScore_top_outside hs hk0 hk1 γ ℓ _ _ _ p S₁ S₂ H hH hS₁
-          (Side.forestDist_of_lin_empty h2)⟩
-    · have hm : s m ∈ S₂.taxa := hmem₂ (by rw [h2]; exact mem_singleton_self m)
-      exact ⟨_, _, _, Side.lenBelow_pos _ hS₁m, Side.lenBelow_pos _ hS₂m,
-        add_pos (Side.lenAbove_pos hS₁m hk) (Side.lenAbove_pos hS₂m hm),
-        expectedScore_top_sides hs hk0 hk1 hm0 hm1 hkm γ ℓ _ _ _ _ p S₁ S₂ H hH hS₁
-          (Side.forestDist_of_lin_single hS₂n h2)⟩
+    have hm : s m ∈ S₂.taxa := hmem₂ (by rw [h2]; exact mem_singleton_self m)
+    exact ⟨Side.lenBelow_pos _ hS₁m, Side.lenBelow_pos _ hS₂m,
+      add_pos (Side.lenAbove_pos hS₁m hk) (Side.lenAbove_pos hS₂m hm),
+      expectedScore_cycle_sides hs hk0 hk1 hm0 hm1 hkm γ ℓ p S₁ S₂ H hH hS₁n hS₂n h1 h2⟩
   rcases hA _ (mem_powerset.2 h1sub) with h1 | h1 | h1 | h1
   · rw [h1] at hne
     exact absurd hne (by simp)
   · rcases hA _ (mem_powerset.2 h2sub) with h2 | h2 | h2 | h2
-    · exact one (k := 2) (m := 3) (by decide) (by decide) (by decide) (by decide) (by decide) h1
-        (Or.inl h2)
+    · have hL : sideLengths S₁ S₂ s = (S₁.lenBelow (s 2), S₂.length, S₁.lenAbove (s 2)) := by
+        simp [sideLengths, h1, h2]
+      rw [hL]
+      exact outside (k := 2) (by decide) (by decide) h1 h2
     · rw [h1, h2] at hdisj
       exact absurd hdisj (by decide)
-    · exact one (k := 2) (m := 3) (by decide) (by decide) (by decide) (by decide) (by decide) h1
-        (Or.inr h2)
+    · have hL : sideLengths S₁ S₂ s = (S₁.lenBelow (s 2), S₂.lenBelow (s 3),
+          S₁.lenAbove (s 2) + S₂.lenAbove (s 3)) := by
+        simp [sideLengths, h1, h2]
+      rw [hL]
+      exact sides (k := 2) (m := 3) (by decide) (by decide) (by decide) (by decide) (by decide) h1
+        h2
     · rw [h1, h2] at hdisj
       exact absurd hdisj (by decide)
   · rcases hA _ (mem_powerset.2 h2sub) with h2 | h2 | h2 | h2
-    · exact one (k := 3) (m := 2) (by decide) (by decide) (by decide) (by decide) (by decide) h1
-        (Or.inl h2)
-    · exact one (k := 3) (m := 2) (by decide) (by decide) (by decide) (by decide) (by decide) h1
-        (Or.inr h2)
+    · have hL : sideLengths S₁ S₂ s = (S₁.lenBelow (s 3), S₂.length, S₁.lenAbove (s 3)) := by
+        simp [sideLengths, h1, h2]
+      rw [hL]
+      exact outside (k := 3) (by decide) (by decide) h1 h2
+    · have hL : sideLengths S₁ S₂ s = (S₁.lenBelow (s 3), S₂.lenBelow (s 2),
+          S₁.lenAbove (s 3) + S₂.lenAbove (s 2)) := by
+        simp [sideLengths, h1, h2]
+      rw [hL]
+      exact sides (k := 3) (m := 2) (by decide) (by decide) (by decide) (by decide) (by decide) h1
+        h2
     · rw [h1, h2] at hdisj
       exact absurd hdisj (by decide)
     · rw [h1, h2] at hdisj
@@ -656,17 +728,27 @@ private theorem ag_core {s : Fin 4 → X} (hs : Function.Injective s) (γ ℓ p 
         rw [h1, h2] at hdisj
         exact absurd hdisj (by decide)
     obtain ⟨u, v, huv, hpos, hE⟩ :=
-      Side.forestDist_of_lin_pair (k := 2) (m := 3) (by decide) hS₁m hS₁n h1 hp₁
+      expectedScore_cycle_oneSide hs γ ℓ p S₁ S₂ H hH hS₁m hS₁n h1 hp₁ h2
     have hu : s u ∈ S₁.taxa := hmem₁ (by
       rw [h1]
       rcases huv with ⟨rfl, -⟩ | ⟨rfl, -⟩ <;> decide)
-    have hcases : (u ≠ 0 ∧ u ≠ 1 ∧ v ≠ 0 ∧ v ≠ 1 ∧ u ≠ v) := by
-      rcases huv with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> decide
-    obtain ⟨hu0, hu1, hv0, hv1, huv'⟩ := hcases
-    exact ⟨_, _, _, Side.lenBelow_pos _ hS₁m,
-      add_pos (Side.lenAbove_pos hS₁m hu) (Side.length_pos hS₂m), hpos,
-      expectedScore_top_oneSide hs hu0 hu1 hv0 hv1 huv' γ ℓ _ _ _ _ p S₁ S₂ H hH hE
-        (Side.forestDist_of_lin_empty h2)⟩
+    have hfacts : 0 < S₁.lenBelow (s v) ∧ 0 < S₁.lenAbove (s u) + S₂.length :=
+      ⟨Side.lenBelow_pos _ hS₁m, add_pos (Side.lenAbove_pos hS₁m hu) (Side.length_pos hS₂m)⟩
+    rcases huv with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · have hL : sideLengths S₁ S₂ s = (S₁.lenBelow (s 3), S₁.lenAbove (s 2) + S₂.length,
+          S₁.lenAbove (s 3) - S₁.lenAbove (s 2)) := by
+        have hlt : S₁.lenAbove (s 2) < S₁.lenAbove (s 3) := by linarith
+        simp [sideLengths, h1, hlt]
+      rw [hL]
+      exact ⟨hfacts.1, hfacts.2, hpos, hE⟩
+    · have hL : sideLengths S₁ S₂ s = (S₁.lenBelow (s 2), S₁.lenAbove (s 3) + S₂.length,
+          S₁.lenAbove (s 2) - S₁.lenAbove (s 3)) := by
+        have hlt : ¬ S₁.lenAbove (s 2) < S₁.lenAbove (s 3) := by
+          intro h
+          linarith
+        simp [sideLengths, h1, hlt]
+      rw [hL]
+      exact ⟨hfacts.1, hfacts.2, hpos, hE⟩
 
 /-- **The quartet CFs of four taxa in the anomalous configuration.** Let `N` be a metric network
 with distinct leaf labels, `s` four distinct taxa of `N`, and `Ω` a cycle of `N` with exactly `s 0`
@@ -674,8 +756,9 @@ and `s 1` below its hybrid node, at least three of the four taxa below its top n
 one in each network hanging from its sides (`Brooqs.Net.Anomalous`, with the two taxa below the
 hybrid node labelled `0` and `1`). Let `γ` be the inheritance probability of `Ω` and `p` the
 probability that the lineages of `s 0` and `s 1` reach the hybrid node apart
-(`Brooqs.Net.Cycle.apartProb`). There are positive lengths `h₁`, `h₂`, `L`, added up along the
-sides of `Ω` as in the module docstring, such that the three quartet CFs are those of `N₃₂`
+(`Brooqs.Net.Cycle.apartProb`). With the positive lengths `h₁ = Ω.anomalyH₁ s`,
+`h₂ = Ω.anomalyH₂ s` and `L = Ω.anomalyL s` added up along the sides of `Ω`
+(`Brooqs.Net.Cycle.anomalyLengths`), the three quartet CFs are those of `N₃₂`
 (`Brooqs.net32_quartetCF`) with `p` in place of `e^{-ℓ}`:
 * `CF(s₀s₁|s₂s₃) = 1 - p + p (γ²(1 - 2/3 e^{-h₁}) + (1 - γ)²(1 - 2/3 e^{-h₂}) + 2γ(1 - γ)e^{-L}/3)`;
 * `CF(s₀s₂|s₁s₃) = CF(s₀s₃|s₁s₂) = p (γ² e^{-h₁}/3 + (1 - γ)² e^{-h₂}/3 + γ(1 - γ)(1 - e^{-L}/3))`.
@@ -684,16 +767,19 @@ theorem Net.Cycle.quartetCF_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω : N
     {s : Fin 4 → X} (hs : Function.Injective s) (hsN : ∀ l, s l ∈ N.taxa)
     (hbelow : Ω.below.lin s = {0, 1}) (h3 : 3 ≤ #(Ω.top.lin s))
     (h1 : ∀ n ∈ Ω.side₁.nodes ++ Ω.side₂.nodes, #(n.2.2.lin s) ≤ 1) :
-    ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
+    0 < Ω.anomalyH₁ s ∧ 0 < Ω.anomalyH₂ s ∧ 0 < Ω.anomalyL s ∧
       N.quartetCF (s 0) (s 1) (s 2) (s 3) = 1 - Ω.apartProb s + Ω.apartProb s *
-        (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) + (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
-          2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-L) / 3)) ∧
+        (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₁ s)) +
+          (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₂ s)) +
+            2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-Ω.anomalyL s) / 3)) ∧
       N.quartetCF (s 0) (s 2) (s 1) (s 3) = Ω.apartProb s *
-        (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
-          Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) ∧
+        (Ω.γ ^ 2 * (Real.exp (-Ω.anomalyH₁ s) / 3) +
+          (1 - Ω.γ) ^ 2 * (Real.exp (-Ω.anomalyH₂ s) / 3) +
+            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL s) / 3)) ∧
       N.quartetCF (s 0) (s 3) (s 1) (s 2) = Ω.apartProb s *
-        (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
-          Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) := by
+        (Ω.γ ^ 2 * (Real.exp (-Ω.anomalyH₁ s) / 3) +
+          (1 - Ω.γ) ^ 2 * (Real.exp (-Ω.anomalyH₂ s) / 3) +
+            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL s) / 3)) := by
   obtain ⟨⟨-, -, -, hS₁m, hS₂m, -⟩, hn⟩ := Ω.facts hN
   have hS₁n : Ω.side₁.leaves.Nodup :=
     ((List.sublist_append_left _ _).trans (List.sublist_append_left _ _)).nodup hn
@@ -738,27 +824,37 @@ theorem Net.Cycle.quartetCF_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω : N
     h1 n (List.mem_append.2 ((List.mem_append.1 hn').symm))
   have hH := Ω.below_forestDist hN hbelow
   -- the expected score at the top node
-  have hES : ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
+  have hES : 0 < Ω.anomalyH₁ s ∧ 0 < Ω.anomalyH₂ s ∧ 0 < Ω.anomalyL s ∧
       ∑ F, Ω.top.forestDist s F * quartetScore F = 1 - Ω.apartProb s + Ω.apartProb s *
-        (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) + (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
-          2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-L) / 3)) := by
-    rcases hne with hne | hne
-    · exact ag_core hs Ω.γ Ω.ℓ (Ω.apartProb s) Ω.side₁ Ω.side₂ Ω.below hH hS₁m hS₂m hS₁n hS₂n h1
-        hsub hdisj hne
+        (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₁ s)) +
+          (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₂ s)) +
+            2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-Ω.anomalyL s) / 3)) := by
+    by_cases hne₁ : (Ω.side₁.lin s).Nonempty
+    · have hL : Ω.anomalyLengths s = sideLengths Ω.side₁ Ω.side₂ s := by
+        simp only [Net.Cycle.anomalyLengths, hne₁, ↓reduceIte]
+      simp only [Net.Cycle.anomalyH₁, Net.Cycle.anomalyH₂, Net.Cycle.anomalyL, hL]
+      exact ag_core hs Ω.γ Ω.ℓ (Ω.apartProb s) Ω.side₁ Ω.side₂ Ω.below hH hS₁m hS₂m hS₁n hS₂n h1
+        hsub hdisj hne₁
     · -- exchange the two sides
-      obtain ⟨h₁, h₂, L, p1, p2, p3, hE⟩ := ag_core hs (1 - Ω.γ) Ω.ℓ (Ω.apartProb s) Ω.side₂
-        Ω.side₁ Ω.below hH hS₂m hS₁m hS₂n hS₁n hp₂ (by rwa [union_comm]) hdisj.symm hne
-      refine ⟨h₂, h₁, L, p2, p1, p3, ?_⟩
+      have hne₂ : (Ω.side₂.lin s).Nonempty := hne.resolve_left hne₁
+      have hL : Ω.anomalyLengths s = ((sideLengths Ω.side₂ Ω.side₁ s).2.1,
+          (sideLengths Ω.side₂ Ω.side₁ s).1, (sideLengths Ω.side₂ Ω.side₁ s).2.2) := by
+        simp only [Net.Cycle.anomalyLengths, hne₁, ↓reduceIte]
+      obtain ⟨p1, p2, p3, hE⟩ := ag_core hs (1 - Ω.γ) Ω.ℓ (Ω.apartProb s) Ω.side₂
+        Ω.side₁ Ω.below hH hS₂m hS₁m hS₂n hS₁n hp₂ (by rwa [union_comm]) hdisj.symm hne₂
+      simp only [Net.Cycle.anomalyH₁, Net.Cycle.anomalyH₂, Net.Cycle.anomalyL, hL]
+      refine ⟨p2, p1, p3, ?_⟩
       have hsw : Ω.top.forestDist s =
           (Net.cycle (1 - Ω.γ) Ω.side₂ Ω.side₁ Ω.ℓ Ω.below).forestDist s :=
         (Net.SideSwap.swap_top Ω.γ Ω.side₁ Ω.side₂ Ω.ℓ Ω.below).forestDist_eq s
       rw [hsw, hE]
       ring
-  obtain ⟨h₁, h₂, L, p1, p2, p3, hE⟩ := hES
+  obtain ⟨p1, p2, p3, hE⟩ := hES
   have h3' : 3 ≤ #(univ.filter fun l => s l ∈ Ω.top.taxa) := h3
   have hCF : N.quartetCF (s 0) (s 1) (s 2) (s 3) = 1 - Ω.apartProb s + Ω.apartProb s *
-      (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) + (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
-        2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-L) / 3)) := by
+      (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₁ s)) +
+        (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₂ s)) +
+          2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-Ω.anomalyL s) / 3)) := by
     rw [quartetCF_eq_sum_top N hN.2 Ω s hsN h3', hE]
   -- the two other quartets have equal CFs, and the three add up to `1`
   have hB : Ω.below ∈ N.subnets := Net.mem_subnets_trans Ω.mem (by
@@ -774,7 +870,7 @@ theorem Net.Cycle.quartetCF_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω : N
     N.quartetCF_eq_splitCF_of s (i := 0) (j := 2) (k := 1) (l := 3) (by decide)
   have e2 : N.quartetCF (s 0) (s 3) (s 1) (s 2) = N.splitCF s {0, 3} :=
     N.quartetCF_eq_splitCF_of s (i := 0) (j := 3) (k := 1) (l := 2) (by decide)
-  refine ⟨h₁, h₂, L, p1, p2, p3, hCF, ?_, ?_⟩
+  refine ⟨p1, p2, p3, hCF, ?_, ?_⟩
   · rw [e1]
     rw [e0] at hCF
     linarith
@@ -783,9 +879,9 @@ theorem Net.Cycle.quartetCF_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω : N
     linarith
 
 /-- **The anomaly criterion in an arbitrary network.** Under the assumptions of
-`Brooqs.Net.Cycle.quartetCF_of_anomalous`, there are positive lengths `h₁`, `h₂`, `L` added up
-along the sides of the cycle such that, with `p = Ω.apartProb s`, `γ = Ω.γ` and
-`D = γ(1 - γ)(1 - e^{-L}) - γ²(1 - e^{-h₁}) - (1 - γ)²(1 - e^{-h₂})`:
+`Brooqs.Net.Cycle.quartetCF_of_anomalous`, with `p = Ω.apartProb s`, `γ = Ω.γ`, the lengths
+`h₁ = Ω.anomalyH₁ s`, `h₂ = Ω.anomalyH₂ s`, `L = Ω.anomalyL s` added up along the sides of the
+cycle, and `D = γ(1 - γ)(1 - e^{-L}) - γ²(1 - e^{-h₁}) - (1 - γ)²(1 - e^{-h₂})`:
 * the quartet `s₀s₁|s₂s₃`, the only one of the three that `N` displays, has a strictly smaller CF
   than the two others iff `1 - p < p D`;
 * it has a strictly larger CF iff `p D < 1 - p`;
@@ -795,21 +891,27 @@ theorem Net.Cycle.anomalous_iff_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω
     {s : Fin 4 → X} (hs : Function.Injective s) (hsN : ∀ l, s l ∈ N.taxa)
     (hbelow : Ω.below.lin s = {0, 1}) (h3 : 3 ≤ #(Ω.top.lin s))
     (h1 : ∀ n ∈ Ω.side₁.nodes ++ Ω.side₂.nodes, #(n.2.2.lin s) ≤ 1) :
-    ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
-      (N.quartetCF (s 0) (s 1) (s 2) (s 3) < N.quartetCF (s 0) (s 2) (s 1) (s 3) ↔
-        1 - Ω.apartProb s < Ω.apartProb s * (Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L)) -
-          Ω.γ ^ 2 * (1 - Real.exp (-h₁)) - (1 - Ω.γ) ^ 2 * (1 - Real.exp (-h₂)))) ∧
-      (N.quartetCF (s 0) (s 2) (s 1) (s 3) < N.quartetCF (s 0) (s 1) (s 2) (s 3) ↔
-        Ω.apartProb s * (Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L)) -
-          Ω.γ ^ 2 * (1 - Real.exp (-h₁)) - (1 - Ω.γ) ^ 2 * (1 - Real.exp (-h₂))) <
-            1 - Ω.apartProb s) ∧
-      (N.quartetCF (s 0) (s 1) (s 2) (s 3) = N.quartetCF (s 0) (s 2) (s 1) (s 3) ↔
-        Ω.apartProb s * (Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L)) -
-          Ω.γ ^ 2 * (1 - Real.exp (-h₁)) - (1 - Ω.γ) ^ 2 * (1 - Real.exp (-h₂))) =
-            1 - Ω.apartProb s) := by
-  obtain ⟨h₁, h₂, L, p1, p2, p3, e0, e1, -⟩ := Ω.quartetCF_of_anomalous hN hs hsN hbelow h3 h1
-  refine ⟨h₁, h₂, L, p1, p2, p3, ?_, ?_, ?_⟩ <;> rw [e0, e1] <;> constructor <;> intro h <;>
-    linarith
+    (N.quartetCF (s 0) (s 1) (s 2) (s 3) < N.quartetCF (s 0) (s 2) (s 1) (s 3) ↔
+      1 - Ω.apartProb s < Ω.apartProb s * (Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL s)) -
+        Ω.γ ^ 2 * (1 - Real.exp (-Ω.anomalyH₁ s)) -
+          (1 - Ω.γ) ^ 2 * (1 - Real.exp (-Ω.anomalyH₂ s)))) ∧
+    (N.quartetCF (s 0) (s 2) (s 1) (s 3) < N.quartetCF (s 0) (s 1) (s 2) (s 3) ↔
+      Ω.apartProb s * (Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL s)) -
+        Ω.γ ^ 2 * (1 - Real.exp (-Ω.anomalyH₁ s)) -
+          (1 - Ω.γ) ^ 2 * (1 - Real.exp (-Ω.anomalyH₂ s))) < 1 - Ω.apartProb s) ∧
+    (N.quartetCF (s 0) (s 1) (s 2) (s 3) = N.quartetCF (s 0) (s 2) (s 1) (s 3) ↔
+      Ω.apartProb s * (Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL s)) -
+        Ω.γ ^ 2 * (1 - Real.exp (-Ω.anomalyH₁ s)) -
+          (1 - Ω.γ) ^ 2 * (1 - Real.exp (-Ω.anomalyH₂ s))) = 1 - Ω.apartProb s) := by
+  obtain ⟨-, -, -, e0, e1, -⟩ := Ω.quartetCF_of_anomalous hN hs hsN hbelow h3 h1
+  refine ⟨?_, ?_, ?_⟩ <;> rw [e0, e1] <;> constructor <;> intro h <;> linarith
+
+/-- The excess `D = γ(1 - γ)(1 - e^{-L}) - γ²(1 - e^{-h₁}) - (1 - γ)²(1 - e^{-h₂})` of the cycle `Ω`
+for the four taxa sampled by `s`, with the lengths of `Brooqs.Net.Cycle.anomalyLengths`: the four
+taxa are in the anomaly zone iff `1 - p < p D` (`Brooqs.Net.Cycle.anomalous_iff_of_anomalous`). -/
+def Net.Cycle.anomalyExcess {N : Net X} (Ω : N.Cycle) (s : Fin 4 → X) : ℝ :=
+  Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL s)) - Ω.γ ^ 2 * (1 - Real.exp (-Ω.anomalyH₁ s)) -
+    (1 - Ω.γ) ^ 2 * (1 - Real.exp (-Ω.anomalyH₂ s))
 
 /-! ### Any labels -/
 
@@ -833,8 +935,9 @@ exactly `s i` and `s j` below its hybrid node, at least three of the four taxa b
 and at most one in each network hanging from its sides (`Brooqs.Net.Anomalous`); `k` and `m` are
 the two other labels. With `p` the probability that the lineages of `s i` and `s j` reach the hybrid
 node apart (`Brooqs.Net.Cycle.apartProb` for the taxa listed as `s i, s j, s k, s m`) and `γ` the
-inheritance probability of `Ω`, there are positive lengths `h₁`, `h₂`, `L` such that the CF of the
-split `{i, j}`, the only one that `N` displays, is
+inheritance probability of `Ω`, and the positive lengths `h₁`, `h₂`, `L` of
+`Brooqs.Net.Cycle.anomalyLengths` for the same list of taxa, the CF of the split `{i, j}`, the only
+one that `N` displays, is
 `1 - p + p (γ²(1 - 2/3 e^{-h₁}) + (1 - γ)²(1 - 2/3 e^{-h₂}) + 2γ(1 - γ) e^{-L}/3)`, and the CFs of
 the splits `{i, k}` and `{i, m}` are both
 `p (γ² e^{-h₁}/3 + (1 - γ)² e^{-h₂}/3 + γ(1 - γ)(1 - e^{-L}/3))`. -/
@@ -842,17 +945,21 @@ theorem Net.Cycle.splitCF_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω : N.C
     {s : Fin 4 → X} (hs : Function.Injective s) (hsN : ∀ l, s l ∈ N.taxa) {i j k m : Fin 4}
     (hinj : Function.Injective ![i, j, k, m]) (hbelow : Ω.below.lin s = {i, j})
     (h3 : 3 ≤ #(Ω.top.lin s)) (h1 : ∀ n ∈ Ω.side₁.nodes ++ Ω.side₂.nodes, #(n.2.2.lin s) ≤ 1) :
-    ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
+    0 < Ω.anomalyH₁ ![s i, s j, s k, s m] ∧ 0 < Ω.anomalyH₂ ![s i, s j, s k, s m] ∧
+      0 < Ω.anomalyL ![s i, s j, s k, s m] ∧
       N.splitCF s {i, j} = 1 - Ω.apartProb ![s i, s j, s k, s m] +
         Ω.apartProb ![s i, s j, s k, s m] *
-          (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) + (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
-            2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-L) / 3)) ∧
+        (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₁ ![s i, s j, s k, s m])) +
+          (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₂ ![s i, s j, s k, s m])) +
+            2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-Ω.anomalyL ![s i, s j, s k, s m]) / 3)) ∧
       N.splitCF s {i, k} = Ω.apartProb ![s i, s j, s k, s m] *
-        (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
-          Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) ∧
+        (Ω.γ ^ 2 * (Real.exp (-Ω.anomalyH₁ ![s i, s j, s k, s m]) / 3) +
+          (1 - Ω.γ) ^ 2 * (Real.exp (-Ω.anomalyH₂ ![s i, s j, s k, s m]) / 3) +
+            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL ![s i, s j, s k, s m]) / 3)) ∧
       N.splitCF s {i, m} = Ω.apartProb ![s i, s j, s k, s m] *
-        (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
-          Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) := by
+        (Ω.γ ^ 2 * (Real.exp (-Ω.anomalyH₁ ![s i, s j, s k, s m]) / 3) +
+          (1 - Ω.γ) ^ 2 * (Real.exp (-Ω.anomalyH₂ ![s i, s j, s k, s m]) / 3) +
+            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL ![s i, s j, s k, s m]) / 3)) := by
   have hij : i ≠ j := fun h => absurd (hinj (a₁ := 0) (a₂ := 1) h) (by decide)
   have hik : i ≠ k := fun h => absurd (hinj (a₁ := 0) (a₂ := 2) h) (by decide)
   have him : i ≠ m := fun h => absurd (hinj (a₁ := 0) (a₂ := 3) h) (by decide)
@@ -887,9 +994,9 @@ theorem Net.Cycle.splitCF_of_anomalous {N : Net X} (hN : N.WellFormed) (Ω : N.C
   have h3' : 3 ≤ #(Ω.top.lin ![s i, s j, s k, s m]) := by rw [hcard]; exact h3
   have h1' : ∀ n ∈ Ω.side₁.nodes ++ Ω.side₂.nodes, #(n.2.2.lin ![s i, s j, s k, s m]) ≤ 1 :=
     fun n hn => by rw [hcard]; exact h1 n hn
-  obtain ⟨h₁, h₂, L, p1, p2, p3, e0, e1, e2⟩ :=
+  obtain ⟨p1, p2, p3, e0, e1, e2⟩ :=
     Ω.quartetCF_of_anomalous hN hs'inj hsN' hbelow' h3' h1'
-  refine ⟨h₁, h₂, L, p1, p2, p3, ?_, ?_, ?_⟩
+  refine ⟨p1, p2, p3, ?_, ?_, ?_⟩
   · rw [← N.quartetCF_eq_splitCF_of s hinj]
     exact e0
   · have hinj' : Function.Injective ![i, k, j, m] := by
@@ -908,23 +1015,27 @@ four distinct taxa `s` of a metric network `N` with distinct leaf labels are in 
 configuration, there are a cycle `Ω` of `N` and labels with `s i` and `s j` below its hybrid node
 (`k` and `m` the two others) such that the CFs of the three splits are those of
 `Brooqs.Net.Cycle.splitCF_of_anomalous`: those of `N₃₂` with the probability `p` that the lineages
-of `s i` and `s j` reach the hybrid node apart in place of `e^{-ℓ}`, and positive lengths added up
-along the sides of `Ω`. -/
+of `s i` and `s j` reach the hybrid node apart in place of `e^{-ℓ}`, and the positive lengths of
+`Brooqs.Net.Cycle.anomalyLengths`, added up along the sides of `Ω`. -/
 theorem Net.Anomalous.splitCF {N : Net X} (hN : N.WellFormed) {s : Fin 4 → X}
     (hs : Function.Injective s) (hsN : ∀ l, s l ∈ N.taxa) (hA : N.Anomalous s) :
     ∃ (Ω : N.Cycle) (i j k m : Fin 4), Function.Injective ![i, j, k, m] ∧
-      Ω.below.lin s = {i, j} ∧ ∃ h₁ h₂ L : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L ∧
-        N.splitCF s {i, j} = 1 - Ω.apartProb ![s i, s j, s k, s m] +
-          Ω.apartProb ![s i, s j, s k, s m] *
-            (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) +
-              (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
-                2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-L) / 3)) ∧
-        N.splitCF s {i, k} = Ω.apartProb ![s i, s j, s k, s m] *
-          (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
-            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) ∧
-        N.splitCF s {i, m} = Ω.apartProb ![s i, s j, s k, s m] *
-          (Ω.γ ^ 2 * (Real.exp (-h₁) / 3) + (1 - Ω.γ) ^ 2 * (Real.exp (-h₂) / 3) +
-            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-L) / 3)) := by
+      Ω.below.lin s = {i, j} ∧
+      0 < Ω.anomalyH₁ ![s i, s j, s k, s m] ∧ 0 < Ω.anomalyH₂ ![s i, s j, s k, s m] ∧
+      0 < Ω.anomalyL ![s i, s j, s k, s m] ∧
+      N.splitCF s {i, j} = 1 - Ω.apartProb ![s i, s j, s k, s m] +
+        Ω.apartProb ![s i, s j, s k, s m] *
+        (Ω.γ ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₁ ![s i, s j, s k, s m])) +
+          (1 - Ω.γ) ^ 2 * (1 - 2 / 3 * Real.exp (-Ω.anomalyH₂ ![s i, s j, s k, s m])) +
+            2 * Ω.γ * (1 - Ω.γ) * (Real.exp (-Ω.anomalyL ![s i, s j, s k, s m]) / 3)) ∧
+      N.splitCF s {i, k} = Ω.apartProb ![s i, s j, s k, s m] *
+        (Ω.γ ^ 2 * (Real.exp (-Ω.anomalyH₁ ![s i, s j, s k, s m]) / 3) +
+          (1 - Ω.γ) ^ 2 * (Real.exp (-Ω.anomalyH₂ ![s i, s j, s k, s m]) / 3) +
+            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL ![s i, s j, s k, s m]) / 3)) ∧
+      N.splitCF s {i, m} = Ω.apartProb ![s i, s j, s k, s m] *
+        (Ω.γ ^ 2 * (Real.exp (-Ω.anomalyH₁ ![s i, s j, s k, s m]) / 3) +
+          (1 - Ω.γ) ^ 2 * (Real.exp (-Ω.anomalyH₂ ![s i, s j, s k, s m]) / 3) +
+            Ω.γ * (1 - Ω.γ) * (1 - Real.exp (-Ω.anomalyL ![s i, s j, s k, s m]) / 3)) := by
   obtain ⟨Ω, h2, h3, h1⟩ := hA
   obtain ⟨i, j, hij, hP⟩ := card_eq_two.1 h2
   obtain ⟨k, m, hik, him, hjk, hjm, hkm⟩ : ∃ k m : Fin 4,

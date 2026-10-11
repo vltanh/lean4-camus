@@ -29,8 +29,9 @@ the anomaly zone (`NMSC.anomalous_drop_iff`).
   boundary, Algorithm 1 does not almost surely end up returning exactly the copies of the displayed
   quartet tree.
 * `NMSC.not_ae_drop_of_equal`: on the boundary, it does not almost surely end up dropping it.
-* `NMSC.anomalous_drop_iff`: Algorithm 1 almost surely ends up dropping the quartet tree of Q(N_r)
-  iff the four taxa are in the anomaly zone.
+* `NMSC.anomalous_drop_iff`, `NMSC.anomalous_drop_iff_quartetProb`: Algorithm 1 almost surely ends
+  up dropping the quartet tree of Q(N_r) iff the four taxa are in the anomaly zone, that is, iff
+  that quartet tree is strictly the least probable.
 
 ## Proof
 
@@ -723,25 +724,23 @@ theorem anomalous_not_ae_filterQuartets_boundary {N : Brooqs.Net L} (hN : N.Well
     (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
     (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
     (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) :
-    ∃ h₁ h₂ L₀ : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L₀ ∧
-      (C.apartProb ![keyTaxon k hk i, keyTaxon k hk j, keyTaxon k hk a, keyTaxon k hk b] *
-          (C.γ * (1 - C.γ) * (1 - Real.exp (-L₀)) - C.γ ^ 2 * (1 - Real.exp (-h₁)) -
-            (1 - C.γ) ^ 2 * (1 - Real.exp (-h₂))) =
-        1 - C.apartProb ![keyTaxon k hk i, keyTaxon k hk j, keyTaxon k hk a, keyTaxon k hk b] →
-        ∀ t, ¬ ∀ᵐ ω ∂P, ∀ᶠ n in atTop, ∀ u,
-          (filterQuartets t (geneQuartets (fun i => G i ω) n)).count (k.quartet u) =
-            if DisplaysQuartet N (k.quartet u) then
-              (geneQuartets (fun i => G i ω) n).count (k.quartet u) else 0) := by
+    C.apartProb (blockSample k hk i j a b) * C.anomalyExcess (blockSample k hk i j a b) =
+      1 - C.apartProb (blockSample k hk i j a b) →
+      ∀ t, ¬ ∀ᵐ ω ∂P, ∀ᶠ n in atTop, ∀ u,
+        (filterQuartets t (geneQuartets (fun i => G i ω) n)).count (k.quartet u) =
+          if DisplaysQuartet N (k.quartet u) then
+            (geneQuartets (fun i => G i ω) n).count (k.quartet u) else 0 := by
+  intro hzone t
   obtain ⟨hdisp, -⟩ := anomalous_quartetProb hN htaxa hk C hinj hbelow h3 h1
-  obtain ⟨h₁, h₂, L₀, p1, p2, p3, hb⟩ :=
-    anomalous_filterQuartets_boundary hN htaxa hk C hinj hbelow h3 h1 G hind hid hlaw
-  exact ⟨h₁, h₂, L₀, p1, p2, p3, fun hzone t =>
-    not_ae_filterQuartets_of_equal hN hk hdisp (hb hzone).1 G hind hid hlaw t⟩
+  exact not_ae_filterQuartets_of_equal hN hk hdisp
+    (anomalous_filterQuartets_boundary hN htaxa hk C hinj hbelow h3 h1 G hind hid hlaw hzone).1
+    G hind hid hlaw t
 
 /-- **Section 3.3: Quartet Filtering drops the quartet tree of Q(N_r) exactly in the anomaly zone.**
 Under the assumptions of `NMSC.anomalous_filterQuartets`, with `p`, `γ`, the positive lengths `h₁`,
 `h₂`, `L₀` of `NMSC.anomalous_quartetProb` and
-`D = γ(1 - γ)(1 - e^{-L₀}) - γ²(1 - e^{-h₁}) - (1 - γ)²(1 - e^{-h₂})`: for every threshold
+`D = γ(1 - γ)(1 - e^{-L₀}) - γ²(1 - e^{-h₁}) - (1 - γ)²(1 - e^{-h₂})`
+(`Brooqs.Net.Cycle.anomalyExcess`): for every threshold
 `0 < t < t₀(N)`, almost surely, for all large numbers `n` of genes, Algorithm 1 returns no copy of
 the quartet tree of Q(N_r) on the four taxa `k` iff `1 - p < p D`. In the anomaly zone it drops it
 (`NMSC.filterQuartets_block_of_least`); outside the zone and off its boundary it keeps all its
@@ -755,17 +754,15 @@ theorem anomalous_drop_iff {N : Brooqs.Net L} (hN : N.WellFormed)
     (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
     (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
     (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) :
-    ∃ h₁ h₂ L₀ : ℝ, 0 < h₁ ∧ 0 < h₂ ∧ 0 < L₀ ∧ ∀ t, 0 < t → t < threshold N →
+    ∀ t, 0 < t → t < threshold N →
       ((∀ᵐ ω ∂P, ∀ᶠ n in atTop,
           (filterQuartets t (geneQuartets (fun i => G i ω) n)).count
             (k.quartet (pairIndex i j)) = 0) ↔
-        1 - C.apartProb ![keyTaxon k hk i, keyTaxon k hk j, keyTaxon k hk a, keyTaxon k hk b] <
-          C.apartProb ![keyTaxon k hk i, keyTaxon k hk j, keyTaxon k hk a, keyTaxon k hk b] *
-            (C.γ * (1 - C.γ) * (1 - Real.exp (-L₀)) - C.γ ^ 2 * (1 - Real.exp (-h₁)) -
-              (1 - C.γ) ^ 2 * (1 - Real.exp (-h₂)))) := by
-  obtain ⟨hdisp, h₁, h₂, L₀, p1, p2, p3, e0, e1⟩ :=
-    anomalous_quartetProb hN htaxa hk C hinj hbelow h3 h1
-  refine ⟨h₁, h₂, L₀, p1, p2, p3, fun t ht ht₀ => ⟨fun hdrop => ?_, fun hzone => ?_⟩⟩
+        1 - C.apartProb (blockSample k hk i j a b) <
+          C.apartProb (blockSample k hk i j a b) * C.anomalyExcess (blockSample k hk i j a b)) := by
+  obtain ⟨hdisp, -, -, -, e0, e1⟩ := anomalous_quartetProb hN htaxa hk C hinj hbelow h3 h1
+  unfold Brooqs.Net.Cycle.anomalyExcess
+  refine fun t ht ht₀ => ⟨fun hdrop => ?_, fun hzone => ?_⟩
   · -- outside the zone, Algorithm 1 does not almost surely drop the displayed quartet tree
     by_contra hzone
     rcases (not_lt.1 hzone).lt_or_eq with hreg | hbd
@@ -829,6 +826,42 @@ theorem anomalous_drop_iff {N : Brooqs.Net L} (hN : N.WellFormed)
     filter_upwards [filterQuartets_block_of_least hdisp hlt G hind hid hlaw t] with ω hω
     filter_upwards [hω] with n hn
     exact hn.1
+
+/-- **Section 3.3: Quartet Filtering drops the quartet tree of Q(N_r) exactly when it is the least
+probable.** Under the assumptions of `NMSC.anomalous_filterQuartets`, for every threshold
+`0 < t < t₀(N)`: almost surely, for all large numbers `n` of genes, Algorithm 1 returns no copy of
+the quartet tree of Q(N_r) on the four taxa `k` iff that quartet tree is strictly less probable
+than the two others (`NMSC.anomalous_drop_iff`, with the probabilities of
+`NMSC.anomalous_quartetProb`). -/
+theorem anomalous_drop_iff_quartetProb {N : Brooqs.Net L} (hN : N.WellFormed)
+    (htaxa : ∀ x : L, x ∈ N.taxa) {k : QuartetKey} (hk : keyTaxa k ⊆ L) (C : N.Cycle)
+    {i j a b : Fin 4} (hinj : Function.Injective ![i, j, a, b])
+    (hbelow : C.below.lin (keyTaxon k hk) = {i, j}) (h3 : 3 ≤ #(C.top.lin (keyTaxon k hk)))
+    (h1 : ∀ n ∈ C.side₁.nodes ++ C.side₂.nodes, #(n.2.2.lin (keyTaxon k hk)) ≤ 1)
+    (G : ℕ → Ω → Finset (Finset L)) (hind : iIndepFun G P)
+    (hid : ∀ n, IdentDistrib (G n) (G 0) P P)
+    (hlaw : ∀ T, P.real (G 0 ⁻¹' {T}) = N.geneTreeDist id T) :
+    ∀ t, 0 < t → t < threshold N →
+      ((∀ᵐ ω ∂P, ∀ᶠ n in atTop,
+          (filterQuartets t (geneQuartets (fun i => G i ω) n)).count
+            (k.quartet (pairIndex i j)) = 0) ↔
+        ∀ u, u ≠ pairIndex i j →
+          quartetProb N (k.quartet (pairIndex i j)) < quartetProb N (k.quartet u)) := by
+  intro t ht ht₀
+  rw [anomalous_drop_iff hN htaxa hk C hinj hbelow h3 h1 G hind hid hlaw t ht ht₀]
+  obtain ⟨-, -, -, -, e0, e1⟩ := anomalous_quartetProb hN htaxa hk C hinj hbelow h3 h1
+  unfold Brooqs.Net.Cycle.anomalyExcess
+  constructor
+  · intro h u hu
+    rw [e0, e1 u hu]
+    linarith
+  · intro h
+    obtain ⟨u, hu⟩ : ∃ u : Fin 3, u ≠ pairIndex i j := ⟨pairIndex i j + 1, by
+      have : ∀ d : Fin 3, d + 1 ≠ d := by decide
+      exact this _⟩
+    have := h u hu
+    rw [e0, e1 u hu] at this
+    linarith
 
 end Genes
 
