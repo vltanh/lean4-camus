@@ -3,9 +3,48 @@ module
 public import Camus.Pipelines.NMSC.Switchings
 
 /-!
-# The trees of the graph of a network by the edges kept into its reticulations
+# The trees of a canonical network, switching by switching
 
-(module docstring to be written)
+Definition 1 builds the trees of a network from its switchings: one of the two edges into each
+reticulation is kept. In the canonical network `Realization.graph t E` of a cycle-separated family
+`E` (Definition 3), a switching keeps, for each pair `e = (u, w)` of `E`, either the edge of the
+subdivided tree `T` into the recipient `w′` or the added edge `u′ → w′`. It is the switching
+`Realization.keptSwitching t E F` of the set `F ⊆ E` of the pairs whose added edge it keeps
+(`Realization.switching_eq_keptSwitching`). This file computes the clades of its tree. Below the
+vertex of `T` at `p` lie the taxa `Realization.keptClade t F p`: the clade of `p` in `T`, without
+the subtrees `T_w` that the kept added edges move out of it and with those that they move into it
+(`Realization.cladeBelow_keptSwitching`). Without ghost donors, the family of the clades below the
+vertices is `Realization.keptClades t F` (`Realization.image_cladeBelow_keptSwitching`): the clades
+`keptClade t F p` and, for each kept added edge, the clade of its donor vertex. For `F = ∅` these
+are the clades of `T`, and for `F = {e}` those of the tree displayed by `T + e` through the added
+edge (`EdgeAbove.switchedClades`).
+
+## Main results
+
+* `Realization.keptSwitching`, `Realization.keptSwitching_switching`,
+  `Realization.switching_eq_keptSwitching`: the switchings of the canonical network.
+* `Realization.keptClade`, `Realization.keptClade_fork`, `Realization.keptClade_leaf`,
+  `Realization.recipient_clade`: the clades of the vertices of `T` in the tree of the switching,
+  and the identities they satisfy.
+* `Realization.cladeBelow_keptSwitching`: the clade below every vertex.
+* `Realization.keptClades`, `Realization.image_cladeBelow_keptSwitching`: the family of the clades.
+* `RootedNetwork.cladeBelow_eq_children`, `RootedNetwork.reachCount_lt`: the clade below a vertex
+  of a switching from those below its children.
+
+## Proof
+
+The clade below a vertex in a switching is its own taxon, if it is a leaf, and the clades below its
+children (`RootedNetwork.cladeBelow_eq_children`), and a child has fewer descendants than its parent
+(`RootedNetwork.reachCount_lt`). So the clades are computed vertex by vertex, by strong induction on
+the number of descendants. The wire above a vertex `c` of `T` carries at most one outer endpoint
+and one ghost donor (`Realization.outerEndpoints_eq_singleton`,
+`Realization.ghostEndpoints_eq_singleton`), and a kept added edge brings the subtree of its
+recipient end below its donor. At an internal vertex, the clade is the union of what the wires
+above its two children bring (`Realization.keptClade_fork`, from `Realization.fork_logic`); this
+uses the separation of the cycles: a pair whose recipient end lies strictly below the recipient end
+of another has its donor end below it too (`Realization.recipient_inside`), as does a pair whose
+donor end does (`Realization.recipient_cone_closed_pairs`), and two pairs never share their
+recipient end (`Realization.eq_of_recipient_eq`).
 -/
 
 @[expose] public section
@@ -63,6 +102,7 @@ noncomputable def keptSwitching (t : PhyloTree) (E F : Finset Pair) : Finset (�
   (supportEdges t E).filter (fun x => ∀ e ∈ F, x.2 ≠ recipient t e) ∪
     F.image (fun e => (donor t e, recipient t e))
 
+/-- The kept switching consists of edges of the canonical network. -/
 theorem keptSwitching_subset (hF : F ⊆ E) : keptSwitching t E F ⊆ (graph t E).edges := by
   intro x hx
   rcases Finset.mem_union.1 hx with hx | hx
@@ -125,9 +165,11 @@ namespace Realization
 
 /-! ### Prefixes -/
 
+/-- A vertex is a strict ancestor of its children. -/
 theorem sp_child (p : Address) (b : Bool) : p <+: p ++ [b] ∧ p ≠ p ++ [b] :=
   ⟨List.prefix_append p [b], fun h => by simpa using congrArg List.length h⟩
 
+/-- An ancestor of a vertex through a child is a strict ancestor. -/
 theorem sp_of_child_prefix {p q : Address} {b : Bool} (h : p ++ [b] <+: q) :
     p <+: q ∧ p ≠ q :=
   ⟨(List.prefix_append p [b]).trans h, fun h' => by
@@ -135,6 +177,7 @@ theorem sp_of_child_prefix {p q : Address} {b : Bool} (h : p ++ [b] <+: q) :
     have := h.length_le
     simp at this⟩
 
+/-- A strict descendant of `p` lies below one of the children of `p`. -/
 theorem exists_child_of_sp {p q : Address} (h : p <+: q) (hne : p ≠ q) :
     ∃ b, p ++ [b] <+: q := by
   obtain ⟨r, rfl⟩ := h
@@ -142,12 +185,14 @@ theorem exists_child_of_sp {p q : Address} (h : p <+: q) (hne : p ≠ q) :
   | nil => simp at hne
   | cons b r => exact ⟨b, ⟨r, by simp⟩⟩
 
+/-- A vertex lies below one child of `p` only. -/
 theorem child_eq_of_prefix {p q : Address} {b b' : Bool} (h : p ++ [b] <+: q)
     (h' : p ++ [b'] <+: q) : b = b' := by
   rcases List.prefix_or_prefix_of_prefix h h' with h'' | h''
   · simpa using (List.prefix_append_right_inj p).1 h''
   · exact ((by simpa using (List.prefix_append_right_inj p).1 h'') : b' = b).symm
 
+/-- A strict descendant of `p` that is an ancestor of a child of `p` is that child. -/
 theorem eq_child_of_between {p x : Address} {b : Bool} (hpx : p <+: x) (hne : p ≠ x)
     (hx : x <+: p ++ [b]) : x = p ++ [b] := by
   refine hx.eq_of_length (le_antisymm hx.length_le ?_)
@@ -160,6 +205,7 @@ theorem eq_child_of_between {p x : Address} {b : Bool} (hpx : p <+: x) (hne : p 
 
 variable {t : PhyloTree} {E : Finset Pair}
 
+/-- The pairs of a cycle-separated family are admissible. -/
 theorem admissible_of_mem (hE : EdgeAbove.CycleSeparated t E) {e : Pair} (he : e ∈ E) :
     EdgeAbove.Admissible t e :=
   (Finset.mem_filter.mp (hE.1 he)).2
@@ -244,11 +290,14 @@ noncomputable def wireTaxa (t : PhyloTree) (F : Finset Pair) (c : Address) : Fin
 
 variable {F : Finset Pair}
 
+/-- A taxon is in the clade of `q` iff its leaf lies below `q`. -/
 theorem mem_taxaAt_of_mem {ht : t.WellLabelled} {q : Address} (hq : q ∈ t.nodes) {a : ℕ}
     (ha : a ∈ t.taxa) : a ∈ t.taxaAt q ↔ q <+: leafAddress t a := by
   rw [PhyloTree.mem_taxaAt_iff ht hq]
   exact and_iff_right ha
 
+/-- A taxon is in `keptClade t F p` iff its leaf lies below `p` and no kept added edge moves
+its subtree out of the clade of `p`, or a kept added edge moves it into the clade of `p`. -/
 theorem mem_keptClade (ht : t.WellLabelled) (hF : ∀ e ∈ F, e.2 ∈ t.nodes) {p : Address}
     (hp : p ∈ t.nodes) {a : ℕ} (ha : a ∈ t.taxa) :
     a ∈ keptClade t F p ↔
@@ -268,6 +317,8 @@ theorem mem_keptClade (ht : t.WellLabelled) (hF : ∀ e ∈ F, e.2 ∈ t.nodes) 
       exact hno e he h1 h2 ((mem_taxaAt_of_mem (ht := ht) (hF e he) ha).1 hae)
     · exact Or.inr ⟨e, ⟨he, h1, h2⟩, (mem_taxaAt_of_mem (ht := ht) (hF e he) ha).2 hea⟩
 
+/-- A taxon is brought to the wire above `c` iff its leaf lies below the recipient end of a
+kept added edge with donor end `c`. -/
 theorem mem_donorTaxa (ht : t.WellLabelled) (hF : ∀ e ∈ F, e.2 ∈ t.nodes) {c : Address}
     {a : ℕ} (ha : a ∈ t.taxa) :
     a ∈ donorTaxa t F c ↔ ∃ e ∈ F, e.1 = c ∧ e.2 <+: leafAddress t a := by
@@ -278,17 +329,20 @@ theorem mem_donorTaxa (ht : t.WellLabelled) (hF : ∀ e ∈ F, e.2 ∈ t.nodes) 
   · rintro ⟨e, he, h1, hea⟩
     exact ⟨e, ⟨he, h1⟩, (mem_taxaAt_of_mem (ht := ht) (hF e he) ha).2 hea⟩
 
+/-- The clades of the tree of the switching are sets of taxa of `T`. -/
 theorem keptClade_subset_taxa (p : Address) : keptClade t F p ⊆ t.taxa := by
   intro a ha
   simp only [keptClade, Finset.mem_union, Finset.mem_sdiff, Finset.mem_biUnion] at ha
   rcases ha with ⟨ha, -⟩ | ⟨e, -, ha⟩ <;> exact PhyloTree.taxaAt_subset t _ ha
 
+/-- The taxa brought by the kept added edges are taxa of `T`. -/
 theorem donorTaxa_subset_taxa (c : Address) : donorTaxa t F c ⊆ t.taxa := by
   intro a ha
   simp only [donorTaxa, Finset.mem_biUnion] at ha
   obtain ⟨e, -, ha⟩ := ha
   exact PhyloTree.taxaAt_subset t _ ha
 
+/-- A strict ancestor of a vertex is a strict ancestor of its descendants. -/
 theorem sp_of_sp_prefix {p x y : Address} (h : p <+: x ∧ p ≠ x) (hxy : x <+: y) :
     p <+: y ∧ p ≠ y :=
   ⟨h.1.trans hxy, fun h' => by
@@ -426,6 +480,7 @@ namespace Realization
 
 variable {t : PhyloTree} {E F : Finset Pair}
 
+/-- The consequences of cycle separation used by `Realization.fork_logic`. -/
 theorem separation_props (hE : EdgeAbove.CycleSeparated t E) (hF : F ⊆ E) :
     (∀ e ∈ F, ¬e.2 <+: e.1) ∧ (∀ e ∈ F, ∀ f ∈ F, e.2 <+: f.1 → e.2 <+: f.2) ∧
       (∀ e ∈ F, ∀ f ∈ F, e.2 <+: f.2 → e.2 ≠ f.2 → e.2 <+: f.1) ∧
@@ -435,6 +490,7 @@ theorem separation_props (hE : EdgeAbove.CycleSeparated t E) (hF : F ⊆ E) :
     fun _ he _ hf h hne => recipient_inside hE (hF he) (hF hf) h hne,
     fun _ he _ hf h => eq_of_recipient_eq hE (hF he) (hF hf) h⟩
 
+/-- The taxa brought by the wire above `c` to its upper end. -/
 theorem mem_wireTaxa {c : Address} {a : ℕ} :
     a ∈ wireTaxa t F c ↔ (¬∃ e ∈ F, e.2 = c) ∧ (a ∈ keptClade t F c ∨ a ∈ donorTaxa t F c) := by
   classical
@@ -579,6 +635,7 @@ noncomputable def firstBelow (t : PhyloTree) (E : Finset Pair) (c : Address) : �
 noncomputable def afterOuter (t : PhyloTree) (E : Finset Pair) (c : Address) : ℕ :=
   (ghostEndpoints t E c ++ [Address.code c]).headD 0
 
+/-- The wire above `c`: its upper end, its fresh vertices and `c`. -/
 theorem wire_eq (t : PhyloTree) (E : Finset Pair) (c : Address) :
     wire t E c = [] ++ Address.code (parent c) ::
       (outerEndpoints t E c ++ ghostEndpoints t E c ++ [Address.code c]) := by
@@ -642,6 +699,8 @@ theorem mem_support_ghost (hE : EdgeAbove.CycleSeparated t E) {c : Address} (hc 
   rw [mem_wireEdges_iff_of_nodup hnd]
   simp
 
+/-- The edges of the kept switching: the support edges that do not enter the recipient of a
+kept added edge, and the kept added edges. -/
 theorem mem_keptSwitching {v x : ℕ} :
     (v, x) ∈ keptSwitching t E F ↔
       ((v, x) ∈ supportEdges t E ∧ ∀ e ∈ F, x ≠ recipient t e) ∨
@@ -654,6 +713,7 @@ theorem mem_keptSwitching {v x : ℕ} :
 def ghostTaxa (t : PhyloTree) (F : Finset Pair) (c : Address) : Finset ℕ :=
   (F.filter fun e => e.1 = c ∧ EdgeAbove.target e = c).biUnion fun e => t.taxaAt e.2
 
+/-- The head of a nonempty list is one of its elements. -/
 theorem headD_mem_append (L : List ℕ) (x d : ℕ) : (L ++ [x]).headD d ∈ L ++ [x] := by
   cases L <;> simp
 

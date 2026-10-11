@@ -3,9 +3,41 @@ module
 public import Camus.Pipelines.NMSC.GraphTrees
 
 /-!
-# Every displayed tree of a network of the NMSC is a tree of its graph
+# The displayed trees of a network of the NMSC are the trees of its graph
 
-(module docstring to be written)
+CAMUS's Definition 1 defines the trees 𝒯 of a network, "formed by deleting one incoming edge into
+each reticulation node ... in each of the possible ways". The model describes them by their
+clusters (`Brooqs.Net.displayed`), and CAMUS works with the graph
+`Realization.graph (baseTree N) (pairs N)` of `N`, built on its base tree. This file shows that the
+two give the same trees. Every displayed tree of `N` is, by its clades, a tree of the graph in the
+sense of Definition 1 (`NMSC.exists_builtOn_of_mem_displayed`), and every tree of the graph is a
+displayed tree of `N` (`NMSC.exists_displayed_of_builtOn`). The switching that gives a displayed
+tree keeps the added edge of a cycle exactly when the displayed tree hangs the hybrid component from
+the side whose hybrid edge the base tree deletes. With `NMSC.nmsc_recovery_builtOn`, CAMUS returns
+the graph of `N` itself through every displayed tree of `N` (`NMSC.nmsc_recovery_displayed`).
+
+## Main results
+
+* `NMSC.exists_builtOn_of_mem_displayed`, `NMSC.exists_switching_of_mem_displayed`: every
+  displayed tree of `N` is a tree of its graph.
+* `NMSC.exists_displayed_of_builtOn`, `NMSC.exists_displayed_of_switching`: every tree of the
+  graph is a displayed tree of `N`.
+* `NMSC.builtOn_clades_iff`: the two families of trees, by their clades.
+* `NMSC.nmsc_recovery_displayed`: Sections 3.2 to 3.4 under the NMSC, through every displayed tree.
+
+## Proof
+
+The clades of the tree of a switching of the graph are `keptClades (baseTree N) F` for the set `F`
+of the pairs whose added edge it keeps (`Realization.image_cladeBelow_keptSwitching`; the pairs of
+`N` have no ghost donor, `NMSC.pairs_noGhost`). These families are computed by induction on `N`,
+as `NMSC.cutSets_baseTree` computes the clusters of the trees displayed through at most one added
+edge. At a tree node, the family is the set of all taxa and the families of the two children
+(`NMSC.nodeClades_fork`). At a cycle, with the side `Sa` from which the base tree hangs the hybrid
+component and the side `Sd` whose hybrid edge it deletes, the added edge of the cycle, when kept,
+removes the taxa of the hybrid component from the clades of the nodes of `Sa` and adds them to
+those of `Sd` (`NMSC.keptClades_cross`, `NMSC.cycle_eq`). The clusters along the two sides follow
+by induction along the sides (`NMSC.exists_kept_attach`, `NMSC.exists_kept_detach`, and for the
+converse `NMSC.exists_displayed_attach`, `NMSC.exists_displayed_detach`).
 -/
 
 @[expose] public section
@@ -27,11 +59,14 @@ def nodeClades (s : PhyloTree) (F : Finset Pair) (f : Address → Finset ℕ →
   s.nodes.image (fun y => f y (keptClade s F y)) ∪
     F.image fun e => keptClade s F e.1 ∪ s.taxaAt e.2
 
+/-- The clades of the tree of the switching are `nodeClades` without modification. -/
 theorem keptClades_eq_nodeClades (s : PhyloTree) (F : Finset Pair) :
     keptClades s F = nodeClades s F fun _ C => C := rfl
 
 /-! ### Lifting to a child of the root -/
 
+/-- The pairs moving a subtree out of the clade of a vertex of a child of the root, for pairs
+lifted to the two children. -/
 theorem movesOut_lift {b c : Bool} (hbc : b ≠ c) (F F' : Finset Pair) (y : Address) :
     movesOut (liftPairs b F ∪ liftPairs c F') (b :: y) = liftPairs b (movesOut F y) := by
   ext e
@@ -43,6 +78,8 @@ theorem movesOut_lift {b c : Bool} (hbc : b ≠ c) (F F' : Finset Pair) (y : Add
   · rintro ⟨f, ⟨hf, h1, h2⟩, rfl⟩
     exact ⟨Or.inl ⟨f, hf, rfl⟩, by simpa using h1, by simpa using h2⟩
 
+/-- The pairs moving a subtree into the clade of a vertex of a child of the root, for pairs
+lifted to the two children. -/
 theorem movesIn_lift {b c : Bool} (hbc : b ≠ c) (F F' : Finset Pair) (y : Address) :
     movesIn (liftPairs b F ∪ liftPairs c F') (b :: y) = liftPairs b (movesIn F y) := by
   ext e
@@ -54,6 +91,7 @@ theorem movesIn_lift {b c : Bool} (hbc : b ≠ c) (F F' : Finset Pair) (y : Addr
   · rintro ⟨f, ⟨hf, h1, h2⟩, rfl⟩
     exact ⟨Or.inl ⟨f, hf, rfl⟩, by simpa using h1, by simpa using h2⟩
 
+/-- The subtrees of the recipient ends of lifted pairs are those in the child. -/
 theorem biUnion_liftPairs {t s : PhyloTree} {b : Bool} (h : t.nodeAt [b] = some s)
     (F : Finset Pair) :
     (liftPairs b F).biUnion (fun e => t.taxaAt e.2) = F.biUnion fun e => s.taxaAt e.2 := by
@@ -76,6 +114,7 @@ theorem keptClade_nil (t : PhyloTree) {F : Finset Pair} (hF : ∀ e ∈ F, e.1 �
     h.2 ⟨List.nil_prefix, (hF e he).2.symm⟩
   simp [keptClade, h1, h2, PhyloTree.taxaAt_nil]
 
+/-- The ends of lifted pairs are not the root. -/
 theorem liftPairs_ne_nil {b : Bool} {F : Finset Pair} :
     ∀ e ∈ liftPairs b F, e.1 ≠ [] ∧ e.2 ≠ [] := by
   intro e he
@@ -124,6 +163,7 @@ theorem nodeClades_fork (l r : PhyloTree) (F₁ F₂ : Finset Pair)
 
 /-! ### One more kept added edge -/
 
+/-- One more kept added edge that moves its subtree out of the clade of `p`. -/
 theorem keptClade_insert_out {t : PhyloTree} {F : Finset Pair} {e : Pair} {p : Address}
     (h1 : p <+: e.2 ∧ p ≠ e.2) (h2 : ¬(p <+: e.1 ∧ p ≠ e.1)) (hin : movesIn F p = ∅) :
     keptClade t (insert e F) p = keptClade t F p \ t.taxaAt e.2 := by
@@ -138,6 +178,7 @@ theorem keptClade_insert_out {t : PhyloTree} {F : Finset Pair} {e : Pair} {p : A
   simp only [Finset.mem_sdiff, Finset.mem_union, Finset.biUnion_empty, Finset.notMem_empty]
   tauto
 
+/-- One more kept added edge that moves its subtree into the clade of `p`. -/
 theorem keptClade_insert_in {t : PhyloTree} {F : Finset Pair} {e : Pair} {p : Address}
     (h1 : p <+: e.1 ∧ p ≠ e.1) (h2 : ¬(p <+: e.2 ∧ p ≠ e.2)) :
     keptClade t (insert e F) p = keptClade t F p ∪ t.taxaAt e.2 := by
@@ -152,6 +193,7 @@ theorem keptClade_insert_in {t : PhyloTree} {F : Finset Pair} {e : Pair} {p : Ad
   simp only [Finset.mem_sdiff, Finset.mem_union]
   tauto
 
+/-- One more kept added edge that leaves the clade of `p` as it is. -/
 theorem keptClade_insert_none {t : PhyloTree} {F : Finset Pair} {e : Pair} {p : Address}
     (h1 : ¬((p <+: e.2 ∧ p ≠ e.2) ∧ ¬(p <+: e.1 ∧ p ≠ e.1)))
     (h2 : ¬((p <+: e.1 ∧ p ≠ e.1) ∧ ¬(p <+: e.2 ∧ p ≠ e.2))) :
@@ -275,9 +317,12 @@ def liftHang : Brooqs.Side L → Finset Pair → Finset Pair
   | .hyb _, P => P
   | .node _ _ _ S, P => liftPairs true (liftHang S P)
 
+/-- Lifting pairs commutes with unions. -/
 theorem liftPairs_union (b : Bool) (A B : Finset Pair) :
     liftPairs b (A ∪ B) = liftPairs b A ∪ liftPairs b B := Finset.image_union _ _
 
+/-- The pairs of the tree of a side with a tree attached: those of the pendant networks and
+those of the attached tree. -/
 theorem attachPairs_eq : ∀ (S : Brooqs.Side L) (P : Finset Pair),
     attachPairs S P = attachPairs S ∅ ∪ liftHang S P
   | .hyb _, P => by simp [attachPairs, liftHang]
@@ -285,6 +330,7 @@ theorem attachPairs_eq : ∀ (S : Brooqs.Side L) (P : Finset Pair),
       simp only [attachPairs, liftHang]
       rw [attachPairs_eq S P, liftPairs_union, Finset.union_assoc]
 
+/-- Lifting the pairs of the attached tree is monotone. -/
 theorem liftHang_subset : ∀ (S : Brooqs.Side L) {P Q : Finset Pair}, P ⊆ Q →
     liftHang S P ⊆ liftHang S Q
   | .hyb _, _, _, h => h
@@ -350,6 +396,7 @@ theorem keptClades_fork (l r : PhyloTree) (F₁ F₂ : Finset Pair) :
       insert (l.taxa ∪ r.taxa) (keptClades l F₁ ∪ keptClades r F₂) :=
   nodeClades_fork l r F₁ F₂ fun _ C => C
 
+/-- The ends of the pairs of `N` are not the root of its base tree. -/
 theorem pairs_ne_nil {N : Brooqs.Net L} {e : Pair} (he : e ∈ pairs N) : e.1 ≠ [] ∧ e.2 ≠ [] :=
   ⟨(admissible_of_mem (separated_pairs N) he).2.2.1,
     (admissible_of_mem (separated_pairs N) he).2.2.2.1⟩
@@ -674,6 +721,7 @@ theorem pairs_noGhost : ∀ (N : Brooqs.Net L), ∀ e ∈ pairs N, ¬e.1 <+: e.2
         · exact liftPairs_noGhost (attachPairs_noGhost _ _ (pairs_noGhost H)) e he
         · exact liftPairs_noGhost (detachPairs_noGhost _) e he
 
+/-- The pairs of the tree of a side with a tree attached have no ghost donor. -/
 theorem attachPairs_noGhost : ∀ (S : Brooqs.Side L) (P : Finset Pair),
     (∀ e ∈ P, ¬e.1 <+: e.2) → ∀ e ∈ attachPairs S P, ¬e.1 <+: e.2
   | .hyb _, _, hP, e, he => hP e he
@@ -682,6 +730,7 @@ theorem attachPairs_noGhost : ∀ (S : Brooqs.Side L) (P : Finset Pair),
       · exact liftPairs_noGhost (pairs_noGhost M) e he
       · exact liftPairs_noGhost (attachPairs_noGhost S P hP) e he
 
+/-- The pairs of the tree of a side with its hybrid edge deleted have no ghost donor. -/
 theorem detachPairs_noGhost : ∀ (S : Brooqs.Side L), ∀ e ∈ detachPairs S, ¬e.1 <+: e.2
   | .hyb _, e, he => by simp [detachPairs] at he
   | .node _ _ M S, e, he => by
@@ -741,6 +790,7 @@ theorem eq_liftPairs_union {b c : Bool} {F A B : Finset Pair}
     · exact Or.inr ⟨f, ⟨hf, he⟩, rfl⟩
   · rintro (⟨f, ⟨-, hf⟩, rfl⟩ | ⟨f, ⟨-, hf⟩, rfl⟩) <;> exact hf
 
+/-- A set of pairs lifted to the two children of the root is the union of two lifted sets. -/
 theorem exists_liftPairs_union {b c : Bool} {F A B : Finset Pair}
     (h : F ⊆ liftPairs b A ∪ liftPairs c B) :
     ∃ A' ⊆ A, ∃ B' ⊆ B, F = liftPairs b A' ∪ liftPairs c B' :=
@@ -1127,6 +1177,20 @@ theorem exists_displayed_of_builtOn {N : Brooqs.Net L} (hN : N.WellFormed) {T : 
   obtain ⟨S, hS, hc⟩ := hT.exists_switching_clades
   obtain ⟨K, hK, e⟩ := exists_displayed_of_switching hN hS
   exact ⟨K, hK, hc.trans e⟩
+
+/-- **The trees of the graph of `N` are the displayed trees of `N`** (Definition 1). For a metric
+level-1 network `N` with distinct leaf labels, a family `C` of sets of taxa is the family of the
+clades of a tree on which the graph `Realization.graph (baseTree N) (pairs N)` of `N` is built iff
+it is the family of the clusters of a displayed tree of `N`. -/
+theorem builtOn_clades_iff {N : Brooqs.Net L} (hN : N.WellFormed) (C : Finset (Finset ℕ)) :
+    (∃ T : PhyloTree, (Realization.graph (baseTree N) (pairs N)).BuiltOn T ∧
+      T.clades.toFinset = C) ↔
+    ∃ K ∈ N.displayed, C = K.image (Finset.map (Coalescent.label L)) := by
+  constructor
+  · rintro ⟨T, hT, rfl⟩
+    exact exists_displayed_of_builtOn hN hT
+  · rintro ⟨K, hK, rfl⟩
+    exact exists_builtOn_of_mem_displayed hN hK
 
 /-! ### Recovery through every displayed tree -/
 
