@@ -1065,4 +1065,336 @@ theorem net32OneSide_regular_iff {x y z w : X} (hxy : x ≠ y) (hxz : x ≠ z) (
   rw [e0, e1]
   exact net32_regular_iff hxy hxz hxw hyz hyw hzw γ ℓ h₁ (a + h₂) b
 
+/-! ### The top node of a cycle, from the forests arriving along its sides -/
+
+/-! The six placements of the lineages `i, j` when the fourth lineage is outside the cycle, as in
+`ThreeCycle.lean`. -/
+
+section PlacementsThree
+
+variable {s : Fin 4 → X} (hs : Function.Injective s) {i j k : Fin 4} (hij : i ≠ j) (hik : i ≠ k)
+  (hjk : j ≠ k) (h₁ h₂ L : ℝ)
+include hs hij hik hjk
+
+/-- The lineages `i, j` both take the side `S₂`. -/
+private theorem ts3_both₂ :
+    ts_ES (forestUnion ((Side.node L 1 (.leaf (s k)) (.hyb h₁)).forestDist s ∅)
+      ((Side.hyb h₂ : Side X).forestDist s {{i}, {j}})) =
+      Real.exp (-h₂) / 3 + (1 - Real.exp (-h₂)) * ts_ps ({i} ∪ {j}) := by
+  rw [ts_side₁ hs k h₁ L, ts_side₂ s h₂, ts_kT_empty, forestUnion_single_single, empty_union,
+    ts_kT_single, ts_kT_two hij, ts_forestUnion_add_right, ts_forestUnion_smul_right,
+    ts_forestUnion_smul_right, forestUnion_single_single, forestUnion_single_single, ts_ES_add,
+    ts_ES_smul, ts_ES_smul, ts_ES_single, ts_ES_single, union_comm, ts_score_three hij hik hjk,
+    union_comm, ts_score_merged hij hik hjk]
+  ring
+
+/-- The lineage `j` takes the side `S₁` and meets `k`; the lineage `i` takes the side `S₂`. -/
+private theorem ts3_split_j :
+    ts_ES (forestUnion ((Side.node L 1 (.leaf (s k)) (.hyb h₁)).forestDist s {{j}})
+      ((Side.hyb h₂ : Side X).forestDist s {{i}})) =
+      Real.exp (-L) / 3 + (1 - Real.exp (-L)) * ts_ps ({j} ∪ {k}) := by
+  rw [ts_side₁ hs k h₁ L, ts_side₂ s h₂, ts_kT_single, forestUnion_single_single,
+    show ({{j}} ∪ {{k}} : Finset (Finset (Fin 4))) = {{j}, {k}} from rfl, ts_kT_two hjk,
+    ts_kT_single, forestUnion_add_left, forestUnion_smul_left, forestUnion_smul_left,
+    forestUnion_single_single, forestUnion_single_single, ts_ES_add, ts_ES_smul, ts_ES_smul,
+    ts_ES_single, ts_ES_single, ts_score_three hjk hij.symm hik.symm,
+    ts_score_merged hjk hij.symm hik.symm]
+  ring
+
+/-- The lineage `i` takes the side `S₁` and meets `k`; the lineage `j` takes the side `S₂`. -/
+private theorem ts3_split_i :
+    ts_ES (forestUnion ((Side.node L 1 (.leaf (s k)) (.hyb h₁)).forestDist s {{i}})
+      ((Side.hyb h₂ : Side X).forestDist s {{j}})) =
+      Real.exp (-L) / 3 + (1 - Real.exp (-L)) * ts_ps ({i} ∪ {k}) := by
+  rw [ts_side₁ hs k h₁ L, ts_side₂ s h₂, ts_kT_single, forestUnion_single_single,
+    show ({{i}} ∪ {{k}} : Finset (Finset (Fin 4))) = {{i}, {k}} from rfl, ts_kT_two hik,
+    ts_kT_single, forestUnion_add_left, forestUnion_smul_left, forestUnion_smul_left,
+    forestUnion_single_single, forestUnion_single_single, ts_ES_add, ts_ES_smul, ts_ES_smul,
+    ts_ES_single, ts_ES_single, ts_score_three hik hij hjk.symm,
+    ts_score_merged hik hij hjk.symm]
+  ring
+
+/-- The lineages `i, j` both take the side `S₁` and meet `k`. -/
+private theorem ts3_both₁ :
+    ts_ES (forestUnion ((Side.node L 1 (.leaf (s k)) (.hyb h₁)).forestDist s {{i}, {j}})
+      ((Side.hyb h₂ : Side X).forestDist s ∅)) =
+      Real.exp (-h₁) / 3 + (1 - Real.exp (-h₁)) * ts_ps ({i} ∪ {j}) := by
+  obtain ⟨g1, -, g2, -⟩ := ts_three_good hij hik hjk
+  obtain ⟨-, l1, -, l2⟩ := ts_three_good hij hik hjk
+  have hnice := niceKernel_kingmanTransition L
+  rw [ts_side₁ hs k h₁ L, ts_side₂ s h₂, ts_kT_empty, forestUnion_single_empty, ts_kT_two hij,
+    forestUnion_add_left, forestUnion_smul_left, forestUnion_smul_left, forestUnion_single_single,
+    forestUnion_single_single, add_vecMul, smul_vecMul, smul_vecMul, ts_ES_add, ts_ES_smul,
+    ts_ES_smul, ts_ES_nice hnice g1 (disjoint_empty_right _) l1.ge,
+    ts_ES_nice hnice g2 (disjoint_empty_right _) l2.ge, ts_score_three hij hik hjk,
+    ts_score_merged hij hik hjk]
+  ring
+
+/-- The lineages `i, j` have coalesced below the hybrid node and take the side `S₂`. -/
+private theorem ts3_merged₂ :
+    ts_ES (forestUnion ((Side.node L 1 (.leaf (s k)) (.hyb h₁)).forestDist s ∅)
+      ((Side.hyb h₂ : Side X).forestDist s (insert ({i} ∪ {j}) {{i}, {j}}))) =
+      ts_ps ({i} ∪ {j}) := by
+  rw [ts_side₁ hs k h₁ L, ts_side₂ s h₂, ts_kT_empty, forestUnion_single_single, empty_union,
+    ts_kT_single, ts_kT_merged hij, forestUnion_single_single, ts_ES_single, union_comm,
+    ts_score_merged hij hik hjk]
+
+/-- The lineages `i, j` have coalesced below the hybrid node and take the side `S₁`. -/
+private theorem ts3_merged₁ :
+    ts_ES (forestUnion ((Side.node L 1 (.leaf (s k)) (.hyb h₁)).forestDist s
+      (insert ({i} ∪ {j}) {{i}, {j}})) ((Side.hyb h₂ : Side X).forestDist s ∅)) =
+      ts_ps ({i} ∪ {j}) := by
+  obtain ⟨-, -, g2, l2⟩ := ts_three_good hij hik hjk
+  rw [ts_side₁ hs k h₁ L, ts_side₂ s h₂, ts_kT_empty, forestUnion_single_empty, ts_kT_merged hij,
+    forestUnion_single_single,
+    ts_ES_nice (niceKernel_kingmanTransition L) g2 (disjoint_empty_right _) l2.ge,
+    ts_score_merged hij hik hjk]
+
+end PlacementsThree
+
+/-- The values of `ts_ps` for the lineages `0, 1` below the hybrid node and a third lineage `k`. -/
+private theorem ts_ps_values {k : Fin 4} (hk0 : k ≠ 0) (hk1 : k ≠ 1) :
+    ts_ps ({0} ∪ {1}) = 1 ∧ ts_ps ({0} ∪ {k}) = 0 ∧ ts_ps ({1} ∪ {k}) = 0 ∧
+      ts_ps ({k} ∪ {0}) = 0 := by
+  have D : ∀ k : Fin 4, k ≠ 0 → k ≠ 1 →
+      ¬({0} ∪ {k} = ({0, 1} : Finset (Fin 4)) ∨ {0} ∪ {k} = ({2, 3} : Finset (Fin 4))) ∧
+      ¬({1} ∪ {k} = ({0, 1} : Finset (Fin 4)) ∨ {1} ∪ {k} = ({2, 3} : Finset (Fin 4))) ∧
+      ¬({k} ∪ {0} = ({0, 1} : Finset (Fin 4)) ∨ {k} ∪ {0} = ({2, 3} : Finset (Fin 4))) := by
+    decide
+  obtain ⟨d0, d1, d2⟩ := D k hk0 hk1
+  refine ⟨by rw [ts_ps, ite_eq_left (by decide)], ?_, ?_, ?_⟩
+  · rw [ts_ps, ite_eq_right d0]
+  · rw [ts_ps, ite_eq_right d1]
+  · rw [ts_ps, ite_eq_right d2]
+
+/-- The expected score at the top node of a cycle with the side `S₁` bringing `k` and the side `S₂`
+bringing no lineage, when the lineages `i, j` arrive at the hybrid node apart with probability
+`p`. -/
+private theorem ts3_cycle_ES_gen {s : Fin 4 → X} (hs : Function.Injective s) {i j k : Fin 4}
+    (hij : i ≠ j) (hik : i ≠ k) (hjk : j ≠ k) (γ ℓ h₁ h₂ L p : ℝ) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{i}, {j}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({i} ∪ {j}) {{i}, {j}}) 1) :
+    ts_ES ((Net.cycle γ (.node L 1 (.leaf (s k)) (.hyb h₁)) (.hyb h₂) ℓ H).forestDist s) =
+      p * ((1 - γ) ^ 2 * (Real.exp (-h₂) / 3 + (1 - Real.exp (-h₂)) * ts_ps ({i} ∪ {j})) +
+        γ * (1 - γ) * (Real.exp (-L) / 3 + (1 - Real.exp (-L)) * ts_ps ({i} ∪ {k})) +
+        γ * (1 - γ) * (Real.exp (-L) / 3 + (1 - Real.exp (-L)) * ts_ps ({j} ∪ {k})) +
+        γ ^ 2 * (Real.exp (-h₁) / 3 + (1 - Real.exp (-h₁)) * ts_ps ({i} ∪ {j}))) +
+      (1 - p) * ts_ps ({i} ∪ {j}) := by
+  set S₁ : Side X := .node L 1 (.leaf (s k)) (.hyb h₁)
+  set S₂ : Side X := .hyb h₂
+  have hdef : (Net.cycle γ S₁ S₂ ℓ H).forestDist s = fun G =>
+      ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) *
+          (fun F A => forestUnion (S₁.forestDist s (forestBelow F A))
+            (S₂.forestDist s (forestBelow F (roots F \ A)))) F A G := rfl
+  have hV₁ := ts_sum_apart γ hij fun E E' => ts_ES (forestUnion (S₁.forestDist s E)
+    (S₂.forestDist s E'))
+  have hV₂ := ts_sum_merged γ hij fun E E' => ts_ES (forestUnion (S₁.forestDist s E)
+    (S₂.forestDist s E'))
+  rw [hdef, ts_ES_cycle, hH, ts_sum_mix, hV₁, hV₂, ts3_both₂ hs hij hik hjk h₁ h₂ L,
+    ts3_split_i hs hij hik hjk h₁ h₂ L, ts3_split_j hs hij hik hjk h₁ h₂ L,
+    ts3_both₁ hs hij hik hjk h₁ h₂ L, ts3_merged₂ hs hij hik hjk h₁ h₂ L,
+    ts3_merged₁ hs hij hik hjk h₁ h₂ L]
+  ring
+
+/-- The expected score at the top node of a cycle with the side `S₁` bringing `k` and the side `S₂`
+bringing `m`, when the lineages `i, j` arrive at the hybrid node apart with probability `p`. -/
+private theorem ts_cycle_ES_gen {s : Fin 4 → X} (hs : Function.Injective s) {i j k m : Fin 4}
+    (hij : i ≠ j) (hik : i ≠ k) (him : i ≠ m) (hjk : j ≠ k) (hjm : j ≠ m) (hkm : k ≠ m)
+    (γ ℓ h₁ h₂ a b p : ℝ) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{i}, {j}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({i} ∪ {j}) {{i}, {j}}) 1) :
+    ts_ES ((Net.cycle γ (.node a 1 (.leaf (s k)) (.hyb h₁)) (.node b 1 (.leaf (s m)) (.hyb h₂)) ℓ
+      H).forestDist s) =
+      p * ((1 - γ) ^ 2 *
+          (Real.exp (-h₂) / 3 + (1 - Real.exp (-h₂)) * ts_ps ({i} ∪ {j})) +
+        γ * (1 - γ) * (Real.exp (-a) * Real.exp (-b) / 3 +
+          (1 - Real.exp (-a) * Real.exp (-b)) * ts_ps ({i} ∪ {k})) +
+        γ * (1 - γ) * (Real.exp (-a) * Real.exp (-b) / 3 +
+          (1 - Real.exp (-a) * Real.exp (-b)) * ts_ps ({j} ∪ {k})) +
+        γ ^ 2 * (Real.exp (-h₁) / 3 + (1 - Real.exp (-h₁)) * ts_ps ({i} ∪ {j}))) +
+      (1 - p) * ts_ps ({i} ∪ {j}) := by
+  set S₁ : Side X := .node a 1 (.leaf (s k)) (.hyb h₁)
+  set S₂ : Side X := .node b 1 (.leaf (s m)) (.hyb h₂)
+  have hdef : (Net.cycle γ S₁ S₂ ℓ H).forestDist s = fun G =>
+      ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) *
+          (fun F A => forestUnion (S₁.forestDist s (forestBelow F A))
+            (S₂.forestDist s (forestBelow F (roots F \ A)))) F A G := rfl
+  have hV₁ := ts_sum_apart γ hij fun E E' => ts_ES (forestUnion (S₁.forestDist s E)
+    (S₂.forestDist s E'))
+  have hV₂ := ts_sum_merged γ hij fun E E' => ts_ES (forestUnion (S₁.forestDist s E)
+    (S₂.forestDist s E'))
+  rw [hdef, ts_ES_cycle, hH, ts_sum_mix, hV₁, hV₂,
+    ts_ES_both₂ hs hij hik him hjk hjm hkm h₁ h₂ a b,
+    ts_ES_split_i hs hij hik him hjk hjm hkm h₁ h₂ a b,
+    ts_ES_split_i hs hij.symm hjk hjm hik him hkm h₁ h₂ a b,
+    ts_ES_both₁ hs hij hik him hjk hjm hkm h₁ h₂ a b,
+    ts_ES_merged₂ hs hij hik him hjk hjm hkm h₁ h₂ a b,
+    ts_ES_merged₁ hs hij hik him hjk hjm hkm h₁ h₂ a b]
+  ring
+
+/-- The expected score at the top node of a cycle whose side `S₁` brings `m` and then `k`, and
+whose side `S₂` brings no lineage, when the lineages `i, j` arrive at the hybrid node apart with
+probability `p`. -/
+private theorem ts1_cycle_ES_gen {s : Fin 4 → X} (hs : Function.Injective s) {i j k m : Fin 4}
+    (hij : i ≠ j) (hik : i ≠ k) (him : i ≠ m) (hjk : j ≠ k) (hjm : j ≠ m) (hkm : k ≠ m)
+    (γ ℓ h₁ h₂ a b p : ℝ) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{i}, {j}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({i} ∪ {j}) {{i}, {j}}) 1) :
+    ts_ES ((Net.cycle γ (.node a 1 (.leaf (s k)) (.node b 1 (.leaf (s m)) (.hyb h₁))) (.hyb h₂) ℓ
+      H).forestDist s) =
+      p * ((1 - γ) ^ 2 * (Real.exp (-a) * Real.exp (-h₂) / 3 +
+          (1 - Real.exp (-a) * Real.exp (-h₂)) * ts_ps ({i} ∪ {j})) +
+        γ * (1 - γ) * (Real.exp (-b) / 3 + (1 - Real.exp (-b)) * ts_ps ({i} ∪ {m})) +
+        γ * (1 - γ) * (Real.exp (-b) / 3 + (1 - Real.exp (-b)) * ts_ps ({j} ∪ {m})) +
+        γ ^ 2 * (Real.exp (-h₁) / 3 + (1 - Real.exp (-h₁)) * ts_ps ({i} ∪ {j}))) +
+      (1 - p) * ts_ps ({i} ∪ {j}) := by
+  set S₁ : Side X := .node a 1 (.leaf (s k)) (.node b 1 (.leaf (s m)) (.hyb h₁))
+  set S₂ : Side X := .hyb h₂
+  have hdef : (Net.cycle γ S₁ S₂ ℓ H).forestDist s = fun G =>
+      ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) *
+          (fun F A => forestUnion (S₁.forestDist s (forestBelow F A))
+            (S₂.forestDist s (forestBelow F (roots F \ A)))) F A G := rfl
+  have hV₁ := ts_sum_apart γ hij fun E E' => ts_ES (forestUnion (S₁.forestDist s E)
+    (S₂.forestDist s E'))
+  have hV₂ := ts_sum_merged γ hij fun E E' => ts_ES (forestUnion (S₁.forestDist s E)
+    (S₂.forestDist s E'))
+  rw [hdef, ts_ES_cycle, hH, ts_sum_mix, hV₁, hV₂,
+    ts_ES1_both₂ hs hij hik him hjk hjm hkm h₁ h₂ a b,
+    ts_ES1_split_i hs hij hik him hjk hjm hkm h₁ h₂ a b,
+    ts_ES1_split_i hs hij.symm hjk hjm hik him hkm h₁ h₂ a b,
+    ts_ES1_both₁ hs hij hik him hjk hjm hkm h₁ h₂ a b,
+    ts_ES1_merged₂ hs hij hik him hjk hjm hkm h₁ h₂ a b,
+    ts_ES1_merged₁ hs hij hik him hjk hjm hkm h₁ h₂ a b]
+  ring
+
+/-- **The top node of a cycle with one of the four taxa on a side, one outside.** Let the lineages
+`0` and `1` arrive at the hybrid node of the cycle `cycle γ S₁ S₂ ℓ H` apart with probability `p`,
+and coalesced otherwise (`hH`). Let the side `S₁` bring the lineage `k` (`k = 2` or `3`): a forest
+`E` that takes its hybrid edge travels for a time `h₁`, is joined by `k`, and travels for a time `L`
+to the top node (`hS₁`). Let the side `S₂` bring no lineage: `E` travels for a time `h₂` (`hS₂`).
+Then the expected score of the forest at the top node, which is the CF of `01|23` when the fourth
+lineage is outside the cycle (`Brooqs.quartetCF_eq_sum_top`), is
+`1 - p + p (γ²(1 - 2/3 e^{-h₁}) + (1 - γ)²(1 - 2/3 e^{-h₂}) + 2γ(1 - γ) e^{-L}/3)`: the CF of
+`xy|zw` of `N₃₂` (`Brooqs.net32_quartetCF`) with `p` in place of `e^{-ℓ}`. -/
+theorem expectedScore_top_outside {s : Fin 4 → X} (hs : Function.Injective s) {k : Fin 4}
+    (hk0 : k ≠ 0) (hk1 : k ≠ 1) (γ ℓ h₁ h₂ L p : ℝ) (S₁ S₂ : Side X) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{0}, {1}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({0} ∪ {1}) {{0}, {1}}) 1)
+    (hS₁ : ∀ E, S₁.forestDist s E = forestUnion (Pi.single E 1 ᵥ* kingmanTransition h₁)
+      (Pi.single {{k}} 1) ᵥ* kingmanTransition L)
+    (hS₂ : ∀ E, S₂.forestDist s E = Pi.single E 1 ᵥ* kingmanTransition h₂) :
+    ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
+      1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) +
+        (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) + 2 * γ * (1 - γ) * (Real.exp (-L) / 3)) := by
+  have hcyc : (Net.cycle γ S₁ S₂ ℓ H).forestDist s =
+      (Net.cycle γ (.node L 1 (.leaf (s k)) (.hyb h₁)) (.hyb h₂) ℓ H).forestDist s := by
+    funext G
+    show ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) * forestUnion (S₁.forestDist s (forestBelow F A))
+          (S₂.forestDist s (forestBelow F (roots F \ A))) G =
+      ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) * forestUnion
+          ((Side.node L 1 (.leaf (s k)) (.hyb h₁) : Side X).forestDist s (forestBelow F A))
+          ((Side.hyb h₂ : Side X).forestDist s (forestBelow F (roots F \ A))) G
+    simp only [hS₁, hS₂, ts_side₁ hs, ts_side₂]
+  have h := ts3_cycle_ES_gen hs (i := 0) (j := 1) (k := k) (by decide) hk0.symm hk1.symm γ ℓ h₁ h₂
+    L p H hH
+  obtain ⟨p01, p0k, p1k, -⟩ := ts_ps_values hk0 hk1
+  rw [p01, p0k, p1k] at h
+  change ts_ES _ = _
+  rw [hcyc, h]
+  ring
+
+/-- **The top node of a cycle with two of the four taxa on its two sides.** As
+`Brooqs.expectedScore_top_outside`, with the side `S₁` bringing the lineage `k` after a time `h₁`
+and travelling for a time `a`, and the side `S₂` bringing the lineage `m` after a time `h₂` and
+travelling for a time `b` (`{k, m} = {2, 3}`). The expected score at the top node, the CF of
+`01|23`, is that of `N₃₂` with `L = a + b` and `p` in place of `e^{-ℓ}`. -/
+theorem expectedScore_top_sides {s : Fin 4 → X} (hs : Function.Injective s) {k m : Fin 4}
+    (hk0 : k ≠ 0) (hk1 : k ≠ 1) (hm0 : m ≠ 0) (hm1 : m ≠ 1) (hkm : k ≠ m)
+    (γ ℓ h₁ h₂ a b p : ℝ) (S₁ S₂ : Side X) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{0}, {1}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({0} ∪ {1}) {{0}, {1}}) 1)
+    (hS₁ : ∀ E, S₁.forestDist s E = forestUnion (Pi.single E 1 ᵥ* kingmanTransition h₁)
+      (Pi.single {{k}} 1) ᵥ* kingmanTransition a)
+    (hS₂ : ∀ E, S₂.forestDist s E = forestUnion (Pi.single E 1 ᵥ* kingmanTransition h₂)
+      (Pi.single {{m}} 1) ᵥ* kingmanTransition b) :
+    ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
+      1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) +
+        (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-h₂)) +
+          2 * γ * (1 - γ) * (Real.exp (-(a + b)) / 3)) := by
+  have hcyc : (Net.cycle γ S₁ S₂ ℓ H).forestDist s =
+      (Net.cycle γ (.node a 1 (.leaf (s k)) (.hyb h₁)) (.node b 1 (.leaf (s m)) (.hyb h₂)) ℓ
+        H).forestDist s := by
+    funext G
+    show ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) * forestUnion (S₁.forestDist s (forestBelow F A))
+          (S₂.forestDist s (forestBelow F (roots F \ A))) G =
+      ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) * forestUnion
+          ((Side.node a 1 (.leaf (s k)) (.hyb h₁) : Side X).forestDist s (forestBelow F A))
+          ((Side.node b 1 (.leaf (s m)) (.hyb h₂) : Side X).forestDist s
+            (forestBelow F (roots F \ A))) G
+    simp only [hS₁, hS₂, ts_side₁ hs]
+  have h := ts_cycle_ES_gen hs (i := 0) (j := 1) (k := k) (m := m) (by decide) hk0.symm hm0.symm
+    hk1.symm hm1.symm hkm γ ℓ h₁ h₂ a b p H hH
+  obtain ⟨p01, p0k, p1k, -⟩ := ts_ps_values hk0 hk1
+  have hab : Real.exp (-(a + b)) = Real.exp (-a) * Real.exp (-b) := by
+    rw [neg_add, Real.exp_add]
+  rw [p01, p0k, p1k] at h
+  change ts_ES _ = _
+  rw [hcyc, h, hab]
+  ring
+
+/-- **The top node of a cycle with two of the four taxa on one side.** As
+`Brooqs.expectedScore_top_outside`, with the side `S₁` bringing the lineage `m` after a time `h₁`,
+then the lineage `k` after a further time `b`, and travelling for a time `a` to the top node, and
+the side `S₂` bringing no lineage (`{k, m} = {2, 3}`). The expected score at the top node, the CF of
+`01|23`, is that of `N₃₂` with `a + h₂` for `h₂`, `b` for `L` and `p` in place of `e^{-ℓ}`. -/
+theorem expectedScore_top_oneSide {s : Fin 4 → X} (hs : Function.Injective s) {k m : Fin 4}
+    (hk0 : k ≠ 0) (hk1 : k ≠ 1) (hm0 : m ≠ 0) (hm1 : m ≠ 1) (hkm : k ≠ m)
+    (γ ℓ h₁ h₂ a b p : ℝ) (S₁ S₂ : Side X) (H : Net X)
+    (hH : H.forestDist s ᵥ* kingmanTransition ℓ =
+      p • Pi.single ({{0}, {1}} : Finset (Finset (Fin 4))) 1 +
+        (1 - p) • Pi.single (insert ({0} ∪ {1}) {{0}, {1}}) 1)
+    (hS₁ : ∀ E, S₁.forestDist s E = forestUnion (forestUnion
+      (Pi.single E 1 ᵥ* kingmanTransition h₁) (Pi.single {{m}} 1) ᵥ* kingmanTransition b)
+        (Pi.single {{k}} 1) ᵥ* kingmanTransition a)
+    (hS₂ : ∀ E, S₂.forestDist s E = Pi.single E 1 ᵥ* kingmanTransition h₂) :
+    ∑ F, (Net.cycle γ S₁ S₂ ℓ H).forestDist s F * quartetScore F =
+      1 - p + p * (γ ^ 2 * (1 - 2 / 3 * Real.exp (-h₁)) +
+        (1 - γ) ^ 2 * (1 - 2 / 3 * Real.exp (-(a + h₂))) +
+          2 * γ * (1 - γ) * (Real.exp (-b) / 3)) := by
+  have hcyc : (Net.cycle γ S₁ S₂ ℓ H).forestDist s =
+      (Net.cycle γ (.node a 1 (.leaf (s k)) (.node b 1 (.leaf (s m)) (.hyb h₁))) (.hyb h₂) ℓ
+        H).forestDist s := by
+    funext G
+    show ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) * forestUnion (S₁.forestDist s (forestBelow F A))
+          (S₂.forestDist s (forestBelow F (roots F \ A))) G =
+      ∑ F, (H.forestDist s ᵥ* kingmanTransition ℓ) F * ∑ A ∈ (roots F).powerset,
+        γ ^ #A * (1 - γ) ^ #(roots F \ A) * forestUnion
+          ((Side.node a 1 (.leaf (s k)) (.node b 1 (.leaf (s m)) (.hyb h₁)) : Side X).forestDist s
+            (forestBelow F A))
+          ((Side.hyb h₂ : Side X).forestDist s (forestBelow F (roots F \ A))) G
+    simp only [hS₁, hS₂, ts_side_two hs, ts_side₂]
+  have h := ts1_cycle_ES_gen hs (i := 0) (j := 1) (k := k) (m := m) (by decide) hk0.symm hm0.symm
+    hk1.symm hm1.symm hkm γ ℓ h₁ h₂ a b p H hH
+  obtain ⟨p01, -, -, -⟩ := ts_ps_values hk0 hk1
+  obtain ⟨-, p0m, p1m, -⟩ := ts_ps_values hm0 hm1
+  have hah : Real.exp (-(a + h₂)) = Real.exp (-a) * Real.exp (-h₂) := by
+    rw [neg_add, Real.exp_add]
+  rw [p01, p0m, p1m] at h
+  change ts_ES _ = _
+  rw [hcyc, h, hah]
+  ring
+
 end Brooqs
