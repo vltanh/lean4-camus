@@ -645,6 +645,84 @@ theorem exists_kept_detach : ∀ (S : Brooqs.Side L), S.IsMetric → S.leaves.No
       tauto
 end
 
+
+/-! ### No ghost donor -/
+
+theorem liftPairs_noGhost {b : Bool} {F : Finset Pair} (h : ∀ e ∈ F, ¬e.1 <+: e.2) :
+    ∀ e ∈ liftPairs b F, ¬e.1 <+: e.2 := by
+  intro e he
+  obtain ⟨f, hf, rfl⟩ := mem_liftPairs.1 he
+  simpa using h f hf
+
+mutual
+/-- The pairs of `N` have no ghost donor: the donor end of each is not an ancestor of its recipient
+end (the two ends lie on the two sides of the top node of a cycle). -/
+theorem pairs_noGhost : ∀ (N : Brooqs.Net L), ∀ e ∈ pairs N, ¬e.1 <+: e.2
+  | .leaf _, e, he => by simp [pairs] at he
+  | .tree _ N₁ _ N₂, e, he => by
+      rcases Finset.mem_union.1 he with he | he
+      · exact liftPairs_noGhost (pairs_noGhost N₁) e he
+      · exact liftPairs_noGhost (pairs_noGhost N₂) e he
+  | .cycle _ S₁ S₂ _ H, e, he => by
+      unfold pairs at he
+      split_ifs at he
+      all_goals
+        rcases Finset.mem_insert.1 he with rfl | he
+        · simp
+        rcases Finset.mem_union.1 he with he | he
+        · exact liftPairs_noGhost (attachPairs_noGhost _ _ (pairs_noGhost H)) e he
+        · exact liftPairs_noGhost (detachPairs_noGhost _) e he
+
+theorem attachPairs_noGhost : ∀ (S : Brooqs.Side L) (P : Finset Pair),
+    (∀ e ∈ P, ¬e.1 <+: e.2) → ∀ e ∈ attachPairs S P, ¬e.1 <+: e.2
+  | .hyb _, _, hP, e, he => hP e he
+  | .node _ _ M S, P, hP, e, he => by
+      rcases Finset.mem_union.1 he with he | he
+      · exact liftPairs_noGhost (pairs_noGhost M) e he
+      · exact liftPairs_noGhost (attachPairs_noGhost S P hP) e he
+
+theorem detachPairs_noGhost : ∀ (S : Brooqs.Side L), ∀ e ∈ detachPairs S, ¬e.1 <+: e.2
+  | .hyb _, e, he => by simp [detachPairs] at he
+  | .node _ _ M S, e, he => by
+      unfold detachPairs at he
+      split_ifs at he
+      · rcases Finset.mem_union.1 he with he | he
+        · exact liftPairs_noGhost (pairs_noGhost M) e he
+        · exact liftPairs_noGhost (detachPairs_noGhost S) e he
+      · exact pairs_noGhost M e he
+end
+
+/-! ### Every displayed tree is a tree of the graph -/
+
+/-- **Every displayed tree of `N` is the tree of a switching of its graph.** For a metric
+level-1 network `N` with distinct leaf labels and a displayed tree `K` of `N` (CAMUS's
+Definition 1 in the model, `Brooqs.Net.displayed`), some switching `S` of the graph
+`Realization.graph (baseTree N) (pairs N)` of `N` has the clusters of `K` as the clades below its
+vertices: it keeps, at each cycle whose displayed tree hangs the hybrid component from the side
+whose hybrid edge the base tree deletes, the added edge of the cycle. -/
+theorem exists_switching_of_mem_displayed {N : Brooqs.Net L} (hN : N.WellFormed)
+    {K : Finset (Finset L)} (hK : K ∈ N.displayed) :
+    ∃ S, (Realization.graph (baseTree N) (pairs N)).Switching S ∧
+      (Realization.graph (baseTree N) (pairs N)).vertices.image
+          ((Realization.graph (baseTree N) (pairs N)).cladeBelow S) =
+        K.image (Finset.map (Coalescent.label L)) := by
+  obtain ⟨F, hF, hFK⟩ := exists_kept_net N hN K hK
+  refine ⟨keptSwitching (baseTree N) (pairs N) F,
+    keptSwitching_switching (separated_pairs N).1 hF, ?_⟩
+  rw [image_cladeBelow_keptSwitching (wellLabelled_baseTree hN) (separated_pairs N) hF
+    (pairs_noGhost N), hFK]
+
+/-- **Every displayed tree of `N` is a tree of its graph** (Definition 1). For a metric level-1
+network `N` with distinct leaf labels and a displayed tree `K` of `N`, there is a tree `T` on which
+the graph `Realization.graph (baseTree N) (pairs N)` of `N` is built, in the sense of
+Definition 1, whose clades are the clusters of `K`. -/
+theorem exists_builtOn_of_mem_displayed {N : Brooqs.Net L} (hN : N.WellFormed)
+    {K : Finset (Finset L)} (hK : K ∈ N.displayed) :
+    ∃ T : PhyloTree, (Realization.graph (baseTree N) (pairs N)).BuiltOn T ∧
+      T.clades.toFinset = K.image (Finset.map (Coalescent.label L)) := by
+  obtain ⟨S, hS, hSK⟩ := exists_switching_of_mem_displayed hN hK
+  exact exists_builtOn_of_switching_clades hN hS hSK
+
 end NMSC
 
 end Camus
