@@ -128,7 +128,7 @@ automation:
       framework: "Claude Code 2.1.296"
       tool_setup: >-
         Second round (10 October 2026): formalize-math-paper skill 2.2.0
-        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 9
+        (commit 13cfb7162b69138771b2aeeec36538660834e1e0); a main session and 9
         sub-agents (at most 8 at once): documentation, an independent statement
         review, a literature search and a verification of the report.
       cost:
@@ -141,7 +141,7 @@ automation:
       framework: "Claude Code 2.1.296"
       tool_setup: >-
         Third round (10 October 2026): formalize-math-paper skill 2.2.0
-        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 10
+        (commit 13cfb7162b69138771b2aeeec36538660834e1e0); a main session and 10
         sub-agents (at most 6 at once), six of them working in separate git worktrees on
         Definition 1 by clades and the counterexamples, backtracking and the stopping rule, the
         cost semantics, Definition 1's class, the site model and ASTRAL, and the coalescent, two
@@ -156,7 +156,7 @@ automation:
       framework: "Claude Code 2.1.296"
       tool_setup: >-
         Fourth round (10 October 2026): formalize-math-paper skill 2.2.0
-        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 5
+        (commit 13cfb7162b69138771b2aeeec36538660834e1e0); a main session and 5
         sub-agents (at most 5 at once), four of them working in separate git worktrees on
         tree-basedness, trees determined by their quartets with the SNP pipeline, backtracking time
         with peak memory, and the network coalescent, and one reviewing the files of the pipeline;
@@ -171,7 +171,7 @@ automation:
       framework: "Claude Code 2.1.296"
       tool_setup: >-
         Fifth round (10 October 2026): formalize-math-paper skill 2.2.0
-        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 3 sub-agents (at most
+        (commit 13cfb7162b69138771b2aeeec36538660834e1e0); a main session and 3 sub-agents (at most
         2 at once): two in separate git worktrees on recovery through every tree with the exchange
         of the sides of a cycle, and on the region of the anomaly, and one read-only reviewer.
       cost:
@@ -184,7 +184,7 @@ automation:
       framework: "Claude Code 2.1.296"
       tool_setup: >-
         Sixth round (10 October 2026): formalize-math-paper skill 2.2.0
-        (commit d82a98e1237e5b864bb76185b1ebb5548092a184); a main session and 3 sub-agents: the
+        (commit 13cfb7162b69138771b2aeeec36538660834e1e0); a main session and 3 sub-agents: the
         two sub-agents of the fifth round, resumed in new git worktrees, on the displayed trees of
         the model and the pipeline of Section 3.3, and on the region of the anomaly in every network
         with its boundary, and a read-only reviewer.
